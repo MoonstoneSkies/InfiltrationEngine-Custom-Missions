@@ -9,6 +9,7 @@ local PropBarrierButton = toolbar:CreateButton("Prop Barrier", "Prop Barrier", "
 local PropPreviewButton = toolbar:CreateButton("Prop Preview", "Prop Preview", "rbxassetid://129506771895350")
 local CombatMapButton = toolbar:CreateButton("Combat Flow Map", "Combat Flow Map", "rbxassetid://107812298422418")
 local ZoneMarkerButton = toolbar:CreateButton("Cell Marker", "Cell Editor", "rbxassetid://97000446266881")
+local AttributeSearchButton = toolbar:CreateButton("Attribute Search", "Attribute Search", "rbxassetid://18733558044")
 local SectionVisibilityButton =
 	toolbar:CreateButton("Section Visibility", "Section Visibility", "rbxassetid://8753176416")
 
@@ -18,6 +19,7 @@ local PropBarrier = require(script.Parent.PropBarrier.Main)
 local PropPreview = require(script.Parent.PropPreview.Main)
 local CombatMap = require(script.Parent.CombatMap.Main)
 local ZoneMarker = require(script.Parent.ZoneMarker.Main)
+local AttributeSearch = require(script.Parent.AttributeSearch.Main)
 local SectionVisibility = require(script.Parent.SectionVisibility.Main)
 local CurrentPlugin = nil
 
@@ -101,6 +103,19 @@ ZoneMarkerButton.Click:connect(function()
 	end
 end)
 
+AttributeSearchButton.Click:connect(function()
+	if CurrentPlugin ~= AttributeSearch then
+		if CurrentPlugin then
+			CurrentPlugin.Clean()
+		end
+		CurrentPlugin = AttributeSearch
+		plugin:Activate(true)
+		CurrentPlugin.Init(plugin:GetMouse())
+	else
+		plugin:Deactivate()
+	end
+end)
+
 SectionVisibilityButton.Click:Connect(function()
 	plugin:Deactivate()
 	SectionVisibility.OpenMenu(plugin)
@@ -114,6 +129,7 @@ local function disablePlugin()
 	PropPreview.Clean()
 	CombatMap.Clean()
 	ZoneMarker.Clean()
+	AttributeSearch.Clean()
 	VisibilityToggle.HideTempRevealedParts(workspace:FindFirstChild("DebugMission"))
 	CurrentPlugin = nil
 end

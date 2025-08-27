@@ -75,6 +75,7 @@ end
 
 -- Add/Remove
 
+local HiddenModels = {}
 local BaseByModel = {}
 function module:AddProp(basePart)
 	if not basePart:IsA("BasePart") then
@@ -82,6 +83,69 @@ function module:AddProp(basePart)
 	end
 
 	if Prop[basePart] then
+		return
+	end
+
+	if script.Parent.ScalableProps:FindFirstChild(basePart.Name) then
+		basePart.Transparency = 1
+
+		local module = require(script.Parent.ScalableProps[basePart.Name])
+		local function generateModel()
+			local generator = setmetatable({
+				Base = basePart,
+				CFrame = basePart.CFrame,
+			}, { __index = module })
+			generator:InitModel()
+			local model = generator.Model
+			if not model:FindFirstChild("Base") then
+				local p = Instance.new("Part")
+				p.Size = Vector3.new(0.2, 0.2, 0.2)
+				p.CFrame = basePart.CFrame
+				p.Transparency = 1
+				p.Name = "Base"
+				p.Parent = model
+			end
+			for _, p in pairs(model:GetDescendants()) do
+				if p:IsA("BasePart") then
+					p.Archivable = false
+					p.CollisionGroup = COLLISON_GROUP
+				end
+			end
+			model.Archivable = false
+			return model
+		end
+
+		local model = generateModel()
+		Prop[basePart] = {
+			Model = model,
+			Events = {
+				basePart:GetPropertyChangedSignal("CFrame"):Connect(function()
+					self:RepositionProp(basePart)
+				end),
+				basePart:GetPropertyChangedSignal("Size"):Connect(function()
+					Prop[basePart].Model:Destroy()
+					local newModel = generateModel()
+					Prop[basePart].Model = newModel
+					BaseByModel[newModel] = basePart
+					HiddenModels[basePart] = nil
+					newModel.Parent = self.Folder
+					self:RecolorProp(basePart)
+				end),
+				basePart.AttributeChanged:Connect(function()
+					Prop[basePart].Model:Destroy()
+					local newModel = generateModel()
+					Prop[basePart].Model = newModel
+					BaseByModel[newModel] = basePart
+					HiddenModels[basePart] = nil
+					newModel.Parent = self.Folder
+					self:RecolorProp(basePart)
+				end),
+			},
+		}
+		model.Parent = self.Folder
+		BaseByModel[model] = basePart
+		self:RepositionProp(basePart)
+		self:RecolorProp(basePart)
 		return
 	end
 
@@ -105,6 +169,8 @@ function module:AddProp(basePart)
 					self:RepositionProp(basePart)
 				end),
 				basePart.AttributeChanged:Connect(function()
+					HiddenModels[basePart] = nil
+					model.Parent = self.Folder
 					self:RecolorProp(basePart)
 				end),
 			},
@@ -157,8 +223,6 @@ function module:SetEnabled()
 	for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 		module:AddProp(prop)
 	end
-
-	local HiddenModels = {}
 
 	module.AddEvents = {
 		workspace.DebugMission.Props.DescendantAdded:Connect(function(p)

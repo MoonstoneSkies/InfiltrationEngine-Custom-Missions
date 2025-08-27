@@ -29,7 +29,7 @@ local RESTRICTIONS_LIST = {
 type DoorData = {
 	Base: Part?,
 	Side: number?,
-	Restrictions: {[number]: string},
+	Restrictions: { [number]: string },
 	Recover: boolean,
 	Locked: boolean,
 	IgnoreWhenOpen: boolean,
@@ -55,7 +55,7 @@ function module:UpdateSelectedState(key: string, value: any)
 	end
 	self.UIState:set(newData)
 end
-	
+
 -- Data Load/Unload
 function module:GetDoorsFromLevel()
 	local doors = {}
@@ -70,7 +70,7 @@ end
 
 function module:ReadData(part: Part, side: number)
 	local atr = part:GetAttributes()
-	local req = atr["PathReq"..side]
+	local req = atr["PathReq" .. side]
 	local data: DoorData = {
 		Base = part,
 		Side = side,
@@ -91,29 +91,31 @@ end
 
 local function setBitMaskValue(mask: number, bit: number, enabled: boolean)
 	local n = if mask % (bit + bit) >= bit then mask - bit else mask
-	if enabled then n += bit end
+	if enabled then
+		n += bit
+	end
 	return n
 end
 
 function module:WriteData(part: Part, side: number, data: DoorData)
 	local atr = part:GetAttributes()
 	local req = table.concat(data.Restrictions, " ")
-	part:SetAttribute("PathReq"..side, if req ~= "" then req else nil)
-	
+	part:SetAttribute("PathReq" .. side, if req ~= "" then req else nil)
+
 	part:SetAttribute(side == 1 and "LockFront" or "LockBack", data.Locked)
-	
+
 	local recover = setBitMaskValue(atr.PathRecover or 0, side, data.Recover)
 	part:SetAttribute("PathRecover", if recover ~= 0 then recover else nil)
-	
+
 	local ignoreOpen = setBitMaskValue(atr.PathIgnoreOpen or 0, side, data.IgnoreWhenOpen)
 	part:SetAttribute("PathIgnoreOpen", if ignoreOpen ~= 0 then ignoreOpen else nil)
-	
+
 	local ignoreUnlocked = setBitMaskValue(atr.PathIgnoreUnlocked or 0, side, data.IgnoreWhenUnlocked)
 	part:SetAttribute("PathIgnoreUnlocked", if ignoreUnlocked ~= 0 then ignoreUnlocked else nil)
 
 	local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
 	part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
-	
+
 	local newData = self:ReadData(part, side)
 	newData.Display = self.DoorState[part][side].Display
 	self.DoorState[part][side] = newData
@@ -135,32 +137,32 @@ function module:UpdateDisplayedData(data: DoorData)
 		data.Display:Destroy()
 		data.Display = nil
 	end
-	
+
 	local listItems = {}
 	table.insert(listItems, data.Locked and "Locked" or "Unlocked")
-	
+
 	if #data.Restrictions == 0 then
 		table.insert(listItems, "Unrestricted")
 	else
 		table.insert(listItems, table.concat(data.Restrictions, " - "))
 	end
-	
+
 	if data.Recover then
 		table.insert(listItems, "Recovery")
 	end
-	
+
 	if data.IgnoreWhenOpen then
 		table.insert(listItems, "Ignore When Open")
 	end
-	
+
 	if data.IgnoreWhenUnlocked then
 		table.insert(listItems, "Ignore When Unlocked")
 	end
-	
+
 	if data.IgnoreWhenBroken then
 		table.insert(listItems, "Ignore When Broken")
 	end
-	
+
 	for index, item in pairs(listItems) do
 		listItems[index] = Create("TextLabel", {
 			Text = item,
@@ -170,10 +172,10 @@ function module:UpdateDisplayedData(data: DoorData)
 			AutomaticSize = Enum.AutomaticSize.XY,
 			Size = UDim2.new(0, 0, 0, 0),
 			BackgroundTransparency = 1,
-			TextWrapped = true
+			TextWrapped = true,
 		})
 	end
-	
+
 	if data.Base then
 		data.Display = Create("Part", {
 			CFrame = data.Base.CFrame * CFrame.Angles(0, data.Side == 2 and math.pi or 0, 0) * CFrame.new(0, 0, -0.5),
@@ -195,8 +197,8 @@ function module:UpdateDisplayedData(data: DoorData)
 						Padding = UDim.new(0, 10),
 					}),
 					listItems,
-				})
-			})
+				}),
+			}),
 		})
 	end
 end
@@ -210,7 +212,7 @@ module.ProcessInput = function(io: InputObject)
 				print("Overwrite")
 				module:WriteData(door, side, module.UIState._Value)
 			end
-		elseif io.KeyCode == Enum.KeyCode.F then
+		elseif io.KeyCode == Enum.KeyCode.F or io.KeyCode == Enum.KeyCode.C then
 			if door and side then
 				print("Copy door data")
 				module.UIState:set(module:ReadData(door, side))
@@ -234,7 +236,6 @@ end
 
 -- UI setup
 function module:InitUI()
-	
 	local buttons = {
 		Button({
 			Text = "Locked",
@@ -282,36 +283,39 @@ function module:InitUI()
 			end,
 		}),
 	}
-	
+
 	for index, text in pairs(RESTRICTIONS_LIST) do
-		table.insert(buttons, Button({
-			Text = text,
-			Enabled = Derived(function(data: DoorData)
-				for _, restriction in pairs(data.Restrictions) do
-					if restriction == text then
-						return true
+		table.insert(
+			buttons,
+			Button({
+				Text = text,
+				Enabled = Derived(function(data: DoorData)
+					for _, restriction in pairs(data.Restrictions) do
+						if restriction == text then
+							return true
+						end
 					end
-				end
-				return false
-			end, module.UIState),
-			Activated = function()
-				local wasRemoved = false
-				local copy = {}
-				for _, restriction in pairs(module.UIState._Value.Restrictions) do
-					if restriction ~= text then
-						table.insert(copy, restriction)
-					else
-						wasRemoved = true
+					return false
+				end, module.UIState),
+				Activated = function()
+					local wasRemoved = false
+					local copy = {}
+					for _, restriction in pairs(module.UIState._Value.Restrictions) do
+						if restriction ~= text then
+							table.insert(copy, restriction)
+						else
+							wasRemoved = true
+						end
 					end
-				end
-				if not wasRemoved then
-					table.insert(copy, text)
-				end
-				self:UpdateSelectedState("Restrictions", copy)
-			end,
-		}))
+					if not wasRemoved then
+						table.insert(copy, text)
+					end
+					self:UpdateSelectedState("Restrictions", copy)
+				end,
+			})
+		)
 	end
-	
+
 	self.UI = Create("ScreenGui", {
 		Parent = game.StarterGui,
 		Archivable = false,
@@ -327,8 +331,8 @@ function module:InitUI()
 				VerticalAlignment = Enum.VerticalAlignment.Bottom,
 				HorizontalAlignment = Enum.HorizontalAlignment.Left,
 			}),
-			buttons
-		})
+			buttons,
+		}),
 	})
 end
 
@@ -341,12 +345,14 @@ end
 
 -- Init/Cleanup
 module.Init = function(mouse: PluginMouse)
-	if module.Active then return end
+	if module.Active then
+		return
+	end
 	module.Active = true
-	
+
 	local self = module
 	self.Mouse = mouse
-	
+
 	for _, door in pairs(self:GetDoorsFromLevel()) do
 		self.DoorState[door] = {
 			self:ReadData(door, 1),
@@ -355,16 +361,18 @@ module.Init = function(mouse: PluginMouse)
 		self:UpdateDisplayedData(self.DoorState[door][1])
 		self:UpdateDisplayedData(self.DoorState[door][2])
 	end
-	
+
 	self:InitUI()
-	
+
 	self.InputEvent = UserInputService.InputBegan:Connect(module.ProcessInput)
 end
 
 module.Clean = function()
-	if not module.Active then return end
+	if not module.Active then
+		return
+	end
 	module.Active = false
-	
+
 	local self = module
 
 	self.InputEvent:Disconnect()
@@ -378,7 +386,7 @@ module.Clean = function()
 		end
 	end
 	self.DoorState = {}
-	
+
 	self:CleanUI()
 end
 
