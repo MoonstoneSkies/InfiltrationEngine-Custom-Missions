@@ -143,8 +143,6 @@ Write = {
 
 	Mission = function(mission)
 		local str = ""
-		local colorMap = {}
-		local stringMap = {}
 
 		local MissionSetup = require(mission:FindFirstChild("MissionSetup"):Clone())
 
@@ -172,9 +170,29 @@ Write = {
 		StringMissionSetup.Value = mission:FindFirstChild("MissionSetup").Source
 		StringMissionSetup.Parent = mission
 
+		-- Numeric index so as to not have the size collide with existing values
+		local colorMap = { [0] = 0 }
+		local stringMap = { [0] = 0 }
+		
 		str, colorMap, stringMap = Write.Instance(mission, colorMap, stringMap)
-		local colorMapStr = Write.ColorMap(colorMap)
-		local stringMapStr = Write.StringMap(stringMap)
+		
+		colorMap[0] = nil
+		stringMap[0] = nil
+		
+		local colorMapArr = {}
+		local stringMapArr = {}
+		
+		for colHex, colidx in pairs(colorMap) do
+			colorMapArr[colidx] = Color3.fromHex(colHex)
+		end
+		
+		for str, stridx in pairs(stringMap) do
+			stringMapArr[stridx] = str
+		end
+		
+		local colorMapStr = Write.ColorMap(colorMapArr)
+		local stringMapStr = Write.StringMap(stringMapArr)
+		
 		return colorMapStr .. stringMapStr .. str
 	end,
 
