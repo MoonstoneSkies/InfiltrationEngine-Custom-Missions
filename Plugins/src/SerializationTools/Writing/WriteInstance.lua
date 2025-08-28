@@ -4,7 +4,12 @@ local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)
 
 local function lookupMapIndex(map, value)
-	if typeof(value) == "Color3" then value = value:ToHex() end
+	if value == nil then
+		return 0
+	end
+	if typeof(value) == "Color3" then
+		value = value:ToHex()
+	end
 	local idx = map[value]
 	if idx == nil then
 		idx = (map[0] + 1) -- Size + 1
