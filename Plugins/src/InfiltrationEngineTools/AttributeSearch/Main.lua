@@ -12,7 +12,7 @@ local ROW_HEIGHT = 20
 
 local SearchText = State("")
 local SearchResults = Derived(function(text)
-	if #text < 4 or not workspace:FindFirstChild("DebugMission") then
+	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
 		return {}
 	end
 	local results = {}
@@ -22,8 +22,11 @@ local SearchResults = Derived(function(text)
 
 	local function searchTable(prefix, tbl)
 		for field, value in tbl do
+			if value == "" then
+				continue
+			end
 			if typeof(value) == "string" then
-				if (typeof(field) == "string" and field:match(text)) or value:match(text) then
+				if (typeof(field) == "string" and field:lower():match(text)) or value:lower():match(text) then
 					local entry = if prefix then `{prefix}.{field}` else field
 					match[entry] = value
 				end
@@ -47,8 +50,8 @@ local SearchResults = Derived(function(text)
 		end
 
 		for k, v in attributes do
-			if k == text or typeof(v) == "string" and v:match(text) then
-				match[k] = v
+			if v ~= "" and k:lower() == text or typeof(v) == "string" and v:lower():match(text) then
+				match[k] = tostring(v)
 			end
 		end
 
@@ -132,7 +135,7 @@ local function ListEntry(instance, fields)
 				Size = UDim2.new(0, 0, 0, ROW_HEIGHT),
 				Position = UDim2.new(0, 400, 0, ROW_HEIGHT * fieldCount),
 				AutomaticSize = Enum.AutomaticSize.X,
-				Text = v,
+				Text = tostring(v):gsub("\n", "   "),
 				BackgroundTransparency = 0.6,
 				TextColor3 = Color3.new(1, 1, 1),
 				BackgroundColor3 = Color3.new(0, 0, 0),
@@ -148,13 +151,18 @@ local function ListEntry(instance, fields)
 		fieldCount += 1
 	end
 
-	UpdatePropMarkers(SearchResults._Value)
+	local layoutOrder = 0
+	if instance.Name ~= "MissionSetup" then
+		layoutOrder = 1000 * string.byte(instance.Name:lower(), 1, 1) + string.byte(instance.Name:lower(), 2, 2)
+	end
+
 	return Create("TextButton", {
 		Size = UDim2.new(0, 400, 0, fieldCount * ROW_HEIGHT),
 		Text = "",
 		BackgroundTransparency = 0.3,
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BorderSizePixel = 0,
+		LayoutOrder = layoutOrder,
 		Activated = function()
 			game.Selection:Set({ instance })
 		end,
@@ -167,6 +175,7 @@ function module.Init(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
+	UpdatePropMarkers(SearchResults._Value)
 
 	local searchBox
 	searchBox = Create("TextBox", {
@@ -184,7 +193,7 @@ function module.Init(mouse: PluginMouse)
 			local clock = lastTextChange
 			task.delay(1, function()
 				if clock == lastTextChange then
-					SearchText:set(searchBox.Text)
+					SearchText:set(searchBox.Text:lower())
 				end
 			end)
 		end,
@@ -213,7 +222,9 @@ function module.Init(mouse: PluginMouse)
 				CanvasSize = UDim2.new(0, 0, 0, 0),
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			}, {
-				Create("UIListLayout", {}),
+				Create("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+				}),
 				DerivedTable(ListEntry, SearchResults),
 			}),
 		}),

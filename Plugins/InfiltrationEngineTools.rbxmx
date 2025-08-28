@@ -1,7 +1,7 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
 	<External>null</External>
 	<External>nil</External>
-	<Item class="Folder" referent="RBX685CFB1BD06B412B8E60D0C85EC5F27C">
+	<Item class="Folder" referent="RBX05B6BF388D434689926F5680563A1B40">
 		<Properties>
 			<BinaryString name="AttributesSerialize"></BinaryString>
 			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -10,7 +10,7 @@
 			<int64 name="SourceAssetId">-1</int64>
 			<BinaryString name="Tags"></BinaryString>
 		</Properties>
-		<Item class="Folder" referent="RBX9511293A25674FC8BA0903CA412FA25A">
+		<Item class="Folder" referent="RBX04B1047BA38F4338A76840F5CD37AA30">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -19,7 +19,7 @@
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX7B9500A0BE0042A09BA010C20E43CA35">
+			<Item class="ModuleScript" referent="RBXE22F3EF5569B4D26B8DF9241FC43A331">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -171,7 +171,7 @@ return module
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX1145EA8D68CD4E6E896A5238ED76BEDF">
+		<Item class="Folder" referent="RBXAEF11A39F7AB44C987B60AD54CF1B5D1">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -180,7 +180,7 @@ return module
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX900225BB3D8244429BB4373E9F0764DB">
+			<Item class="ModuleScript" referent="RBX0A1EA628704D4FB1A761946F44002FE6">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -587,7 +587,7 @@ return module
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Script" referent="RBX0906863AEE3B46F9AAA4E72C63E4B9F6">
+		<Item class="Script" referent="RBX20AAEA038A204C94935B05ED507BF87C">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -740,7 +740,7 @@ plugin.Deactivation:connect(disablePlugin)
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="Folder" referent="RBXA5A9996A7A41431BBD98E16EADF6CADE">
+		<Item class="Folder" referent="RBXE2A61170DC3241099DF93C73643573C0">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -749,7 +749,7 @@ plugin.Deactivation:connect(disablePlugin)
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXF13F72662B6241F6AB096D06C925414D">
+			<Item class="ModuleScript" referent="RBX12747B5E6FB54286ABFA13DDCFCFF625">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1078,7 +1078,7 @@ return {
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBXD404482698D640DDA8B03CD15ED03ED1">
+		<Item class="Folder" referent="RBX4787EC506B9347EB8C7383400B23669C">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1087,7 +1087,7 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXC0A14955040B4CE8B258EFAD4A54B9BE">
+			<Item class="ModuleScript" referent="RBX8E636B4B6B2E41CB8B02AB1783AFAA62">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1231,7 +1231,7 @@ return module
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX6F70B595C37347ABA9292523C90CD325">
+		<Item class="Folder" referent="RBXA923E46AA84C42EAB2AD4AA0DF91086B">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1240,7 +1240,7 @@ return module
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX28664DA71F3A437783B294DD6135A833">
+			<Item class="ModuleScript" referent="RBXA47C024532F64F448C85617B8C8D8336">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1654,7 +1654,7 @@ return module
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX08FAFB6D2A0D4462B2DE880888668170">
+			<Item class="Folder" referent="RBX4AD22DB7C68C4A23B75EB0CC87023852">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1663,7 +1663,7 @@ return module
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX7818C70D2A824881AEE504B5A243BE2D">
+				<Item class="ModuleScript" referent="RBX56EBDB14CAF043BE9C2E73C3DFA5BF25">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1837,7 +1837,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBXDF9DEA85CE164552872DC8CA4C4714C4">
+				<Item class="ModuleScript" referent="RBX1F38C94A9EB949DCBC29590D34A0FA67">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1934,7 +1934,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX28812A8F792E444A93D699231D5061A7">
+				<Item class="ModuleScript" referent="RBXECB8E2D0762E4F4089E096CACDE2A606">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2037,7 +2037,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX53B2D78781104BEEB5CF58748F3DA954">
+				<Item class="ModuleScript" referent="RBX98FEE53F42F84E329723B12EC572CFD3">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2051,7 +2051,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX29771CE319024EB0BFF1666C5DA031E2">
+				<Item class="ModuleScript" referent="RBXC009F4017BE949B6AA7AC4FEE1D9EBBA">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2105,7 +2105,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX8EBDC393E7D64468BC6F0B8C113C75EF">
+				<Item class="ModuleScript" referent="RBX7E9FF878FE5A4237903DD87D1818E294">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2218,7 +2218,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX0ACF4223DC474A0C9509AD09560DCD20">
+				<Item class="ModuleScript" referent="RBXC9A5C80C9FEE4278BDD7A26DF92A16B4">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2280,7 +2280,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBXD84C6D7A724343348DBFFABB15C7DBF3">
+				<Item class="ModuleScript" referent="RBXB4660B70094F463F9F5BB17B81188751">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2381,7 +2381,7 @@ return {
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX6B9318ACC21149ABA2460BE4C809D933">
+				<Item class="ModuleScript" referent="RBX4ABDD8AEC11641E8967AF7A7E0F5D813">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2480,7 +2480,7 @@ return {
 				</Item>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX3E3A08D705F44151B00A1E68FB3489A0">
+		<Item class="Folder" referent="RBXD31982A6C5FA4952ACA084F415C6438E">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2489,7 +2489,7 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXB239976240F047538D53FF8179C1F061">
+			<Item class="ModuleScript" referent="RBXB6A84DCBAE0E4039A6ABC0EE7BCFBD8E">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2572,7 +2572,7 @@ return {
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX2527B0198DAC445F819D21B7FAD13F4F">
+		<Item class="Folder" referent="RBX752E42EE97BC455C801E11DC78459381">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2581,7 +2581,7 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX763ACCD9B4C84AB3ABC19FE4DD1FF9F3">
+			<Item class="ModuleScript" referent="RBX04C6447ACD4949F1972542457E1F1071">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2607,7 +2607,7 @@ return module]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="Folder" referent="RBX4407601307024A2A8AD3484B340C7BD9">
+				<Item class="Folder" referent="RBX5B89C9EDBBD842629D1C008E13BE5148">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2616,7 +2616,7 @@ return module]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBXB63190149E2D4FD7923FFD731565BFFC">
+					<Item class="ModuleScript" referent="RBX31DC63A470EA4E069154F1C68E2E2A86">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2703,7 +2703,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX14090D54D8C246CA8462E8877C7D5C94">
+					<Item class="ModuleScript" referent="RBXE8EF834DA0534F2DA547F9B067C02799">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2744,7 +2744,7 @@ return Anim]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX2A74728107C8480788D43D7DB40CF7EA">
+					<Item class="ModuleScript" referent="RBX834D211455CB4D7186A68395184CFD45">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2817,7 +2817,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX2C77FABCA2724C2598102109F9401C2D">
+					<Item class="ModuleScript" referent="RBX2F33C3D7260B4C908B93F23C6CF6B6AF">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2891,7 +2891,7 @@ end]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX5FA35295F1AD435EA11BD796C0CC0A88">
+				<Item class="Folder" referent="RBX5635C8F4EEED4F4A97FAD6C9B3E976BB">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2900,7 +2900,7 @@ end]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBXB2AB89B13CC14E1A991AB82809DAEBD5">
+					<Item class="ModuleScript" referent="RBX69AE5FDC4BD64DC2AC88CB14019A5EF9">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3008,7 +3008,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX94776AD31BE9418A86FB9733A97EA9F8">
+					<Item class="ModuleScript" referent="RBXBB2BC1AFA91E45ADB80986A0215DE244">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3039,7 +3039,7 @@ return cleanup]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX014442E2575D45959BE309D9C124F871">
+				<Item class="Folder" referent="RBXCB5570792E3D4C8C85993E9766994E27">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3048,7 +3048,7 @@ return cleanup]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX74A8B4158BE04FBFB4AF2A8BA8E4DCE2">
+					<Item class="ModuleScript" referent="RBX60C7DE9924D142D882B0F2F0381559A7">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3112,7 +3112,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBXD3F27C3FE0B04820A7F6619DA8DB1E23">
+					<Item class="ModuleScript" referent="RBX4E04FB00E9B24D2BAB4AB88F5F21A553">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3191,7 +3191,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBXB553DECC8C11471097971079413C9AC2">
+					<Item class="ModuleScript" referent="RBX85DFEC5B80D54252828322931B3817ED">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3228,7 +3228,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX89D9D0DE9E2842198780A113A03491B5">
+					<Item class="ModuleScript" referent="RBX52336D1935DA46738CDE925B84BA4404">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3274,7 +3274,7 @@ end]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX249F424AC36D426396266932BFB33255">
+					<Item class="ModuleScript" referent="RBXCBECAAACD5174F89865CD1E7F7F93EE6">
 						<Properties>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3341,7 +3341,7 @@ end]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="ModuleScript" referent="RBX931DA706761B4253951E082EA451E5A6">
+				<Item class="ModuleScript" referent="RBX307F05F24BB74FB2A2150CD1AD4C4B7F">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3360,7 +3360,7 @@ end]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX2F8FE45FDE2A43BA86F043B52387E4A3">
+			<Item class="ModuleScript" referent="RBXCAAB40D62CC04F14842A4A2318F2390D">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3421,7 +3421,7 @@ return AxisAlign
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX9F8ECF547731496089B83318AE7E5CC9">
+			<Item class="ModuleScript" referent="RBX6218C520F60A4F9FB8DA4418917E6E66">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3463,7 +3463,7 @@ end]]></ProtectedString>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX194F5D1BA78A4B2A830042E16197DA63">
+			<Item class="ModuleScript" referent="RBXD4E8E61D060D482BA4E531C3DA37DCB1">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3545,7 +3545,7 @@ return module
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX316AA0B2AB314FED83FBFC5B45DE9DE7">
+			<Item class="ModuleScript" referent="RBXDAAC4835CE044869BB0E1073DEDB1214">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3593,7 +3593,7 @@ return ZoneUtil]]></ProtectedString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBXBBF0F831E6744C80A10A444CA571CDF2">
+		<Item class="Folder" referent="RBX556C50D215E546E59F0B52F086CC6F6B">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3602,7 +3602,7 @@ return ZoneUtil]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX4C5081B37D224AFB9D6B481F8BBEB426">
+			<Item class="ModuleScript" referent="RBX4CAAD45FF4314CEB87FE3D2695748766">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3637,7 +3637,7 @@ end]]></ProtectedString>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX4D3D8564B7EF4960B0532C23EF724880">
+			<Item class="ModuleScript" referent="RBX8DD3319A5B1A476E9EA381FD026E8F7F">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3917,7 +3917,7 @@ return {
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX40276F68BC154F879710B81242B9C5A0">
+		<Item class="Folder" referent="RBXBA933C33A5E84D57A5D36F7D93C22AA9">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3926,7 +3926,7 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXFF4BDACFB90D465D9912F88F499E413E">
+			<Item class="ModuleScript" referent="RBX64BAE40112414CBB9EE9DA1152A25E46">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3948,7 +3948,7 @@ local ROW_HEIGHT = 20
 
 local SearchText = State("")
 local SearchResults = Derived(function(text)
-	if #text < 4 or not workspace:FindFirstChild("DebugMission") then
+	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
 		return {}
 	end
 	local results = {}
@@ -3958,8 +3958,11 @@ local SearchResults = Derived(function(text)
 
 	local function searchTable(prefix, tbl)
 		for field, value in tbl do
+			if value == "" then
+				continue
+			end
 			if typeof(value) == "string" then
-				if (typeof(field) == "string" and field:match(text)) or value:match(text) then
+				if (typeof(field) == "string" and field:lower():match(text)) or value:lower():match(text) then
 					local entry = if prefix then `{prefix}.{field}` else field
 					match[entry] = value
 				end
@@ -3983,8 +3986,8 @@ local SearchResults = Derived(function(text)
 		end
 
 		for k, v in attributes do
-			if k == text or typeof(v) == "string" and v:match(text) then
-				match[k] = v
+			if v ~= "" and k:lower() == text or typeof(v) == "string" and v:lower():match(text) then
+				match[k] = tostring(v)
 			end
 		end
 
@@ -4068,7 +4071,7 @@ local function ListEntry(instance, fields)
 				Size = UDim2.new(0, 0, 0, ROW_HEIGHT),
 				Position = UDim2.new(0, 400, 0, ROW_HEIGHT * fieldCount),
 				AutomaticSize = Enum.AutomaticSize.X,
-				Text = v,
+				Text = tostring(v):gsub("\n", "   "),
 				BackgroundTransparency = 0.6,
 				TextColor3 = Color3.new(1, 1, 1),
 				BackgroundColor3 = Color3.new(0, 0, 0),
@@ -4084,13 +4087,18 @@ local function ListEntry(instance, fields)
 		fieldCount += 1
 	end
 
-	UpdatePropMarkers(SearchResults._Value)
+	local layoutOrder = 0
+	if instance.Name ~= "MissionSetup" then
+		layoutOrder = 1000 * string.byte(instance.Name:lower(), 1, 1) + string.byte(instance.Name:lower(), 2, 2)
+	end
+
 	return Create("TextButton", {
 		Size = UDim2.new(0, 400, 0, fieldCount * ROW_HEIGHT),
 		Text = "",
 		BackgroundTransparency = 0.3,
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BorderSizePixel = 0,
+		LayoutOrder = layoutOrder,
 		Activated = function()
 			game.Selection:Set({ instance })
 		end,
@@ -4103,6 +4111,7 @@ function module.Init(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
+	UpdatePropMarkers(SearchResults._Value)
 
 	local searchBox
 	searchBox = Create("TextBox", {
@@ -4120,7 +4129,7 @@ function module.Init(mouse: PluginMouse)
 			local clock = lastTextChange
 			task.delay(1, function()
 				if clock == lastTextChange then
-					SearchText:set(searchBox.Text)
+					SearchText:set(searchBox.Text:lower())
 				end
 			end)
 		end,
@@ -4149,7 +4158,9 @@ function module.Init(mouse: PluginMouse)
 				CanvasSize = UDim2.new(0, 0, 0, 0),
 				AutomaticCanvasSize = Enum.AutomaticSize.Y,
 			}, {
-				Create("UIListLayout", {}),
+				Create("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+				}),
 				DerivedTable(ListEntry, SearchResults),
 			}),
 		}),
