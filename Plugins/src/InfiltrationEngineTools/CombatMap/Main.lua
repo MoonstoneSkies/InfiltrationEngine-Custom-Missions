@@ -28,14 +28,14 @@ local function DrawLine(p0, p1, color)
 	return p
 end
 
-local function LinkId(id0, id1)
+local function GetLinkId(id0, id1)
 	if id0 < id1 then
 		return id0 .. "|" .. id1
 	end
 	return id1 .. "|" .. id0
 end
 
-local function NodeId(node)
+local function GetNodeId(node)
 	local nodeId = node:GetAttribute("Id")
 	if nodeId then return nodeId end
 
@@ -48,13 +48,13 @@ local function ToggleNodeLink(node1, node2)
 	local node1Links = HttpService:JSONDecode(node1:GetAttribute("LinkedIds") or "[]")
 	local node2Links = HttpService:JSONDecode(node2:GetAttribute("LinkedIds") or "[]")
 
-	local idx = table.find(node1Links, NodeId(node2))
+	local idx = table.find(node1Links, GetNodeId(node2))
 	if idx == nil then
-		table.insert(node1Links, NodeId(node2))
-		table.insert(node2Links, NodeId(node1))
+		table.insert(node1Links, GetNodeId(node2))
+		table.insert(node2Links, GetNodeId(node1))
 	else
 		table.remove(node1Links, idx)
-		table.remove(node2Links, table.find(node2Links, NodeId(node1)))
+		table.remove(node2Links, table.find(node2Links, GetNodeId(node1)))
 	end
 
 	node1:SetAttribute("LinkedIds", HttpService:JSONEncode(node1Links))
@@ -101,16 +101,13 @@ function module.Init(mouse: PluginMouse)
 		Position = UDim2.new(0, 50, 0, 80),
 		BorderSizePixel = 0,
 		ClearTextOnFocus = true,
-		FocusLost = function(enterPressed)
-
-		end,
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 0.5,
 		Visible = false,
 	})
 
 	module.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,--game:GetService("CoreGui"),
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 	}, {
 		nodeNameBox
@@ -150,7 +147,7 @@ function module.Init(mouse: PluginMouse)
 
 			local deadLinks = {}
 			for _, targetId in linkTo do
-				local linkName = LinkId(checkId, targetId)
+				local linkName = GetLinkId(checkId, targetId)
 
 				if DrawnModel:FindFirstChild(linkName) ~= nil then
 					-- Node link already exists, don't create a second one
@@ -273,7 +270,7 @@ function module.Init(mouse: PluginMouse)
 
 			game.Selection:Set({ newNode })
 
-			RedrawMap(NodeId(newNode))
+			RedrawMap(GetNodeId(newNode))
 
 			return
 		end
