@@ -27,6 +27,7 @@ local GlobalPropAttributes = {
 	Material4 = { PropAttributeTypes.OPTIONAL_MATERIAL, nil },
 	Material5 = { PropAttributeTypes.OPTIONAL_MATERIAL, nil },
 	Type = { PropAttributeTypes.STRING, nil },
+	AltProp = { PropAttributeTypes.STRING, nil },
 	AltPropModel = { PropAttributeTypes.STRING, nil },
 	FadeOutCondition = { PropAttributeTypes.STRING, nil },
 	CollisionGroup = { PropAttributeTypes.STRING, nil },
@@ -246,6 +247,8 @@ return {
 		local name = className == "BoolValue" and attributes.Type or instanceName
 		if not AttributesMap[name] then
 			return attributes -- If not included in the prop list, just return the normal attributes list
+		elseif attributes.AltProp or attributes.AltPropModel then
+			return attributes -- Skip validation for AltProp/AltPropModel
 		else
 			local newAttributes = {}
 			local attributeTypes = AttributesMap[name]

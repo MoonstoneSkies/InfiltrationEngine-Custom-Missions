@@ -317,7 +317,7 @@ function module:InitUI()
 	end
 
 	self.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 		Name = "DoorAccessConfig",
 	}, {

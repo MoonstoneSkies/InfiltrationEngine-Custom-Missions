@@ -336,7 +336,7 @@ module.Init = function(mouse: PluginMouse)
 	})
 
 	module.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 	}, {
 		Button({

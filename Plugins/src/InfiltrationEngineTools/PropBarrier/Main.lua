@@ -42,7 +42,14 @@ CastConfig.FilterType = Enum.RaycastFilterType.Exclude
 
 module.GetProjectedDistance = function(self, pos: Vector3, dir: Vector3)
 	local cast = workspace:Raycast(pos, dir * MAX_DIST, CastConfig)
-	while cast and cast.Instance and cast.Instance.Transparency > 0.3 do
+	local cellsModel = workspace:FindFirstChild("DebugMission")
+	cellsModel = cellsModel and cellsModel:FindFirstChild("Cells")
+	while
+		cast
+		and cast.Instance
+		and cast.Instance.Transparency > 0.3
+		and (not cellsModel or not cast.Instance:IsDescendantOf(cellsModel))
+	do
 		table.insert(IgnoreList, cast.Instance)
 		CastConfig.FilterDescendantsInstances = IgnoreList
 		cast = workspace:Raycast(pos, dir * MAX_DIST, CastConfig)
@@ -63,7 +70,7 @@ module.Init = function(mouse: PluginMouse)
 	module.Active = true
 
 	if workspace:FindFirstChild("DebugMission") and workspace.DebugMission:FindFirstChild("Props") then
-		for _, prop in pairs(workspace.DebugMission.Props:GetChildren()) do
+		for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 			if prop:IsA("BasePart") then
 				prop.Color = prop:GetAttribute(ATTRIBUTE_NAME) and ON_COLOR or OFF_COLOR
 			end
@@ -97,7 +104,7 @@ module.Clean = function()
 	local self = module
 
 	if workspace:FindFirstChild("DebugMission") and workspace.DebugMission:FindFirstChild("Props") then
-		for _, prop in pairs(workspace.DebugMission.Props:GetChildren()) do
+		for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 			if prop:IsA("BasePart") then
 				prop.Color = DEFAULT_COLOR
 

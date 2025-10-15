@@ -6,6 +6,8 @@ local PartTypes = require(script.Parent.Parent.Types.PartTypes)
 local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
 
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
+
 local SIGNED_INT_BOUND = StringConversion.GetMaxNumber(3) / 2
 local INT_BOUND = StringConversion.GetMaxNumber(4)
 local BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(3)
@@ -31,6 +33,17 @@ local function CreateEnumReader(enum, map)
 		local num = StringConversion.StringToNumber(str, cursor, 1)
 		return enum[ids[num]], cursor + 1
 	end
+end
+
+local function NewlineGSub(capture)
+	if capture == "&n" then
+		return "\n"
+	elseif capture == "&r" then
+		return "\r"
+	elseif capture == "&t" then
+		return utf8.char(9)
+	end
+	return "&"
 end
 
 Read = {
@@ -98,6 +111,11 @@ Read = {
 	String = function(str, cursor)
 		local length, cursor = Read.Int(str, cursor)
 		local value = str:sub(cursor, cursor + length - 1)
+
+		if VersionConfig.ReplaceNewlines then
+			value = value:gsub("&.", NewlineGSub)
+		end
+
 		return value, cursor + length
 	end,
 
@@ -122,6 +140,14 @@ Read = {
 	end,
 
 	Mission = function(str, cursor)
+		if str:sub(1, 3) == "!!!" then
+			local code = str:match("!!!.-!!!(.+)")
+			if not code then
+				error("Malformed opening comment")
+			end
+			str = code
+		end
+
 		local colorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		local stringMap

@@ -6,6 +6,8 @@ local PartTypes = require(script.Parent.Parent.Types.PartTypes)
 local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
 
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
+
 local Write
 
 local SHORTEST_INT_BOUND = StringConversion.GetMaxNumber(1)
@@ -26,6 +28,9 @@ local function CreateEnumWriter(keys)
 		return StringConversion.NumberToString(index, 1)
 	end
 end
+
+local ESCAPED_NEWLINES_ACTIVE = VersionConfig.ReplaceNewlines
+local TAB_CHAR = utf8.char(9)
 
 Write = {
 	Bool = function(bool) -- 1 character
@@ -122,6 +127,9 @@ Write = {
 	end,
 
 	String = function(str) -- 4 + length characters
+		if ESCAPED_NEWLINES_ACTIVE then
+			str = str:gsub("&", "&&"):gsub("\n", "&n"):gsub("\r", "&r"):gsub(TAB_CHAR, "&t")
+		end
 		return Write.Int(#str) .. str
 	end,
 
@@ -173,26 +181,26 @@ Write = {
 		-- Numeric index so as to not have the size collide with existing values
 		local colorMap = { [0] = 0 }
 		local stringMap = { [0] = 0 }
-		
+
 		str, colorMap, stringMap = Write.Instance(mission, colorMap, stringMap)
-		
+
 		colorMap[0] = nil
 		stringMap[0] = nil
-		
+
 		local colorMapArr = {}
 		local stringMapArr = {}
-		
+
 		for colHex, colidx in pairs(colorMap) do
 			colorMapArr[colidx] = Color3.fromHex(colHex)
 		end
-		
+
 		for str, stridx in pairs(stringMap) do
 			stringMapArr[stridx] = str
 		end
-		
+
 		local colorMapStr = Write.ColorMap(colorMapArr)
 		local stringMapStr = Write.StringMap(stringMapArr)
-		
+
 		return colorMapStr .. stringMapStr .. str
 	end,
 

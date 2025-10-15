@@ -59,7 +59,7 @@ return {
 		Disguise = {AttributeType.STRING, ""},
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
 		ClientUsedVariable = {AttributeType.STATE_VALUE, ""},
-		SocialEngineeringLevel = {AttributeType.INT, 0},
+		SocialEngineeringLevel = {AttributeType.EXPRESSION, 0},
 	},
 	CodeCardReader = {
 		PowerArea = {AttributeType.STATE_VALUE, ""},
@@ -163,7 +163,7 @@ return {
 		Disguise = {AttributeType.STRING, ""},
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
 		ClientUsedVariable = {AttributeType.STATE_VALUE, ""},
-		SocialEngineeringLevel = {AttributeType.INT, 0},
+		SocialEngineeringLevel = {AttributeType.EXPRESSION, 0},
 	},
 	DomeCamera = {
 		AngleMax = {AttributeType.STRING, "0"},
@@ -457,6 +457,9 @@ return {
 		CoverMaterial = {AttributeType.STRING, ""},
 		SafeTag = {AttributeType.STRING, ""},
 		HiddenShuffleId = {AttributeType.STRING, ""},
+		Reinforced = {AttributeType.EXPRESSION, ""},
+		ReinforcedColor = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
+		ReinforcedColor2 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
 	},
 	IndustrialShelvesSmall = {
 		BoxSeed = {AttributeType.INT, 0},
@@ -508,7 +511,7 @@ return {
 		Disguise = {AttributeType.STRING, ""},
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
 		ClientUsedVariable = {AttributeType.STATE_VALUE, ""},
-		SocialEngineeringLevel = {AttributeType.INT, 0},
+		SocialEngineeringLevel = {AttributeType.EXPRESSION, 0},
 	},
 	LeverageMove = {
 		MoveDist = {AttributeType.EXPRESSION, 0},
@@ -657,7 +660,7 @@ return {
 	ThermiteBurn = {
 		ProgressVariable = {AttributeType.STATE_VALUE, ""},
 		StartedVariable = {AttributeType.STATE_VALUE, ""},
-		BurnTime = {AttributeType.INT, 90},
+		BurnTime = {AttributeType.EXPRESSION, 90},
 	},
 	ThinBush = {
 	},
@@ -710,7 +713,7 @@ return {
 		RemovedVariable = {AttributeType.STATE_VALUE, ""},
 		MovePrompt = {AttributeType.BOOL, false},
 		PreAssembled = {AttributeType.BOOL, false},
-		DrillTime = {AttributeType.NUMBER, 60},
+		DrillTime = {AttributeType.EXPRESSION, 60},
 	},
 	WallSafe = {
 		Seed = {AttributeType.INT, 1},
@@ -902,6 +905,7 @@ return {
 		KeyItem = {AttributeType.BOOL, false},
 		ItemRemovedVariable = {AttributeType.STATE_VALUE, ""},
 		IsSpawned = {AttributeType.EXPRESSION, ""},
+		HasAmmo = {AttributeType.BOOL, false},
 	},
 	KillZone = {
 		BotServerTag = {AttributeType.STRING, ""},
@@ -922,6 +926,8 @@ return {
 		LeanRight = {AttributeType.BOOL, false},
 	},
 	LeaveMissionPoint = {
+	},
+	LootCountZone = {
 	},
 	LootGeneric = {
 		ItemTagString = {AttributeType.STATE_VALUE, ""},
@@ -949,6 +955,7 @@ return {
 	MissionExit = {
 	},
 	PathfindingBlocker = {
+		BotCollisions = {AttributeType.BOOL, nil},
 	},
 	PlaceholderProp = {
 	},
@@ -960,6 +967,7 @@ return {
 		PowerArea = {AttributeType.STRING, ""},
 		DetectSabotage = {AttributeType.BOOL, true},
 		DamagedVariable = {AttributeType.STATE_VALUE, ""},
+		Health = {AttributeType.INT, 0},
 	},
 	PowerRoomProp2 = {
 		PowerArea = {AttributeType.STRING, ""},
@@ -976,6 +984,8 @@ return {
 		RewireEnabled = {AttributeType.EXPRESSION, "1"},
 		ObjectName = {AttributeType.STRING, ""},
 		DifficultRewire = {AttributeType.BOOL, false},
+	},
+	SawCutPoint = {
 	},
 	ScriptedExplosion = {
 		BlastRadius = {AttributeType.NUMBER, 20},
@@ -1168,6 +1178,7 @@ return {
 		SpawnCap = {AttributeType.EXPRESSION, "8"},
 		EnemyType = {AttributeType.STRING, "Swat"},
 		EnemyWeapons = {AttributeType.STRING, "F57|S97|480 MCS"},
+		ServerTag = {AttributeType.STRING, nil},
 	},
 	CustomBehaviorCondition = {
 		Priority = {AttributeType.STRING, "Custom1"},

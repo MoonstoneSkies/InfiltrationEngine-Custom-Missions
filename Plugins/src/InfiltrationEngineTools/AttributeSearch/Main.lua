@@ -78,7 +78,7 @@ local function UpdatePropMarkers(list)
 				module.PropMarkers,
 				Create("BillboardGui", {
 					Archivable = false,
-					Parent = game.StarterGui,
+					Parent = game:GetService("CoreGui"),
 					Adornee = k,
 					Size = UDim2.new(0, 20, 0, 20),
 					AlwaysOnTop = true,

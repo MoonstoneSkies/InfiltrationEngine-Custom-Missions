@@ -7,6 +7,7 @@ local Read = require(script.Parent.Parent.Reading.Read)
 
 local Button = require(script.Parent.Parent.Util.Button)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
@@ -18,7 +19,22 @@ local MAX_PASTE_SIZE = 199999
 local PASTE_INFO_SIZE = 7
 local PASTE_SIZE = MAX_PASTE_SIZE - PASTE_INFO_SIZE
 
-local VERSION_NUMBER = 0
+local VERSION_NUMBER = VersionConfig.VersionNumber
+
+local GIST_PREFIX = [[!!! 
+How to play custom missions:
+
+1) Join the game and find "Custom Mission" in the mission menu
+2) Start a custom mission lobby
+3) Go to the table and open the custom mission loader
+4) Copy the URL of this page into the box and hit enter. It will NOT work if you copy the contents of this page instead of the URL.
+
+Mission Name:
+Creator:
+Version:
+Briefing:
+
+!!!]]
 
 local module = {}
 
@@ -53,7 +69,7 @@ module.Init = function(mouse: PluginMouse)
 	end, CodeState)
 
 	module.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 	}, {
 		Button({
@@ -113,6 +129,7 @@ module.Init = function(mouse: PluginMouse)
 					output = output .. Write.ShortInt(1)
 					output = output .. Write.ShortInt(1)
 					output = output .. code
+					output = GIST_PREFIX .. output
 
 					if workspace:FindFirstChild("CustomMissionCode") then
 						workspace.CustomMissionCode:Destroy()

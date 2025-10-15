@@ -118,7 +118,11 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 		end
 
 		local newInstance = Instance.new("Part")
-		local meshId = newProperties.MeshId and newProperties.MeshId:match("%d+") or newProperties.MeshId
+		local meshId = newProperties.MeshId
+		local id = meshId and newProperties.MeshId:match("%d+")
+		if id and #id > 3 then
+			meshId = id
+		end
 		newProperties.MeshId = nil
 		if
 			meshId
