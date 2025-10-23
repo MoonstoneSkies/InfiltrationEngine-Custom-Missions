@@ -1,7 +1,7 @@
 <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
 	<External>null</External>
 	<External>nil</External>
-	<Item class="Folder" referent="RBXD16FCE6CA0B8483D9F3B2D1CBE378610">
+	<Item class="Folder" referent="RBXB8B36009828B4CD3BDA661DDB1282E99">
 		<Properties>
 			<BinaryString name="AttributesSerialize"></BinaryString>
 			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -10,7 +10,273 @@
 			<int64 name="SourceAssetId">-1</int64>
 			<BinaryString name="Tags"></BinaryString>
 		</Properties>
-		<Item class="Folder" referent="RBXC383C37EF25F453CB583B178EAE1BF73">
+		<Item class="Folder" referent="RBX8597112E784F49D790862605F928DBA5">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AttributeSearch</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="ModuleScript" referent="RBX563EFC6156E846BD8572F4C6CA268D76">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local Actor = require(script.Parent.Parent.Util.Actor)
+local Create = Actor.Create
+local State = Actor.State
+local Derived = Actor.Derived
+local DerivedTable = Actor.DerivedTable
+local OnChange = Actor.OnChange
+local Watch = Actor.Watch
+
+local module = {}
+
+local ROW_HEIGHT = 20
+
+local SearchText = State("")
+local SearchResults = Derived(function(text)
+	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
+		return {}
+	end
+	local results = {}
+
+	local missionModule = require(workspace.DebugMission.MissionSetup:Clone())
+	local match = {}
+
+	local function searchTable(prefix, tbl)
+		for field, value in tbl do
+			if value == "" then
+				continue
+			end
+			if typeof(value) == "string" then
+				if (typeof(field) == "string" and field:lower():match(text)) or value:lower():match(text) then
+					local entry = if prefix then `{prefix}.{field}` else field
+					match[entry] = value
+				end
+			elseif typeof(value) == "table" then
+				local entry = if prefix then `{prefix}.{field}` else field
+				searchTable(entry, value)
+			end
+		end
+	end
+	searchTable(nil, missionModule)
+
+	if next(match) then
+		results[workspace.DebugMission.MissionSetup] = match
+		match = {}
+	end
+
+	for _, instance in workspace.DebugMission:GetDescendants() do
+		local attributes = instance:GetAttributes()
+		if not next(attributes) then
+			continue
+		end
+
+		for k, v in attributes do
+			if v ~= "" and k:lower() == text or typeof(v) == "string" and v:lower():match(text) then
+				match[k] = tostring(v)
+			end
+		end
+
+		if next(match) then
+			results[instance] = match
+			match = {}
+		end
+	end
+	return results
+end, SearchText)
+
+module.PropMarkers = {}
+local function ClearPropMarkers()
+	for _, p in module.PropMarkers do
+		p:Destroy()
+	end
+	module.PropMarkers = {}
+end
+local function UpdatePropMarkers(list)
+	ClearPropMarkers()
+	for k in list do
+		if k:IsA("BasePart") then
+			table.insert(
+				module.PropMarkers,
+				Create("BillboardGui", {
+					Archivable = false,
+					Parent = game:GetService("CoreGui"),
+					Adornee = k,
+					Size = UDim2.new(0, 20, 0, 20),
+					AlwaysOnTop = true,
+				}, {
+					Create("Frame", {
+						Size = UDim2.new(0, 20, 0, 20),
+						BorderSizePixel = 0,
+						BackgroundColor3 = Color3.new(1, 1, 1),
+					}, {
+						Create("UICorner", {
+							CornerRadius = UDim.new(0.5, 0),
+						}),
+					}),
+				})
+			)
+		end
+	end
+end
+Watch(UpdatePropMarkers, SearchResults)
+
+local function ListEntry(instance, fields)
+	local fieldCount = 0
+	local contents = {
+		Create("TextLabel", {
+			Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
+			Position = UDim2.new(0, 0, 0, 0),
+			Text = instance.Name,
+			BackgroundTransparency = 1,
+			TextColor3 = Color3.new(1, 1, 1),
+		}),
+	}
+
+	for k, v in fields do
+		table.insert(
+			contents,
+			Create(
+				"TextLabel",
+				{
+					Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
+					Position = UDim2.new(0, 200, 0, ROW_HEIGHT * fieldCount),
+					Text = k,
+					TextXAlignment = Enum.TextXAlignment.Right,
+					BackgroundTransparency = 1,
+					TextColor3 = Color3.new(1, 1, 1),
+				},
+				Create("UIPadding", {
+					PaddingRight = UDim.new(0, 10),
+				})
+			)
+		)
+		table.insert(
+			contents,
+			Create("TextLabel", {
+				Size = UDim2.new(0, 0, 0, ROW_HEIGHT),
+				Position = UDim2.new(0, 400, 0, ROW_HEIGHT * fieldCount),
+				AutomaticSize = Enum.AutomaticSize.X,
+				Text = tostring(v):gsub("\n", "   "),
+				BackgroundTransparency = 0.6,
+				TextColor3 = Color3.new(1, 1, 1),
+				BackgroundColor3 = Color3.new(0, 0, 0),
+				TextXAlignment = Enum.TextXAlignment.Left,
+				BorderSizePixel = 0,
+			}, {
+				Create("UIPadding", {
+					PaddingRight = UDim.new(0, 10),
+					PaddingLeft = UDim.new(0, 10),
+				}),
+			})
+		)
+		fieldCount += 1
+	end
+
+	local layoutOrder = 0
+	if instance.Name ~= "MissionSetup" then
+		layoutOrder = 1000 * string.byte(instance.Name:lower(), 1, 1) + string.byte(instance.Name:lower(), 2, 2)
+	end
+
+	return Create("TextButton", {
+		Size = UDim2.new(0, 400, 0, fieldCount * ROW_HEIGHT),
+		Text = "",
+		BackgroundTransparency = 0.3,
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BorderSizePixel = 0,
+		LayoutOrder = layoutOrder,
+		Activated = function()
+			game.Selection:Set({ instance })
+		end,
+	}, contents)
+end
+
+local lastTextChange = 0
+function module.Init(mouse: PluginMouse)
+	if module.Active then
+		return
+	end
+	module.Active = true
+	UpdatePropMarkers(SearchResults._Value)
+
+	local searchBox
+	searchBox = Create("TextBox", {
+		Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
+		PlaceholderText = "Search Attribute",
+		BackgroundTransparency = 0.5,
+		BorderSizePixel = 0,
+		BackgroundColor3 = Color3.new(),
+		PlaceholderColor3 = Color3.new(0.8, 0.8, 0.8),
+		TextColor3 = Color3.new(1, 1, 1),
+		Text = SearchText._Value,
+		ClearTextOnFocus = false,
+		[OnChange("Text")] = function()
+			lastTextChange += 1
+			local clock = lastTextChange
+			task.delay(1, function()
+				if clock == lastTextChange then
+					SearchText:set(searchBox.Text:lower())
+				end
+			end)
+		end,
+		FocusLost = function()
+			SearchText:set(searchBox.Text)
+		end,
+	})
+
+	module.UI = Create("ScreenGui", {
+		Parent = game.CoreGui,
+		Archivable = false,
+	}, {
+		Create("Frame", {
+			Size = UDim2.new(1, -100, 1, -100),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundTransparency = 1,
+		}, {
+			searchBox,
+			Create("ScrollingFrame", {
+				Size = UDim2.new(1, 0, 1, -ROW_HEIGHT * 1.5),
+				Position = UDim2.new(0, 0, 1, 0),
+				AnchorPoint = Vector2.new(0, 1),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				CanvasSize = UDim2.new(0, 0, 0, 0),
+				AutomaticCanvasSize = Enum.AutomaticSize.Y,
+			}, {
+				Create("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+				}),
+				DerivedTable(ListEntry, SearchResults),
+			}),
+		}),
+	})
+end
+
+function module.Clean()
+	module.Active = false
+	ClearPropMarkers()
+	if module.UI then
+		module.UI:Destroy()
+		module.UI = nil
+	end
+end
+
+return module
+]]></ProtectedString>
+					<string name="ScriptGuid">{53185B27-E0A8-4DCB-8AC0-7C0272B210A7}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+		<Item class="Folder" referent="RBXBB4F07C803DA4F1D9FD156B2CADEBAB0">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -19,14 +285,9 @@
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXA6FF2704366F4202BEFCA750511C60BD">
+			<Item class="ModuleScript" referent="RBXA48C4FAAB45A461FB781A5BF7EDB4965">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{CE98FD9F-5E57-4FC6-84C4-76221D6EC7FF}</string>
 					<ProtectedString name="Source"><![CDATA[local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
 
@@ -230,7 +491,7 @@ function module.Init(mouse: PluginMouse)
 		if processed then return end
 
 		local part = mouse.Target
-
+		
 		if part == nil then
 			game.Selection:Set({})
 			if DrawnModel then
@@ -239,7 +500,7 @@ function module.Init(mouse: PluginMouse)
 			end
 			return
 		end
-
+		
 		local wasCtrlPressed = input:IsModifierKeyDown(Enum.ModifierKey.Ctrl)
 		local partIsFlowNode = part:IsDescendantOf(workspace.DebugMission.CombatFlowMap)
 
@@ -375,12 +636,17 @@ end
 return module
 
 ]]></ProtectedString>
+					<string name="ScriptGuid">{18C0ACEB-FAB0-47FC-9133-90B16C9141D9}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBXBD8F89963FBC4975A743842D6847705E">
+		<Item class="Folder" referent="RBX471C0C29341C49DCB3CB135F82158FA9">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -389,14 +655,9 @@ return module
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXC36828492024494AA31CEF4A14965D90">
+			<Item class="ModuleScript" referent="RBX250C6222D2A04E0D9C776CB95D41BDA9">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{E8A8C209-9588-4F74-9912-1FF3A0BACA43}</string>
 					<ProtectedString name="Source"><![CDATA[--!strict
 
 local UserInputService = game:GetService("UserInputService")
@@ -716,7 +977,7 @@ function module:InitUI()
 	end
 
 	self.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 		Name = "DoorAccessConfig",
 	}, {
@@ -791,21 +1052,18 @@ end
 
 return module
 ]]></ProtectedString>
+					<string name="ScriptGuid">{DCA54A0B-64A9-4958-9E92-D0F38FBF4FAB}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Script" referent="RBXF2F4EA74A30B4736BDD44FB9F254275E">
+		<Item class="Script" referent="RBX642822620FC04AF3BD6A8736BE15C425">
 			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-				<bool name="DefinesCapabilities">false</bool>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<string name="Name">Main</string>
-				<token name="RunContext">0</token>
-				<string name="ScriptGuid">{05ECEA78-8EFC-402B-B238-B5DBCB729EBC}</string>
 				<ProtectedString name="Source"><![CDATA[-- Infiltration Engine Tooling created by Cishshato
 -- Modified by GhfjSpero
 -- All Rights Reserved
@@ -945,11 +1203,19 @@ end
 plugin.Unloading:connect(disablePlugin)
 plugin.Deactivation:connect(disablePlugin)
 ]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{0BE066E0-F03A-4054-911A-17F791424874}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Main</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="Folder" referent="RBX41C221F9EC6F44D6AFF115DF7D3682F9">
+		<Item class="Folder" referent="RBX4BC82A1BC6E741F59B26A29872493E0E">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -958,14 +1224,9 @@ plugin.Deactivation:connect(disablePlugin)
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXCAEE9A7CFD5D4C6AB1B857662E1126DD">
+			<Item class="ModuleScript" referent="RBX9AC3BBE9E3124919BED8ED1CC6C5CD75">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{643EF82B-61DD-4ECE-B15C-F451AE631613}</string>
 					<ProtectedString name="Source"><![CDATA[local HttpService = game:GetService("HttpService")
 
 local AxisAlign = require(script.Parent.Parent.Util.AxisAlign)
@@ -1282,12 +1543,17 @@ return {
 		end
 	end,
 }]]></ProtectedString>
+					<string name="ScriptGuid">{9C566AC6-8E8F-44CE-94FA-1A42ECB71D80}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX512FF19353044281911F0E6E4D2E7D9C">
+		<Item class="Folder" referent="RBX22655C454BCB43AEBD6305EFA2B73EE1">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1296,14 +1562,9 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXDBB767E665FE4122A6B291EDDA6B4526">
+			<Item class="ModuleScript" referent="RBX8CF9799B57C34D089D59240EE911B005">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{F99CB967-FBA9-43DA-A5CB-EFBAB2599DB8}</string>
 					<ProtectedString name="Source"><![CDATA[--!strict
 
 local UserInputService = game:GetService("UserInputService")
@@ -1348,7 +1609,14 @@ CastConfig.FilterType = Enum.RaycastFilterType.Exclude
 
 module.GetProjectedDistance = function(self, pos: Vector3, dir: Vector3)
 	local cast = workspace:Raycast(pos, dir * MAX_DIST, CastConfig)
-	while cast and cast.Instance and cast.Instance.Transparency > 0.3 do
+	local cellsModel = workspace:FindFirstChild("DebugMission")
+	cellsModel = cellsModel and cellsModel:FindFirstChild("Cells")
+	while
+		cast
+		and cast.Instance
+		and cast.Instance.Transparency > 0.3
+		and (not cellsModel or not cast.Instance:IsDescendantOf(cellsModel))
+	do
 		table.insert(IgnoreList, cast.Instance)
 		CastConfig.FilterDescendantsInstances = IgnoreList
 		cast = workspace:Raycast(pos, dir * MAX_DIST, CastConfig)
@@ -1369,7 +1637,7 @@ module.Init = function(mouse: PluginMouse)
 	module.Active = true
 
 	if workspace:FindFirstChild("DebugMission") and workspace.DebugMission:FindFirstChild("Props") then
-		for _, prop in pairs(workspace.DebugMission.Props:GetChildren()) do
+		for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 			if prop:IsA("BasePart") then
 				prop.Color = prop:GetAttribute(ATTRIBUTE_NAME) and ON_COLOR or OFF_COLOR
 			end
@@ -1403,7 +1671,7 @@ module.Clean = function()
 	local self = module
 
 	if workspace:FindFirstChild("DebugMission") and workspace.DebugMission:FindFirstChild("Props") then
-		for _, prop in pairs(workspace.DebugMission.Props:GetChildren()) do
+		for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 			if prop:IsA("BasePart") then
 				prop.Color = DEFAULT_COLOR
 
@@ -1435,12 +1703,17 @@ end
 
 return module
 ]]></ProtectedString>
+					<string name="ScriptGuid">{7228F9E7-C944-441D-8C1E-C4D57ED3E03D}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX1F2A707D7362425C9D7D558B5DE625AC">
+		<Item class="Folder" referent="RBX5DAAAD1F0442480288D4A20CEBB319F7">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1449,14 +1722,9 @@ return module
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX6A738F812B9F4C3C801943FA07EA39FB">
+			<Item class="ModuleScript" referent="RBX00A4B0C2C6C34CB18326E9F89515AAB5">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{DF6A88A1-272B-4868-B8CE-900CDAAE4721}</string>
 					<ProtectedString name="Source"><![CDATA[local PhysicsService = game:GetService("PhysicsService")
 
 local COLLISON_GROUP = "PluginNoCollision"
@@ -1795,7 +2063,7 @@ module.Init = function(mouse: PluginMouse)
 	})
 
 	module.UI = Create("ScreenGui", {
-		Parent = game.StarterGui,
+		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 	}, {
 		Button({
@@ -1859,11 +2127,16 @@ end
 
 return module
 ]]></ProtectedString>
+					<string name="ScriptGuid">{E886C216-468D-4876-AC2A-BDECA24DF446}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBXB8D5D46D88CD401EB5A7600FC9DFC569">
+			<Item class="Folder" referent="RBXAFC214FB776D4F3CBC409C9452AE1491">
 				<Properties>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -1872,14 +2145,126 @@ return module
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX4885986496AD4826B61CB4DA42BAD724">
+				<Item class="ModuleScript" referent="RBXA5FFA5AEA54B4BB88EFD3CC90406F3F5">
 					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[return require(script.Parent.DecorativePipe)
+]]></ProtectedString>
+						<string name="ScriptGuid">{7914CB82-E987-4DC7-A275-89EBC53D1327}</string>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">ClimbablePipe</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX54DCA207B99A4A1DB66FCA77E3525BC3">
+					<Properties>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">DecorativeVent</string>
-						<string name="ScriptGuid">{3AF00639-704A-40DF-ACB9-8F1BE8E0EA80}</string>
+						<ProtectedString name="Source"><![CDATA[local RING_DIST = 5
+
+local function addPart(model, baseCFr, offset, size)
+	local p = Instance.new("Part")
+	p.Size = size
+	p.CFrame = baseCFr * CFrame.new(offset)
+	p.Anchored = true
+	p.CanCollide = false
+	p.Name = "Part0"
+	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.Material = Enum.Material.Metal
+	p.CanTouch = false
+	p.Parent = model
+	p.CollisionGroup = "None"
+	p.CastShadow = false
+	return p
+end
+
+local function addCylinderPart(model, baseCFr, offset, size)
+	local p = Instance.new("Part")
+	p.Size = size
+	p.CFrame = baseCFr * CFrame.new(offset)
+	p.Anchored = true
+	p.CanCollide = true
+	p.Shape = Enum.PartType.Cylinder
+	p.Name = "Part0"
+	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.Material = Enum.Material.Metal
+	p.CanTouch = false
+	p.Parent = model
+	p.CollisionGroup = "None"
+	p.CastShadow = false
+	return p
+end
+
+local function createModel(self)
+	self.Base.CollisionGroup = "Default"
+
+	local size = self.Base.Size
+	local height = size.Y
+	local baseCFr = self.CFrame * CFrame.new(0, height / -2, 0) * CFrame.Angles(0, 0, math.pi / 2)
+
+	local model = Instance.new("Model")
+
+	local POLE_DIAMETER = self.Base.Size.X
+	local RING_DIAMETER = POLE_DIAMETER + 0.1
+
+	local bendHeight = height
+
+	if self.Base:GetAttribute("BendTop") or self.Base.Name == "ClimbablePipe" then
+		bendHeight = bendHeight - POLE_DIAMETER / 2
+
+		addPart(model, baseCFr, Vector3.new(bendHeight, 0, 0), Vector3.new(POLE_DIAMETER, POLE_DIAMETER, POLE_DIAMETER)).Shape =
+			Enum.PartType.Ball
+
+		local bent = addCylinderPart(
+			model,
+			baseCFr,
+			Vector3.new(bendHeight, 0, POLE_DIAMETER / -2),
+			Vector3.new(POLE_DIAMETER, POLE_DIAMETER, POLE_DIAMETER)
+		)
+		bent.CFrame = bent.CFrame * CFrame.Angles(0, math.pi / 2, 0)
+	end
+
+	addCylinderPart(
+		model,
+		baseCFr,
+		Vector3.new(bendHeight / 2, 0, 0),
+		Vector3.new(bendHeight, POLE_DIAMETER, POLE_DIAMETER)
+	).CollisionGroup =
+		"Default" -- Main pipe part
+
+	local ringDist = self.Base:GetAttribute("RingSpace") or RING_DIST
+	local ringCount = math.floor((bendHeight - 2) / ringDist)
+
+	for i = 0, ringCount do
+		local ringHeight = bendHeight / 2 + (i - ringCount / 2) * ringDist
+		addCylinderPart(model, baseCFr, Vector3.new(ringHeight, 0, 0), Vector3.new(0.2, RING_DIAMETER, RING_DIAMETER))
+		addPart(model, baseCFr, Vector3.new(ringHeight, 0, RING_DIAMETER / -2), Vector3.new(0.2, RING_DIAMETER, 0.2))
+	end
+
+	self.Model = model
+	self.Parts = model:GetChildren()
+end
+
+return {
+	InitModel = createModel,
+}
+]]></ProtectedString>
+						<string name="ScriptGuid">{7D11F14E-F8EA-4178-B1DF-F8A6C5BC9EBC}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">DecorativePipe</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBXC7BCD05633704DE1BDABA599B5646A38">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
 						<ProtectedString name="Source"><![CDATA[local function addPart(model, baseCFr, offset, size)
 	local p = Instance.new("Part")
 	p.Size = size
@@ -2042,18 +2427,72 @@ return {
 	InitModel = createModel,
 }
 ]]></ProtectedString>
+						<string name="ScriptGuid">{C6A4E55C-BA02-4517-A2AB-57C82CBC3878}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">DecorativeVent</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBXAABCBC7B278640658F4C58B3363C1859">
+				<Item class="ModuleScript" referent="RBX56B05C5DB4DD433EAB935D25DF03C59E">
 					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local renStep = game:GetService("RunService").RenderStepped
+
+local MOVE_SPEED = 4
+
+local function addPart(model, baseCFr, offset, size)
+	local p = Instance.new("Part")
+	p.Size = size
+	p.CFrame = baseCFr * CFrame.new(offset)
+	p.Anchored = true
+	p.CanCollide = true
+	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.CanTouch = false
+	p.Parent = model
+	p.CastShadow = false
+	return p
+end
+
+local function createModel(self)
+	local size = self.Base.Size
+	local height = size.Y
+	local baseCFr = self.CFrame * CFrame.new(0, height / -2, 0)
+
+	local model = Instance.new("Model")
+
+	for row = 0, math.floor(height) do
+		local main = addPart(model, baseCFr, Vector3.new(0, row + 0.4, 0), Vector3.new(0.3, 0.8, size.Z))
+		main.Material = Enum.Material.DiamondPlate
+		main.Name = "Part0"
+		local fill = addPart(model, baseCFr, Vector3.new(0, row + 0.9, 0), Vector3.new(0.2, 0.2, size.Z))
+		fill.Material = Enum.Material.Metal
+		fill.Name = "Part1"
+	end
+
+	self.Model = model
+	self.Parts = model:GetChildren()
+end
+
+return {
+	InitModel = createModel,
+}
+]]></ProtectedString>
+						<string name="ScriptGuid">{9BCA801F-B7D3-4313-9EAB-B13D4F7A8C9E}</string>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">GarageDoor</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX1290550F1FCB446A99C1031C09CC30E9">
+					<Properties>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">Ladder</string>
-						<string name="ScriptGuid">{937BD18F-9304-48AC-9432-14F5112C3654}</string>
 						<ProtectedString name="Source"><![CDATA[local POLE_DIAMETER = 0.3
 local POLE_HEIGHT = 1
 local RUNG_DIAMETER = 0.2
@@ -2139,147 +2578,131 @@ return {
 	InitModel = createModel,
 }
 ]]></ProtectedString>
+						<string name="ScriptGuid">{D0719B92-723E-4394-9E5B-9E631A452EF8}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Ladder</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX3EE9A65846D847A18D42E52FCAB44284">
+				<Item class="ModuleScript" referent="RBX0547F06DDD124DB3B0D6511D36AC5401">
 					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">DecorativePipe</string>
-						<string name="ScriptGuid">{4BD440B3-F415-4961-8A67-3EF33FDD71AC}</string>
-						<ProtectedString name="Source"><![CDATA[local RING_DIST = 5
+						<ProtectedString name="Source"><![CDATA[local ThinBush = require(script.Parent.ThinBush)
 
-local function addPart(model, baseCFr, offset, size)
+local RailWidth = 0.4
+local RailWidthHalf = RailWidth / 2
+local RailHeight = 0.1
+
+local function addPart(model, cfr, size, name)
 	local p = Instance.new("Part")
 	p.Size = size
-	p.CFrame = baseCFr * CFrame.new(offset)
-	p.Anchored = true
-	p.CanCollide = false
-	p.Name = "Part0"
-	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.Material = Enum.Material.Metal
-	p.CanTouch = false
-	p.Parent = model
-	p.CollisionGroup = "None"
-	p.CastShadow = false
-	return p
-end
-
-local function addCylinderPart(model, baseCFr, offset, size)
-	local p = Instance.new("Part")
-	p.Size = size
-	p.CFrame = baseCFr * CFrame.new(offset)
+	p.CFrame = cfr
 	p.Anchored = true
 	p.CanCollide = true
-	p.Shape = Enum.PartType.Cylinder
-	p.Name = "Part0"
+	p.Name = name
 	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
 	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.Material = Enum.Material.Metal
+	p.Material = Enum.Material.SmoothPlastic
 	p.CanTouch = false
 	p.Parent = model
-	p.CollisionGroup = "None"
 	p.CastShadow = false
 	return p
 end
 
 local function createModel(self)
-	self.Base.CollisionGroup = "Default"
-
 	local size = self.Base.Size
-	local height = size.Y
-	local baseCFr = self.CFrame * CFrame.new(0, height / -2, 0) * CFrame.Angles(0, 0, math.pi / 2)
+	local height = size.Y + RailHeight
+	local baseCFr = self.CFrame * CFrame.new(0, RailHeight / 2, 0)
 
 	local model = Instance.new("Model")
 
-	local POLE_DIAMETER = self.Base.Size.X
-	local RING_DIAMETER = POLE_DIAMETER + 0.1
-
-	local bendHeight = height
-
-	if self.Base:GetAttribute("BendTop") or self.Base.Name == "ClimbablePipe" then
-		bendHeight = bendHeight - POLE_DIAMETER / 2
-
-		addPart(model, baseCFr, Vector3.new(bendHeight, 0, 0), Vector3.new(POLE_DIAMETER, POLE_DIAMETER, POLE_DIAMETER)).Shape =
-			Enum.PartType.Ball
-
-		local bent = addCylinderPart(
-			model,
-			baseCFr,
-			Vector3.new(bendHeight, 0, POLE_DIAMETER / -2),
-			Vector3.new(POLE_DIAMETER, POLE_DIAMETER, POLE_DIAMETER)
-		)
-		bent.CFrame = bent.CFrame * CFrame.Angles(0, math.pi / 2, 0)
-	end
-
-	addCylinderPart(
+	addPart(
+		model,
+		baseCFr * CFrame.new(0, 0, size.Z / 2 - RailWidthHalf),
+		Vector3.new(size.X - RailWidth * 2, height, RailWidth),
+		"Part0"
+	)
+	addPart(
+		model,
+		baseCFr * CFrame.new(0, 0, size.Z / -2 + RailWidthHalf),
+		Vector3.new(size.X - RailWidth * 2, height, RailWidth),
+		"Part0"
+	)
+	addPart(
+		model,
+		baseCFr * CFrame.new(size.X / 2 - RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
+		Vector3.new(size.Z, height, RailWidth),
+		"Part0"
+	)
+	addPart(
+		model,
+		baseCFr * CFrame.new(size.X / -2 + RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
+		Vector3.new(size.Z, height, RailWidth),
+		"Part0"
+	)
+	addPart(
 		model,
 		baseCFr,
-		Vector3.new(bendHeight / 2, 0, 0),
-		Vector3.new(bendHeight, POLE_DIAMETER, POLE_DIAMETER)
-	).CollisionGroup =
-		"Default" -- Main pipe part
+		Vector3.new(size.X - RailWidth - RailWidth, height - RailHeight - RailHeight, size.Z - RailWidth - RailWidth),
+		"Part1"
+	).Material =
+		Enum.Material.Pebble
 
-	local ringDist = self.Base:GetAttribute("RingSpace") or RING_DIST
-	local ringCount = math.floor((bendHeight - 2) / ringDist)
-
-	for i = 0, ringCount do
-		local ringHeight = bendHeight / 2 + (i - ringCount / 2) * ringDist
-		addCylinderPart(model, baseCFr, Vector3.new(ringHeight, 0, 0), Vector3.new(0.2, RING_DIAMETER, RING_DIAMETER))
-		addPart(model, baseCFr, Vector3.new(ringHeight, 0, RING_DIAMETER / -2), Vector3.new(0.2, RING_DIAMETER, 0.2))
+	local base = self.Base
+	local attributes = self.Base:GetAttributes()
+	local height = attributes.PlantHeight or 3
+	local width = attributes.PlantWidth or 0
+	if height > 0 then
+		local p = Instance.new("Part")
+		p.Name = "ThinBush"
+		p.CFrame = base.CFrame * CFrame.new(0, base.Size.Y / 2 + height / 2, 0)
+		p.Size = Vector3.new(base.Size.X + width, height, base.Size.Z + width)
+		local generator = setmetatable({
+			Base = p,
+			CFrame = p.CFrame,
+		}, { __index = ThinBush })
+		generator:InitModel()
+		generator.Model.Parent = model
 	end
 
 	self.Model = model
-	self.Parts = model:GetChildren()
 end
 
 return {
 	InitModel = createModel,
 }
 ]]></ProtectedString>
+						<string name="ScriptGuid">{CA32A884-C608-495D-9C29-CABC7759D0B2}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">ScalablePlanter</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX80B45F33FD0E419D80C91C559DA7186C">
+				<Item class="ModuleScript" referent="RBXB0AE727018F446C6B850C0C38EF7AE49">
 					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">ClimbablePipe</string>
-						<string name="ScriptGuid">{5976FC7E-E408-4647-9415-BE2C14665790}</string>
-						<ProtectedString name="Source"><![CDATA[return require(script.Parent.DecorativePipe)
-]]></ProtectedString>
-						<int64 name="SourceAssetId">-1</int64>
-						<BinaryString name="Tags"></BinaryString>
-					</Properties>
-				</Item>
-				<Item class="ModuleScript" referent="RBX1072B6DE8369473C9AD390EE400DF066">
-					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
-						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">GarageDoor</string>
-						<string name="ScriptGuid">{CBC85ABD-BC69-40F0-98C5-0AA1D988F4EC}</string>
-						<ProtectedString name="Source"><![CDATA[local renStep = game:GetService("RunService").RenderStepped
+						<ProtectedString name="Source"><![CDATA[local ThinBush = require(script.Parent.ThinBush)
 
-local MOVE_SPEED = 4
+local RailWidth = 0.2
+local RailWidthHalf = RailWidth / 2
+local RailHeight = 0.1
 
-local function addPart(model, baseCFr, offset, size)
+local function addPart(model, cfr, size, name)
 	local p = Instance.new("Part")
 	p.Size = size
-	p.CFrame = baseCFr * CFrame.new(offset)
+	p.CFrame = cfr
 	p.Anchored = true
 	p.CanCollide = true
+	p.Name = name
 	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
 	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
+	p.Material = Enum.Material.SmoothPlastic
 	p.CanTouch = false
 	p.Parent = model
 	p.CastShadow = false
@@ -2288,18 +2711,123 @@ end
 
 local function createModel(self)
 	local size = self.Base.Size
-	local height = size.Y
-	local baseCFr = self.CFrame * CFrame.new(0, height / -2, 0)
+	local height = size.Y + RailHeight
+	local baseCFr = self.CFrame * CFrame.new(0, RailHeight / 2, 0)
 
 	local model = Instance.new("Model")
 
-	for row = 0, math.floor(height) do
-		local main = addPart(model, baseCFr, Vector3.new(0, row + 0.4, 0), Vector3.new(0.3, 0.8, size.Z))
-		main.Material = Enum.Material.DiamondPlate
-		main.Name = "Part0"
-		local fill = addPart(model, baseCFr, Vector3.new(0, row + 0.9, 0), Vector3.new(0.2, 0.2, size.Z))
-		fill.Material = Enum.Material.Metal
-		fill.Name = "Part1"
+	-- Sides
+	addPart(
+		model,
+		baseCFr * CFrame.new(RailWidthHalf, 0, size.Z / 2 - RailWidthHalf),
+		Vector3.new(size.X - RailWidth, height, RailWidth),
+		"Part0"
+	)
+	addPart(
+		model,
+		baseCFr * CFrame.new(RailWidthHalf, 0, size.Z / -2 + RailWidthHalf),
+		Vector3.new(size.X - RailWidth, height, RailWidth),
+		"Part0"
+	)
+	addPart(
+		model,
+		baseCFr * CFrame.new(size.X / -2 + RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
+		Vector3.new(size.Z, height, RailWidth),
+		"Part0"
+	)
+
+	-- bottom
+	addPart(
+		model,
+		baseCFr * CFrame.new(RailWidthHalf, size.Y / -2 + RailWidthHalf, 0) * CFrame.Angles(0, math.pi / 2, 0),
+		Vector3.new(size.Z - RailWidth - RailWidth, RailWidth, size.X - RailWidth),
+		"Part0"
+	)
+
+	addPart(
+		model,
+		baseCFr * CFrame.new(RailWidthHalf, 0, 0),
+		Vector3.new(size.X - RailWidth, height - RailHeight - RailHeight, size.Z - RailWidth - RailWidth),
+		"Part1"
+	).Material =
+		Enum.Material.Pebble
+
+	local base = self.Base
+	local attributes = self.Base:GetAttributes()
+	local height = attributes.PlantHeight or 3
+	local width = attributes.PlantWidth or 0
+	if height > 0 then
+		local p = Instance.new("Part")
+		p.Name = "ThinBush"
+		p.CFrame = base.CFrame * CFrame.new(0, base.Size.Y / 2 + height / 2, 0)
+		p.Size = Vector3.new(base.Size.X + width, height, base.Size.Z + width)
+		local generator = setmetatable({
+			Base = p,
+			CFrame = p.CFrame,
+		}, { __index = ThinBush })
+		generator:InitModel()
+		generator.Model.Parent = model
+	end
+
+	self.Model = model
+end
+
+return {
+	InitModel = createModel,
+}
+]]></ProtectedString>
+						<string name="ScriptGuid">{DB20112C-F45D-4A61-B901-CB7EE68989F6}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">ScalableWallPlanter</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBXBAB8F5FB3015499AB6057AA1C6CE27AC">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local leaves = Instance.new("Part")
+leaves.BrickColor = BrickColor.new("Slime green")
+leaves.Transparency = 0.05
+leaves.CanCollide = false
+leaves.Anchored = true
+leaves.Size = Vector3.new(0.05, 0.05, 0.05)
+leaves.Name = "Bush"
+
+local leavesMesh = Instance.new("SpecialMesh")
+leavesMesh.MeshType = Enum.MeshType.FileMesh
+leavesMesh.MeshId = "rbxassetid://1091940"
+leavesMesh.TextureId = "rbxassetid://140397573"
+
+local function createModel(self)
+	local expectedSize = self.Base.Size
+	local model = Instance.new("Model")
+
+	local variance = 0.2
+	local spacing = 1.2
+
+	local part = leaves:Clone()
+	local mesh = leavesMesh:Clone()
+	mesh.Scale = Vector3.new(expectedSize.X * 0.5, expectedSize.Y, expectedSize.X * 0.5)
+	mesh.Parent = part
+
+	local function plant(cfr)
+		local l = part:Clone()
+		local mesh = l:FindFirstChildOfClass("SpecialMesh")
+		local factor = math.noise(cfr.p.X, cfr.p.Y, cfr.p.Z)
+		mesh.Scale = Vector3.new(mesh.Scale.X, mesh.Scale.Y * (1 + factor * variance), mesh.Scale.Z)
+		l.CFrame = cfr * CFrame.new(0, mesh.Scale.Y * 0.15, 0) * CFrame.Angles(0, factor * 10, 0)
+		l.Parent = model
+	end
+
+	local dist = expectedSize.Z - expectedSize.X
+	local minDist = dist / -2
+	local cuts = math.ceil(dist / spacing)
+
+	for x = 0, cuts do
+		plant(self.Base.CFrame * CFrame.new(0, 0, minDist + (x / cuts) * dist))
 	end
 
 	self.Model = model
@@ -2310,18 +2838,18 @@ return {
 	InitModel = createModel,
 }
 ]]></ProtectedString>
+						<string name="ScriptGuid">{47D2826E-E3F8-4CC2-A236-D23F03AB8D23}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">ThinBush</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX5C33D0CA73EA427BA8962CA3862DF65A">
+				<Item class="ModuleScript" referent="RBXAEC0EAA410914D7BBCFAB3B5516E5A15">
 					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">Window</string>
-						<string name="ScriptGuid">{0E33B592-5E0A-4C56-85A1-699A709AE1C2}</string>
 						<ProtectedString name="Source"><![CDATA[local FRAME_WIDTH = 0.2
 
 local function createServerGlass(self)
@@ -2423,273 +2951,18 @@ return {
 	InitModel = createServerGlass,
 }
 ]]></ProtectedString>
-						<int64 name="SourceAssetId">-1</int64>
-						<BinaryString name="Tags"></BinaryString>
-					</Properties>
-				</Item>
-				<Item class="ModuleScript" referent="RBX1C04D950C3354DDD91D525F8C74BDE39">
-					<Properties>
+						<string name="ScriptGuid">{31F0BBC9-2176-4897-888A-569A3D5FE5F6}</string>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 						<bool name="DefinesCapabilities">false</bool>
-						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">ThinBush</string>
-						<string name="ScriptGuid">{941C3626-8FDC-4E32-94A1-B341E7B34854}</string>
-						<ProtectedString name="Source"><![CDATA[local leaves = Instance.new("Part")
-leaves.BrickColor = BrickColor.new("Slime green")
-leaves.Transparency = 0.05
-leaves.CanCollide = false
-leaves.Anchored = true
-leaves.Size = Vector3.new(0.05, 0.05, 0.05)
-leaves.Name = "Bush"
-
-local leavesMesh = Instance.new("SpecialMesh")
-leavesMesh.MeshType = Enum.MeshType.FileMesh
-leavesMesh.MeshId = "rbxassetid://1091940"
-leavesMesh.TextureId = "rbxassetid://140397573"
-
-local function createModel(self)
-	local expectedSize = self.Base.Size
-	local model = Instance.new("Model")
-
-	local variance = 0.2
-	local spacing = 1.2
-
-	local part = leaves:Clone()
-	local mesh = leavesMesh:Clone()
-	mesh.Scale = Vector3.new(expectedSize.X * 0.5, expectedSize.Y, expectedSize.X * 0.5)
-	mesh.Parent = part
-
-	local function plant(cfr)
-		local l = part:Clone()
-		local mesh = l:FindFirstChildOfClass("SpecialMesh")
-		local factor = math.noise(cfr.p.X, cfr.p.Y, cfr.p.Z)
-		mesh.Scale = Vector3.new(mesh.Scale.X, mesh.Scale.Y * (1 + factor * variance), mesh.Scale.Z)
-		l.CFrame = cfr * CFrame.new(0, mesh.Scale.Y * 0.15, 0) * CFrame.Angles(0, factor * 10, 0)
-		l.Parent = model
-	end
-
-	local dist = expectedSize.Z - expectedSize.X
-	local minDist = dist / -2
-	local cuts = math.ceil(dist / spacing)
-
-	for x = 0, cuts do
-		plant(self.Base.CFrame * CFrame.new(0, 0, minDist + (x / cuts) * dist))
-	end
-
-	self.Model = model
-	self.Parts = model:GetChildren()
-end
-
-return {
-	InitModel = createModel,
-}
-]]></ProtectedString>
-						<int64 name="SourceAssetId">-1</int64>
-						<BinaryString name="Tags"></BinaryString>
-					</Properties>
-				</Item>
-				<Item class="ModuleScript" referent="RBX7692122753C84BA5A38C5FA1587CF234">
-					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
-						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">ScalableWallPlanter</string>
-						<string name="ScriptGuid">{D6646E04-CEF3-47B3-90B8-761AA7C3044F}</string>
-						<ProtectedString name="Source"><![CDATA[local ThinBush = require(script.Parent.ThinBush)
-
-local RailWidth = 0.2
-local RailWidthHalf = RailWidth / 2
-local RailHeight = 0.1
-
-local function addPart(model, cfr, size, name)
-	local p = Instance.new("Part")
-	p.Size = size
-	p.CFrame = cfr
-	p.Anchored = true
-	p.CanCollide = true
-	p.Name = name
-	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.Material = Enum.Material.SmoothPlastic
-	p.CanTouch = false
-	p.Parent = model
-	p.CastShadow = false
-	return p
-end
-
-local function createModel(self)
-	local size = self.Base.Size
-	local height = size.Y + RailHeight
-	local baseCFr = self.CFrame * CFrame.new(0, RailHeight / 2, 0)
-
-	local model = Instance.new("Model")
-
-	-- Sides
-	addPart(
-		model,
-		baseCFr * CFrame.new(RailWidthHalf, 0, size.Z / 2 - RailWidthHalf),
-		Vector3.new(size.X - RailWidth, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr * CFrame.new(RailWidthHalf, 0, size.Z / -2 + RailWidthHalf),
-		Vector3.new(size.X - RailWidth, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr * CFrame.new(size.X / -2 + RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
-		Vector3.new(size.Z, height, RailWidth),
-		"Part0"
-	)
-
-	-- bottom
-	addPart(
-		model,
-		baseCFr * CFrame.new(RailWidthHalf, size.Y / -2 + RailWidthHalf, 0) * CFrame.Angles(0, math.pi / 2, 0),
-		Vector3.new(size.Z - RailWidth - RailWidth, RailWidth, size.X - RailWidth),
-		"Part0"
-	)
-
-	addPart(
-		model,
-		baseCFr * CFrame.new(RailWidthHalf, 0, 0),
-		Vector3.new(size.X - RailWidth, height - RailHeight - RailHeight, size.Z - RailWidth - RailWidth),
-		"Part1"
-	).Material =
-		Enum.Material.Pebble
-
-	local base = self.Base
-	local attributes = self.Base:GetAttributes()
-	local height = attributes.PlantHeight or 3
-	local width = attributes.PlantWidth or 0
-	if height > 0 then
-		local p = Instance.new("Part")
-		p.Name = "ThinBush"
-		p.CFrame = base.CFrame * CFrame.new(0, base.Size.Y / 2 + height / 2, 0)
-		p.Size = Vector3.new(base.Size.X + width, height, base.Size.Z + width)
-		local generator = setmetatable({
-			Base = p,
-			CFrame = p.CFrame,
-		}, { __index = ThinBush })
-		generator:InitModel()
-		generator.Model.Parent = model
-	end
-
-	self.Model = model
-end
-
-return {
-	InitModel = createModel,
-}
-]]></ProtectedString>
-						<int64 name="SourceAssetId">-1</int64>
-						<BinaryString name="Tags"></BinaryString>
-					</Properties>
-				</Item>
-				<Item class="ModuleScript" referent="RBX52B6A76BB1A1488B8637EF82292ADD04">
-					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
-						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">ScalablePlanter</string>
-						<string name="ScriptGuid">{361BF45A-C121-4525-852A-428A339E92B7}</string>
-						<ProtectedString name="Source"><![CDATA[local ThinBush = require(script.Parent.ThinBush)
-
-local RailWidth = 0.4
-local RailWidthHalf = RailWidth / 2
-local RailHeight = 0.1
-
-local function addPart(model, cfr, size, name)
-	local p = Instance.new("Part")
-	p.Size = size
-	p.CFrame = cfr
-	p.Anchored = true
-	p.CanCollide = true
-	p.Name = name
-	p.TopSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.BottomSurface = Enum.SurfaceType.SmoothNoOutlines
-	p.Material = Enum.Material.SmoothPlastic
-	p.CanTouch = false
-	p.Parent = model
-	p.CastShadow = false
-	return p
-end
-
-local function createModel(self)
-	local size = self.Base.Size
-	local height = size.Y + RailHeight
-	local baseCFr = self.CFrame * CFrame.new(0, RailHeight / 2, 0)
-
-	local model = Instance.new("Model")
-
-	addPart(
-		model,
-		baseCFr * CFrame.new(0, 0, size.Z / 2 - RailWidthHalf),
-		Vector3.new(size.X - RailWidth * 2, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr * CFrame.new(0, 0, size.Z / -2 + RailWidthHalf),
-		Vector3.new(size.X - RailWidth * 2, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr * CFrame.new(size.X / 2 - RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
-		Vector3.new(size.Z, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr * CFrame.new(size.X / -2 + RailWidthHalf, 0, 0) * CFrame.Angles(0, math.pi / 2, 0),
-		Vector3.new(size.Z, height, RailWidth),
-		"Part0"
-	)
-	addPart(
-		model,
-		baseCFr,
-		Vector3.new(size.X - RailWidth - RailWidth, height - RailHeight - RailHeight, size.Z - RailWidth - RailWidth),
-		"Part1"
-	).Material =
-		Enum.Material.Pebble
-
-	local base = self.Base
-	local attributes = self.Base:GetAttributes()
-	local height = attributes.PlantHeight or 3
-	local width = attributes.PlantWidth or 0
-	if height > 0 then
-		local p = Instance.new("Part")
-		p.Name = "ThinBush"
-		p.CFrame = base.CFrame * CFrame.new(0, base.Size.Y / 2 + height / 2, 0)
-		p.Size = Vector3.new(base.Size.X + width, height, base.Size.Z + width)
-		local generator = setmetatable({
-			Base = p,
-			CFrame = p.CFrame,
-		}, { __index = ThinBush })
-		generator:InitModel()
-		generator.Model.Parent = model
-	end
-
-	self.Model = model
-end
-
-return {
-	InitModel = createModel,
-}
-]]></ProtectedString>
+						<string name="Name">Window</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX6DD596F9A30E406F82F8212FB548D971">
+		<Item class="Folder" referent="RBX5364F69B1752400884757B2171D89ED0">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2698,14 +2971,9 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXDE46A710914845C398EA77FA68D32785">
+			<Item class="ModuleScript" referent="RBX0D8832C471F0433F8C72B1F404424564">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{E6A052D6-7570-4790-A460-2E83F06A320B}</string>
 					<ProtectedString name="Source"><![CDATA[local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
 local sections = { "Barrier", "Cells", "Nodes", "LoudSpawns", "CombatFlowMap" }
 
@@ -2776,12 +3044,17 @@ return {
 	end,
 }
 ]]></ProtectedString>
+					<string name="ScriptGuid">{7696A6FD-4D3B-4C64-BD8E-6884BA043850}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Main</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBXA4C0841507B248128787522D159CE98A">
+		<Item class="Folder" referent="RBXB044DD2C38EC402696B5333C02FE4098">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2790,14 +3063,9 @@ return {
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBXFB0E14ADD4B14CABBFF0A5C274A0D861">
+			<Item class="ModuleScript" referent="RBXAFD049DDC562434A9C7A4F04344B8FD2">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Actor</string>
-					<string name="ScriptGuid">{7E6A7827-BFAC-4BA5-82AC-0BDA6CABCE35}</string>
 					<ProtectedString name="Source"><![CDATA[local module = {
 	Create = require(script._ActorCreation._Create),
 
@@ -2813,10 +3081,15 @@ return {
 }
 
 return module]]></ProtectedString>
+					<string name="ScriptGuid">{BE43966E-B5D0-4998-AE13-F5D2D3A391A0}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Actor</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="Folder" referent="RBX4BAFD98D503C41359AC4CC6167768F6C">
+				<Item class="Folder" referent="RBXB4D9C9683D204748AC4ABE769EA80451">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -2825,14 +3098,9 @@ return module]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBXE49F414214604B88A8AA2D4256BC1001">
+					<Item class="ModuleScript" referent="RBX034DA429940E40D4B40ACFA3ECDBB68E">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_ActorSpring</string>
-							<string name="ScriptGuid">{AF015E90-AFA7-405D-AF31-3790250B8228}</string>
 							<ProtectedString name="Source"><![CDATA[local AnimRunner = require(script.Parent._Anim)
 
 local numberClose = function(x, y)
@@ -2908,18 +3176,18 @@ return function(follow, force, damping, speed)
 	setmetatable(self, Spring)
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{3936B9D3-8BCC-4D7B-9040-7A403EFADA5D}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_ActorSpring</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBXE51F4E98721F483E85F8BAC12293FC0F">
+					<Item class="ModuleScript" referent="RBX35BEDA261A6545C9B55A8B158F42E7F9">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Anim</string>
-							<string name="ScriptGuid">{3D9A1B05-81B3-4EDD-8928-85C41EBB147D}</string>
 							<ProtectedString name="Source"><![CDATA[local RunService = game:GetService("RunService")
 local Update = require(script.Parent.Parent._ActorState._Update)
 
@@ -2949,91 +3217,91 @@ function Anim:Start(data)
 end
 
 return Anim]]></ProtectedString>
+							<string name="ScriptGuid">{9296CDDA-8387-4081-8F02-9F97336C8A4C}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Anim</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX6DE4ADE506C44D208A1F4767E44E6A0F">
+					<Item class="ModuleScript" referent="RBX926C49C6CBCA4FA09439FB2F1C300FA3">
 						<Properties>
+							<Content name="LinkedSource"><null></null></Content>
+							<ProtectedString name="Source"><![CDATA[local DEFAULT_LINEAR_TRANSITION_RATE = 4
+
+local AnimRunner = require(script.Parent.Parent._ActorAnim._Anim)
+
+local Cubic = {
+	_Update = function(self)
+		self.T = self._Follow._Value
+		if self._Active then return true end
+		AnimRunner:Start(self)
+	end,
+	_Step = function(self, dt)
+		local shift = dt * self._Speed
+		local done = false
+		if math.abs(self.T - self.P) < shift then
+			self.P = self.T
+			done = true
+		elseif self.P < self.T then
+			self.P += shift
+		else
+			self.P -= shift
+		end
+		local a = self.P
+		self._Value = a * a * (-2 * a + 3)
+		return done
+	end,
+	_GetDependencies = function(self)
+		return { self._Follow }
+	end,
+	_Init = function(self)
+		if self._Initialized then return end
+		self._Initialized = true
+		self._Follow._Dependent[self] = true
+		if self._Follow._Init then
+			self._Follow:_Init()
+		end
+		local a = self._Follow._Value
+		self.P = a -- Position
+		self.T = a -- Target
+		self._Value = a * a * (-2 * a + 3)
+	end
+}
+Cubic.__index = Cubic
+
+return function(follow, speed)
+	local self = {}
+	self._StateType = "_Cubic"
+	self._Active = false
+	self._Follow = follow
+	self._Speed =  DEFAULT_LINEAR_TRANSITION_RATE
+	if speed then
+		self._Speed = self._Speed * speed
+	end
+	self._Temp = follow._Temp
+
+	self._Priority = follow._Priority + 1
+	self._Dependent = {}
+	self._Link = {}
+
+	setmetatable(self, Cubic)
+	return self
+end]]></ProtectedString>
+							<string name="ScriptGuid">{C62EC308-A030-40C9-942F-0F59DD57B5DA}</string>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 							<bool name="DefinesCapabilities">false</bool>
-							<Content name="LinkedSource"><null></null></Content>
 							<string name="Name">_Cubic</string>
-							<string name="ScriptGuid">{199103F0-1ED6-4692-AA8B-E33C9BBC7DC9}</string>
-							<ProtectedString name="Source"><![CDATA[local DEFAULT_LINEAR_TRANSITION_RATE = 4
-
-local AnimRunner = require(script.Parent.Parent._ActorAnim._Anim)
-
-local Cubic = {
-	_Update = function(self)
-		self.T = self._Follow._Value
-		if self._Active then return true end
-		AnimRunner:Start(self)
-	end,
-	_Step = function(self, dt)
-		local shift = dt * self._Speed
-		local done = false
-		if math.abs(self.T - self.P) < shift then
-			self.P = self.T
-			done = true
-		elseif self.P < self.T then
-			self.P += shift
-		else
-			self.P -= shift
-		end
-		local a = self.P
-		self._Value = a * a * (-2 * a + 3)
-		return done
-	end,
-	_GetDependencies = function(self)
-		return { self._Follow }
-	end,
-	_Init = function(self)
-		if self._Initialized then return end
-		self._Initialized = true
-		self._Follow._Dependent[self] = true
-		if self._Follow._Init then
-			self._Follow:_Init()
-		end
-		local a = self._Follow._Value
-		self.P = a -- Position
-		self.T = a -- Target
-		self._Value = a * a * (-2 * a + 3)
-	end
-}
-Cubic.__index = Cubic
-
-return function(follow, speed)
-	local self = {}
-	self._StateType = "_Cubic"
-	self._Active = false
-	self._Follow = follow
-	self._Speed =  DEFAULT_LINEAR_TRANSITION_RATE
-	if speed then
-		self._Speed = self._Speed * speed
-	end
-	self._Temp = follow._Temp
-
-	self._Priority = follow._Priority + 1
-	self._Dependent = {}
-	self._Link = {}
-
-	setmetatable(self, Cubic)
-	return self
-end]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBXAA982F5D777C4C73867EC5F8075D9BB4">
+					<Item class="ModuleScript" referent="RBX2AEDB1ED6AA24E45B8176E9376111D17">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Linear</string>
-							<string name="ScriptGuid">{B2248123-4A30-4F51-9291-7C6D88A052A4}</string>
 							<ProtectedString name="Source"><![CDATA[local DEFAULT_LINEAR_TRANSITION_RATE = 4
 
 local AnimRunner = require(script.Parent.Parent._ActorAnim._Anim)
@@ -3095,12 +3363,17 @@ return function(follow, speed)
 	setmetatable(self, Cubic)
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{1657EE13-2966-4D31-94D6-003003B3968C}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Linear</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX83F57A91A38C4C66B797A5C14B2D5510">
+				<Item class="Folder" referent="RBX2738200851A8400DA6908ADB14E4A575">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3109,14 +3382,9 @@ end]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX6B530D589B7646D6850E7F5861F2A105">
+					<Item class="ModuleScript" referent="RBX6003BDC048A6454E8F4E1CAD1626E7E7">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Create</string>
-							<string name="ScriptGuid">{E9429F23-229A-452D-84E7-2663175EADBD}</string>
 							<ProtectedString name="Source"><![CDATA[local TABLE = "table"
 local SCRIPT_SIGNAL = "RBXScriptSignal"
 local INST = "Instance"
@@ -3213,18 +3481,18 @@ return function(className, props, children, autoCleanup)
 
 	return instance
 end]]></ProtectedString>
+							<string name="ScriptGuid">{88C70D30-D90F-4B65-8799-A943F98DDC3F}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Create</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX27832C7001AE411FB5DDE62492FF8677">
+					<Item class="ModuleScript" referent="RBX9D0F767441AD4A32BA51406064F8EC8B">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_HandleStateCleanup</string>
-							<string name="ScriptGuid">{C806F303-E1C7-499B-BCD2-08E4454F2E9B}</string>
 							<ProtectedString name="Source"><![CDATA[local cleanup
 cleanup = function(state)
 	if state.Debug then
@@ -3243,12 +3511,17 @@ cleanup = function(state)
 end
 
 return cleanup]]></ProtectedString>
+							<string name="ScriptGuid">{2712EE74-E6E8-40F5-9B9A-F93653A27E83}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_HandleStateCleanup</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBXDA9028D6748D4F4F94CFB2AA70F59D57">
+				<Item class="Folder" referent="RBX16F21ABFF1FB4B61A711AFC66E989EA9">
 					<Properties>
 						<BinaryString name="AttributesSerialize"></BinaryString>
 						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3257,14 +3530,9 @@ return cleanup]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX330763DB955043A796D768F5639D12D3">
+					<Item class="ModuleScript" referent="RBX60BBBEF333434DA98AF488A09A15EB9D">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Derived</string>
-							<string name="ScriptGuid">{FDED2B84-1741-4FEE-91FB-0088B5A88C34}</string>
 							<ProtectedString name="Source"><![CDATA[local Derived = {
 	_Update = function(self)
 		local values = {}
@@ -3317,18 +3585,18 @@ return function(eval, ...)
 	setmetatable(self, Derived)
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{D2ADBE84-AE9B-4BF7-8E90-B1257B8F114A}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Derived</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX7B27041B7C344511938EC85B1FB94F56">
+					<Item class="ModuleScript" referent="RBX4D76FF6D1D7E4FBCB3359091C9E11E62">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_DerivedTable</string>
-							<string name="ScriptGuid">{57EF1A94-3FC4-426E-A5C4-9BE87D05423B}</string>
 							<ProtectedString name="Source"><![CDATA[local DerivedTable = {
 	_Update = function(self)
 		local changed = false
@@ -3396,18 +3664,18 @@ return function(eval, input, onAdd, onRemove)
 	setmetatable(self, DerivedTable)
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{C5A847A5-B24C-44A4-B420-352817519730}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_DerivedTable</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX1F36818A326940E7B46CA5CD852A724C">
+					<Item class="ModuleScript" referent="RBX032305CF304D48258E3A612AD2BF8DC0">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_State</string>
-							<string name="ScriptGuid">{A72B8EFB-9DEE-4C05-A6F9-99F757E63940}</string>
 							<ProtectedString name="Source"><![CDATA[local Update = require(script.Parent:WaitForChild("_Update"))
 
 local State = {
@@ -3433,18 +3701,18 @@ return function(value)
 	setmetatable(self, State)
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{07010653-0598-4BDD-BEEF-2D5B4EB1199C}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_State</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX4F228B6198904973B7EAFBF638BD1041">
+					<Item class="ModuleScript" referent="RBX3A396D314F864F42B289B762B4857E7E">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Update</string>
-							<string name="ScriptGuid">{309E8EEC-FFE7-4E3B-B17F-62BCB1B2C5AB}</string>
 							<ProtectedString name="Source"><![CDATA[return function(base)
 	local list = {}
 
@@ -3479,18 +3747,18 @@ end]]></ProtectedString>
 		best = next(list)
 	end
 end]]></ProtectedString>
+							<string name="ScriptGuid">{86F14C9A-68B5-437D-90F3-197FC7B7212B}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Update</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBXA4F8371A3F2E4B4890594184023E5476">
+					<Item class="ModuleScript" referent="RBXED7E624B407D4BB9B3565742D2EEC585">
 						<Properties>
-							<BinaryString name="AttributesSerialize"></BinaryString>
-							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-							<bool name="DefinesCapabilities">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
-							<string name="Name">_Watch</string>
-							<string name="ScriptGuid">{8E91DF3A-0381-4576-A9E5-175D8D18E93F}</string>
 							<ProtectedString name="Source"><![CDATA[local Watch = {
 	_Update = function(self)
 		local values = {}
@@ -3545,38 +3813,38 @@ return function(eval, ...)
 
 	return self
 end]]></ProtectedString>
+							<string name="ScriptGuid">{06A28A27-A9D7-4CDE-A4BE-FEBAF8129EB2}</string>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">_Watch</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="ModuleScript" referent="RBXDF6893FB9E4F45E3828940802B576B7B">
+				<Item class="ModuleScript" referent="RBXAEFF989C5C3A4EC4A2F3B9E55CB795AD">
 					<Properties>
-						<BinaryString name="AttributesSerialize"></BinaryString>
-						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-						<bool name="DefinesCapabilities">false</bool>
 						<Content name="LinkedSource"><null></null></Content>
-						<string name="Name">_OnChange</string>
-						<string name="ScriptGuid">{DD76191E-C54C-4DF6-9EE3-B85AD6994526}</string>
 						<ProtectedString name="Source"><![CDATA[return function(prop)
 	return {
 		_OnChange = true,
 		_Property = prop,
 	}
 end]]></ProtectedString>
+						<string name="ScriptGuid">{2AA5AA79-4794-47BB-8A28-DA68EA7D23A3}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">_OnChange</string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX5B7D69BC83CD408290B3149B923972CE">
+			<Item class="ModuleScript" referent="RBXEAACE72F86204C21BBAEDEC70D6D4106">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">AxisAlign</string>
-					<string name="ScriptGuid">{1C7A7BEA-CFDF-45F8-A91A-E0A07FF74B38}</string>
 					<ProtectedString name="Source"><![CDATA[local AxisAlign = {}
 
 local VECTOR_UP = Vector3.new(0, 1, 0)
@@ -3626,18 +3894,18 @@ end
 
 return AxisAlign
 ]]></ProtectedString>
+					<string name="ScriptGuid">{A9D1C0AE-C97B-43B7-94C1-67B52EADB098}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">AxisAlign</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX0A9526411DE54BDA9B6C13C7146BE786">
+			<Item class="ModuleScript" referent="RBX15A00D75C8F549778DDE3F0889FA41E5">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Button</string>
-					<string name="ScriptGuid">{27A51676-1460-46BC-BA0F-A5656145F982}</string>
 					<ProtectedString name="Source"><![CDATA[local Actor = require(script.Parent.Actor)
 local Create = Actor.Create
 local State = Actor.State
@@ -3668,18 +3936,18 @@ return function(props)
 		AnchorPoint = props.AnchorPoint
 	})
 end]]></ProtectedString>
+					<string name="ScriptGuid">{EF4B093D-C3BF-4BE9-8A2F-057A518F47FB}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Button</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX04339C5554EF4A0EBCD04BFC6832E47D">
+			<Item class="ModuleScript" referent="RBXDC7B4721985A42509C1E42129EDDBCA4">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">VisibilityToggle</string>
-					<string name="ScriptGuid">{B0AB8C38-9F44-45A5-80B1-745E1726F07A}</string>
 					<ProtectedString name="Source"><![CDATA[local STASH_LINK_NAME = "StashLink"
 
 local module = {}
@@ -3750,18 +4018,18 @@ end
 
 return module
 ]]></ProtectedString>
+					<string name="ScriptGuid">{9541E1F0-3F26-4362-B9CD-3DC9EBBEF151}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">VisibilityToggle</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX5F381195A6354861B531BF7AD556ACC1">
+			<Item class="ModuleScript" referent="RBX5CC60B147BAC4C6CAA88844D622306DE">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">ZoneUtil</string>
-					<string name="ScriptGuid">{16F891E3-E1E2-4830-B3CC-B51C1943DDE6}</string>
 					<ProtectedString name="Source"><![CDATA[local ZoneUtil = {}
 
 function ZoneUtil.InZone(zone, pos)
@@ -3797,12 +4065,17 @@ function ZoneUtil.GetZone(pos)
 end
 
 return ZoneUtil]]></ProtectedString>
+					<string name="ScriptGuid">{8B8CA9A9-5D1A-48C4-8035-7BFD1FBF1FF9}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">ZoneUtil</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Folder" referent="RBX0892981D76844882A14634496FA08B73">
+		<Item class="Folder" referent="RBX68DE5C1E2AD344CF9425378A457F3DD9">
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
@@ -3811,14 +4084,9 @@ return ZoneUtil]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ModuleScript" referent="RBX5A80F6EBC47A471683E730D78C5EED43">
+			<Item class="ModuleScript" referent="RBX1485011AB20F4AF39A3137137EACB2B6">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">GetZone</string>
-					<string name="ScriptGuid">{4E8B8D9C-56D2-4ACB-96DB-952274F75200}</string>
 					<ProtectedString name="Source"><![CDATA[return function(pos)
 	local LevelBase = workspace:FindFirstChild("DebugMission") or workspace:FindFirstChild("Level")
 	for _, zone in pairs(LevelBase.Cells:GetChildren()) do
@@ -3842,18 +4110,18 @@ return ZoneUtil]]></ProtectedString>
 		end
 	end
 end]]></ProtectedString>
+					<string name="ScriptGuid">{7CF5BF20-1EF1-414A-B7A6-AFB0A1C1924C}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">GetZone</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX1C22EE0A941A4A6BAAF5D21603B8931D">
+			<Item class="ModuleScript" referent="RBX2D2709449C4B4C699B806F3BFC0B9CAE">
 				<Properties>
-					<BinaryString name="AttributesSerialize"></BinaryString>
-					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-					<bool name="DefinesCapabilities">false</bool>
 					<Content name="LinkedSource"><null></null></Content>
-					<string name="Name">Main</string>
-					<string name="ScriptGuid">{8DC11A66-6EB3-4AA4-8091-A17FDD455EE3}</string>
 					<ProtectedString name="Source"><![CDATA[local AxisAlign = require(script.Parent.Parent.Util.AxisAlign)
 local GetZone = require(script.Parent.GetZone)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
@@ -4121,272 +4389,11 @@ return {
 		end
 	end,
 }]]></ProtectedString>
-					<int64 name="SourceAssetId">-1</int64>
-					<BinaryString name="Tags"></BinaryString>
-				</Properties>
-			</Item>
-		</Item>
-		<Item class="Folder" referent="RBXD9F7E76BD0ED436E8F6D5BD4BD5169CF">
-			<Properties>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">AttributeSearch</string>
-				<int64 name="SourceAssetId">-1</int64>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-			<Item class="ModuleScript" referent="RBXA529E4215F4B487C84C613A464B665F6">
-				<Properties>
+					<string name="ScriptGuid">{783A691B-6483-4700-B44F-14FB2C0E4657}</string>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 					<bool name="DefinesCapabilities">false</bool>
-					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Main</string>
-					<string name="ScriptGuid">{E3C6A825-44D5-4DAA-85B0-E3F4315AA60C}</string>
-					<ProtectedString name="Source"><![CDATA[local Actor = require(script.Parent.Parent.Util.Actor)
-local Create = Actor.Create
-local State = Actor.State
-local Derived = Actor.Derived
-local DerivedTable = Actor.DerivedTable
-local OnChange = Actor.OnChange
-local Watch = Actor.Watch
-
-local module = {}
-
-local ROW_HEIGHT = 20
-
-local SearchText = State("")
-local SearchResults = Derived(function(text)
-	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
-		return {}
-	end
-	local results = {}
-
-	local missionModule = require(workspace.DebugMission.MissionSetup:Clone())
-	local match = {}
-
-	local function searchTable(prefix, tbl)
-		for field, value in tbl do
-			if value == "" then
-				continue
-			end
-			if typeof(value) == "string" then
-				if (typeof(field) == "string" and field:lower():match(text)) or value:lower():match(text) then
-					local entry = if prefix then `{prefix}.{field}` else field
-					match[entry] = value
-				end
-			elseif typeof(value) == "table" then
-				local entry = if prefix then `{prefix}.{field}` else field
-				searchTable(entry, value)
-			end
-		end
-	end
-	searchTable(nil, missionModule)
-
-	if next(match) then
-		results[workspace.DebugMission.MissionSetup] = match
-		match = {}
-	end
-
-	for _, instance in workspace.DebugMission:GetDescendants() do
-		local attributes = instance:GetAttributes()
-		if not next(attributes) then
-			continue
-		end
-
-		for k, v in attributes do
-			if v ~= "" and k:lower() == text or typeof(v) == "string" and v:lower():match(text) then
-				match[k] = tostring(v)
-			end
-		end
-
-		if next(match) then
-			results[instance] = match
-			match = {}
-		end
-	end
-	return results
-end, SearchText)
-
-module.PropMarkers = {}
-local function ClearPropMarkers()
-	for _, p in module.PropMarkers do
-		p:Destroy()
-	end
-	module.PropMarkers = {}
-end
-local function UpdatePropMarkers(list)
-	ClearPropMarkers()
-	for k in list do
-		if k:IsA("BasePart") then
-			table.insert(
-				module.PropMarkers,
-				Create("BillboardGui", {
-					Archivable = false,
-					Parent = game.StarterGui,
-					Adornee = k,
-					Size = UDim2.new(0, 20, 0, 20),
-					AlwaysOnTop = true,
-				}, {
-					Create("Frame", {
-						Size = UDim2.new(0, 20, 0, 20),
-						BorderSizePixel = 0,
-						BackgroundColor3 = Color3.new(1, 1, 1),
-					}, {
-						Create("UICorner", {
-							CornerRadius = UDim.new(0.5, 0),
-						}),
-					}),
-				})
-			)
-		end
-	end
-end
-Watch(UpdatePropMarkers, SearchResults)
-
-local function ListEntry(instance, fields)
-	local fieldCount = 0
-	local contents = {
-		Create("TextLabel", {
-			Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
-			Position = UDim2.new(0, 0, 0, 0),
-			Text = instance.Name,
-			BackgroundTransparency = 1,
-			TextColor3 = Color3.new(1, 1, 1),
-		}),
-	}
-
-	for k, v in fields do
-		table.insert(
-			contents,
-			Create(
-				"TextLabel",
-				{
-					Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
-					Position = UDim2.new(0, 200, 0, ROW_HEIGHT * fieldCount),
-					Text = k,
-					TextXAlignment = Enum.TextXAlignment.Right,
-					BackgroundTransparency = 1,
-					TextColor3 = Color3.new(1, 1, 1),
-				},
-				Create("UIPadding", {
-					PaddingRight = UDim.new(0, 10),
-				})
-			)
-		)
-		table.insert(
-			contents,
-			Create("TextLabel", {
-				Size = UDim2.new(0, 0, 0, ROW_HEIGHT),
-				Position = UDim2.new(0, 400, 0, ROW_HEIGHT * fieldCount),
-				AutomaticSize = Enum.AutomaticSize.X,
-				Text = tostring(v):gsub("\n", "   "),
-				BackgroundTransparency = 0.6,
-				TextColor3 = Color3.new(1, 1, 1),
-				BackgroundColor3 = Color3.new(0, 0, 0),
-				TextXAlignment = Enum.TextXAlignment.Left,
-				BorderSizePixel = 0,
-			}, {
-				Create("UIPadding", {
-					PaddingRight = UDim.new(0, 10),
-					PaddingLeft = UDim.new(0, 10),
-				}),
-			})
-		)
-		fieldCount += 1
-	end
-
-	local layoutOrder = 0
-	if instance.Name ~= "MissionSetup" then
-		layoutOrder = 1000 * string.byte(instance.Name:lower(), 1, 1) + string.byte(instance.Name:lower(), 2, 2)
-	end
-
-	return Create("TextButton", {
-		Size = UDim2.new(0, 400, 0, fieldCount * ROW_HEIGHT),
-		Text = "",
-		BackgroundTransparency = 0.3,
-		BackgroundColor3 = Color3.new(0, 0, 0),
-		BorderSizePixel = 0,
-		LayoutOrder = layoutOrder,
-		Activated = function()
-			game.Selection:Set({ instance })
-		end,
-	}, contents)
-end
-
-local lastTextChange = 0
-function module.Init(mouse: PluginMouse)
-	if module.Active then
-		return
-	end
-	module.Active = true
-	UpdatePropMarkers(SearchResults._Value)
-
-	local searchBox
-	searchBox = Create("TextBox", {
-		Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
-		PlaceholderText = "Search Attribute",
-		BackgroundTransparency = 0.5,
-		BorderSizePixel = 0,
-		BackgroundColor3 = Color3.new(),
-		PlaceholderColor3 = Color3.new(0.8, 0.8, 0.8),
-		TextColor3 = Color3.new(1, 1, 1),
-		Text = SearchText._Value,
-		ClearTextOnFocus = false,
-		[OnChange("Text")] = function()
-			lastTextChange += 1
-			local clock = lastTextChange
-			task.delay(1, function()
-				if clock == lastTextChange then
-					SearchText:set(searchBox.Text:lower())
-				end
-			end)
-		end,
-		FocusLost = function()
-			SearchText:set(searchBox.Text)
-		end,
-	})
-
-	module.UI = Create("ScreenGui", {
-		Parent = game.CoreGui,
-		Archivable = false,
-	}, {
-		Create("Frame", {
-			Size = UDim2.new(1, -100, 1, -100),
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			BackgroundTransparency = 1,
-		}, {
-			searchBox,
-			Create("ScrollingFrame", {
-				Size = UDim2.new(1, 0, 1, -ROW_HEIGHT * 1.5),
-				Position = UDim2.new(0, 0, 1, 0),
-				AnchorPoint = Vector2.new(0, 1),
-				BackgroundTransparency = 1,
-				BorderSizePixel = 0,
-				CanvasSize = UDim2.new(0, 0, 0, 0),
-				AutomaticCanvasSize = Enum.AutomaticSize.Y,
-			}, {
-				Create("UIListLayout", {
-					SortOrder = Enum.SortOrder.LayoutOrder,
-				}),
-				DerivedTable(ListEntry, SearchResults),
-			}),
-		}),
-	})
-end
-
-function module.Clean()
-	module.Active = false
-	ClearPropMarkers()
-	if module.UI then
-		module.UI:Destroy()
-		module.UI = nil
-	end
-end
-
-return module
-]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>

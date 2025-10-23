@@ -31,6 +31,7 @@ local GlobalPropAttributes = {
 	AltPropModel = { PropAttributeTypes.STRING, nil },
 	FadeOutCondition = { PropAttributeTypes.STRING, nil },
 	CollisionGroup = { PropAttributeTypes.STRING, nil },
+	TagButton = { PropAttributeTypes.EXPRESSION, nil },
 }
 
 local testAttributeCompatibility = function(attributeType, value, objectName, attributeName)

@@ -36,6 +36,7 @@ return {
 		MinimumCard = {AttributeType.STRING, ""},
 		LightLevel = {AttributeType.INT, 1},
 		Blocked = {AttributeType.EXPRESSION, ""},
+		LockdownReason = {AttributeType.EXPRESSION, nil},
 	},
 	CeilingAccessPoint = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
@@ -90,6 +91,8 @@ return {
 		CodeSeed = {AttributeType.INT, 1},
 	},
 	CombatCuttableFence = {
+	},
+	CustomMissionLoadPoint = {
 	},
 	DecorativeDepositBox1 = {
 		IncludeSidePart = {AttributeType.BOOL, true},
@@ -180,6 +183,7 @@ return {
 		DetectionSpeed = {AttributeType.NUMBER, 1},
 		LocationKey = {AttributeType.STRING, ""},
 		MapFloorOffset = {AttributeType.INT, 0},
+		WarpPoint = {AttributeType.STRING, nil},
 	},
 	DoorCombatSpawn = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -229,6 +233,8 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DoorMetal = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -256,6 +262,8 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DoorMetalElectronic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -281,6 +289,8 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DoorPushLeft = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -306,6 +316,7 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
 	},
 	DoorWood = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -330,6 +341,8 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DoorWoodElectronic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -354,6 +367,8 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DoubleVaultDoor = {
 		OpenCondition = {AttributeType.EXPRESSION, ""},
@@ -372,6 +387,7 @@ return {
 		DisabledInCombat = {AttributeType.BOOL, false},
 	},
 	EventPumpkin = {
+		CounterVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	FallingLadder = {
 		LiftScale = {AttributeType.NUMBER, 0.8},
@@ -434,9 +450,10 @@ return {
 	Helicopter = {
 		ActiveCondition = {AttributeType.EXPRESSION, ""},
 		StopAttemptDialogue = {AttributeType.STRING, ""},
-		StartupTime = {AttributeType.INT, 60},
+		StartupTime = {AttributeType.EXPRESSION, 60},
 		ProgressVariable = {AttributeType.STATE_VALUE, ""},
 		PoliceShutdownVariable = {AttributeType.STATE_VALUE, ""},
+		QuadBlade = {AttributeType.BOOL, false},
 	},
 	HiddenWallSafe = {
 		PromptVisible = {AttributeType.EXPRESSION, ""},
@@ -458,8 +475,8 @@ return {
 		SafeTag = {AttributeType.STRING, ""},
 		HiddenShuffleId = {AttributeType.STRING, ""},
 		Reinforced = {AttributeType.EXPRESSION, ""},
-		ReinforcedColor = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
-		ReinforcedColor2 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
+		ReinforcedColor0 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
+		ReinforcedColor1 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
 	},
 	IndustrialShelvesSmall = {
 		BoxSeed = {AttributeType.INT, 0},
@@ -468,6 +485,7 @@ return {
 	},
 	InteractionBlocker = {
 		ServerActive = {AttributeType.EXPRESSION, "1"},
+		ClientActive = {AttributeType.EXPRESSION, nil},
 	},
 	IntroCam = {
 	},
@@ -522,6 +540,7 @@ return {
 		Heavy = {AttributeType.BOOL, true},
 	},
 	LongCoffeeTable = {
+		Seed = {AttributeType.INT, 0},
 	},
 	LootCash = {
 		ItemTagString = {AttributeType.STRING, ""},
@@ -623,8 +642,14 @@ return {
 		DetectionSpeed = {AttributeType.NUMBER, 1},
 		LocationKey = {AttributeType.STRING, ""},
 		MapFloorOffset = {AttributeType.INT, 0},
+		CycleTime = {AttributeType.NUMBER, 0},
+		WarpPoint = {AttributeType.STRING, nil},
 	},
 	ServerRack = {
+		CanPickup = {AttributeType.BOOL, false},
+		ItemTagString = {AttributeType.STRING, ""},
+		PickupVariable = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.STRING, ""},
 	},
 	ServerRackWideTerminal = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
@@ -697,6 +722,10 @@ return {
 		UpdateFrequency = {AttributeType.NUMBER, 1},
 	},
 	TutorialText = {
+		HorizontalOffset = {AttributeType.NUMBER, 0.5},
+		VerticalOffset = {AttributeType.NUMBER, 0.5},
+		Text = {AttributeType.STRING, ""},
+		Visible = {AttributeType.EXPRESSION, 1},
 	},
 	Van = {
 		IsOpen = {AttributeType.EXPRESSION, ""},
@@ -745,6 +774,7 @@ return {
 	WoodChair = {
 	},
 	WoodShootingTarget = {
+		TargetDownVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	WoodTargetWithSensor = {
 	},
@@ -784,13 +814,12 @@ return {
 		RewireEnabled = {AttributeType.EXPRESSION, ""},
 	},
 	Cabinet = {
+		BodyHiddenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	ConditionalHighJumpRequired = {
 		Climber3Condition = {AttributeType.EXPRESSION, 1},
 		Color = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(0, 0, 0)},
 		Material = {AttributeType.STRING, "Plastic"},
-	},
-	CustomMissionLoadPoint = {
 	},
 	CustomReportPoint = {
 		Hidden = {AttributeType.BOOL, false},
@@ -823,6 +852,7 @@ return {
 		WarpPointId = {AttributeType.STRING, ""},
 	},
 	EscapeZone = {
+		Active = {AttributeType.EXPRESSION, ""},
 	},
 	FlowStart = {
 	},
@@ -849,6 +879,7 @@ return {
 		OmniDir = {AttributeType.BOOL, false},
 	},
 	GuardCombatNode = {
+		BotTag = {AttributeType.STRING, nil},
 	},
 	init = {
 	},
@@ -973,6 +1004,7 @@ return {
 		PowerArea = {AttributeType.STRING, ""},
 		DetectSabotage = {AttributeType.BOOL, true},
 		DamagedVariable = {AttributeType.STATE_VALUE, ""},
+		Health = {AttributeType.INT, 0},
 	},
 	RandomBotSpawnLocation = {
 		StartingSpawnOnly = {AttributeType.BOOL, false},
@@ -1272,6 +1304,8 @@ return {
 		FailedVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	NetworkRouter = {
+		NetworkId = {AttributeType.NETWORK_ID, 999},
+		NetworkLink = {AttributeType.NETWORK_ID_STRING, ""},
 	},
 	Notification = {
 		Condition = {AttributeType.EXPRESSION, ""},
@@ -1311,6 +1345,11 @@ return {
 		BotServerTag = {AttributeType.STRING, ""},
 	},
 	ServerChat = {
+		Active = {AttributeType.EXPRESSION, ""},
+		Dialogue = {AttributeType.STRING, ""},
+		Delay = {AttributeType.NUMBER, 0},
+		Chance = {AttributeType.NUMBER, 1},
+		TriggerOnce = {AttributeType.BOOL, false},
 	},
 	SniperSpawner = {
 		Active = {AttributeType.EXPRESSION, ""},
@@ -1342,6 +1381,7 @@ return {
 		Active = {AttributeType.EXPRESSION, ""},
 	},
 	BlackoutScreen = {
+		Active = {AttributeType.EXPRESSION, ""},
 	},
 	FileUITrigger = {
 		Trigger = {AttributeType.EXPRESSION, ""},
@@ -1350,6 +1390,11 @@ return {
 	GameCredits = {
 	},
 	HackingNodeHighlight = {
+		HackDesc = {AttributeType.STRING, ""},
+		Active = {AttributeType.EXPRESSION, ""},
+		IncludeTraversal = {AttributeType.BOOL, false},
+		NodeId = {AttributeType.NETWORK_ID, 0},
+		ObjectiveType = {AttributeType.INT, 1},
 	},
 	LocalChat = {
 		DelayStart = {AttributeType.NUMBER, 0},
@@ -1361,8 +1406,14 @@ return {
 	LocalStateComponents = {
 	},
 	LocalWeaponTracker = {
+		TotalAmmoVariable = {AttributeType.STATE_VALUE, ""},
+		LoadedAmmoVariable = {AttributeType.STATE_VALUE, ""},
+		HoldingWeaponVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	LocationCard = {
+		Subtitle = {AttributeType.STRING, ""},
+		Title = {AttributeType.STRING, ""},
+		Active = {AttributeType.EXPRESSION, ""},
 	},
 	MusicController = {
 		ActivePriority = {AttributeType.EXPRESSION, "1"},
@@ -1370,5 +1421,6 @@ return {
 		NoLoop = {AttributeType.BOOL, false},
 		Volume = {AttributeType.NUMBER, 0.5},
 		MusicType = {AttributeType.STRING, Stealth},
+		PersistOnReload = {AttributeType.BOOL, false},
 	},
 }
