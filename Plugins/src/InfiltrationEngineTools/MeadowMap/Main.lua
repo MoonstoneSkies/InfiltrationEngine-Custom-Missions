@@ -24,7 +24,9 @@ local function CloseZone()
 end
 
 local function CheckLOS(p0, p1)
-	if p0 == p1 then return false end
+	if p0 == p1 then
+		return false
+	end
 	local result = workspace:Raycast(p0.Position + Vector3.new(0, 0.75, 0), p1.Position - p0.Position)
 	return not result or result.Instance == p1
 end
@@ -34,14 +36,14 @@ local function AddLink(p0, p1)
 	l0.Size = Vector3.new(0.4, 0.4, (p0.Position - p1.Position).magnitude / 2)
 	l0.Transparency = 0.5
 	local l1 = l0:Clone()
-	
+
 	l0.CFrame = CFrame.new(p0.Position * 0.75 + p1.Position * 0.25, p0.Position)
 	if not CurrentMap[p0][p1] then
 		CurrentMap[p0][p1] = l0
 		l0.BrickColor = BrickColor.new("Bright blue")
 		l0.Parent = CurrentModel
 	end
-	
+
 	l1.CFrame = CFrame.new(p1.Position * 0.75 + p0.Position * 0.25, p1.Position)
 	if not CurrentMap[p1][p0] then
 		CurrentMap[p1][p0] = l1
@@ -74,7 +76,9 @@ local function CreateNode(pos, placed, generateLinks)
 	p.Parent = CurrentModel
 	p.CFrame = CFrame.new(pos)
 	p.BrickColor = BrickColor.new("Bright blue")
-	if placed then p.Transparency = 0.5 end
+	if placed then
+		p.Transparency = 0.5
+	end
 	CurrentMap[p] = {}
 	if generateLinks then
 		for node in pairs(CurrentMap) do
@@ -96,18 +100,26 @@ local function OpenZone(newZone)
 		if prop.Name:match("Door") then
 			local p0 = (prop.CFrame * CFrame.new(0, -3, DOOR_BUFFER)).p
 			local p1 = (prop.CFrame * CFrame.new(0, -3, -DOOR_BUFFER)).p
-			if ZoneUtil.InZone(newZone, p0) then table.insert(DoorNodes, p0) end
-			if ZoneUtil.InZone(newZone, p1) then table.insert(DoorNodes, p1) end
+			if ZoneUtil.InZone(newZone, p0) then
+				table.insert(DoorNodes, p0)
+			end
+			if ZoneUtil.InZone(newZone, p1) then
+				table.insert(DoorNodes, p1)
+			end
 		end
 	end
-	
+
 	if workspace.DebugMission.Cells:FindFirstChild("Links") then
 		for _, link in pairs(workspace.DebugMission.Cells.Links:GetChildren()) do
 			if link:GetAttribute("Path") then
 				local p0 = (link.CFrame * CFrame.new(0, 0.5, DOOR_BUFFER)).p
 				local p1 = (link.CFrame * CFrame.new(0, 0.5, -DOOR_BUFFER)).p
-				if ZoneUtil.InZone(newZone, p0) then table.insert(DoorNodes, p0) end
-				if ZoneUtil.InZone(newZone, p1) then table.insert(DoorNodes, p1) end
+				if ZoneUtil.InZone(newZone, p0) then
+					table.insert(DoorNodes, p0)
+				end
+				if ZoneUtil.InZone(newZone, p1) then
+					table.insert(DoorNodes, p1)
+				end
 			end
 		end
 	end
@@ -120,7 +132,7 @@ local function OpenZone(newZone)
 	for _, pos in pairs(DoorNodes) do
 		CreateNode(pos, false, true)
 	end
-	
+
 	--[[if CurrentZone:GetAttribute("Path") then
 		local data = HttpService:JSONDecode(CurrentZone:GetAttribute("Path"))
 		if data.Placed then
@@ -135,17 +147,19 @@ local function OpenZoneWithoutRegenerating(newZone)
 	if CurrentZone then
 		CloseZone()
 	end
-	
+
 	CurrentModel = Instance.new("Model")
 	CurrentModel.Parent = workspace
 	CurrentMap = {}
 	CurrentZone = newZone
 
+	game.Selection:Set({ newZone })
+
 	if not CurrentZone:GetAttribute("Path") then
 		print("Doing first time generation for zone")
 		return OpenZone(newZone)
 	end
-		
+
 	local data = HttpService:JSONDecode(CurrentZone:GetAttribute("Path"))
 	local PlacedNodes = {}
 	if data.Placed then
@@ -154,14 +168,14 @@ local function OpenZoneWithoutRegenerating(newZone)
 			PlacedNodes[node] = true
 		end
 	end
-	
+
 	local NodeParts = {}
 	for _, node in pairs(data.Node) do
 		local pos = Vector3.new(unpack(node))
 		local nodePart = CreateNode(pos, PlacedNodes[pos], false)
 		table.insert(NodeParts, nodePart)
 	end
-	
+
 	for startIndex, list in data.Link do
 		for _, endIndex in list do
 			AddOneWayLink(NodeParts[startIndex], NodeParts[endIndex])
@@ -200,20 +214,20 @@ local function Serialize()
 	local nodeId = {}
 	local link = {}
 	local placed = {}
-	
+
 	local function getNode(p)
 		if not nodeId[p] then
 			local pos = p.Position
-			node[#node+1] = {pos.X, pos.Y, pos.Z}
+			node[#node + 1] = { pos.X, pos.Y, pos.Z }
 			nodeId[p] = #node
-			
+
 			if p.Transparency > 0.25 then
 				table.insert(placed, node[#node])
 			end
 		end
 		return nodeId[p]
 	end
-	
+
 	for node, linkList in pairs(CurrentMap) do
 		local id = getNode(node)
 		local links = {}
@@ -222,7 +236,7 @@ local function Serialize()
 		end
 		link[id] = links
 	end
-	
+
 	return HttpService:JSONEncode({
 		Node = node,
 		Link = link,
@@ -245,14 +259,14 @@ return {
 		print("R - Remove")
 
 		VisibilityToggle.TempReveal(workspace.DebugMission.Cells)
-		
+
 		UserInputConnection = UserInputService.InputBegan:Connect(function(io)
 			if io.KeyCode == Enum.KeyCode.C then
 				if tick() - LastCTap < 0.5 then
 					LastCTap = 0
 					local zone = ZoneUtil.GetZone(mouse.Hit.p)
-					if zone then 
-						OpenZone(zone) 
+					if zone then
+						OpenZone(zone)
 						Save()
 					end
 				else
@@ -262,15 +276,18 @@ return {
 						if clock ~= LastCTap then
 							return
 						end
-						warn("Double tap C to fully clear and regenerate the meadow map for this room\nThis will remove any manual modifications you've made")
+						warn(
+							"Double tap C to fully clear and regenerate the meadow map for this room\nThis will remove any manual modifications you've made"
+						)
 					end)
 				end
 			elseif io.KeyCode == Enum.KeyCode.T then
 				local zone = ZoneUtil.GetZone(mouse.Hit.p)
-				if zone then 
-					OpenZoneWithoutRegenerating(zone) 
+				if zone then
+					OpenZoneWithoutRegenerating(zone)
 					Save()
 				elseif CurrentZone then
+					warn("Cursor must be in cell to open meadow map")
 					CloseZone()
 				end
 			elseif io.KeyCode == Enum.KeyCode.G then
