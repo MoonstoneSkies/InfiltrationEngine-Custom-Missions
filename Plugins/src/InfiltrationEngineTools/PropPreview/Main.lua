@@ -2,9 +2,6 @@ local PhysicsService = game:GetService("PhysicsService")
 
 local COLLISON_GROUP = "PluginNoCollision"
 
-local ModelFolder = game.ReplicatedStorage:FindFirstChild("Assets")
-ModelFolder = ModelFolder and ModelFolder:FindFirstChild("Props")
-
 local Button = require(script.Parent.Parent.Util.Button)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
@@ -19,6 +16,14 @@ local module = {}
 
 local ColorMap = {}
 local Prop = {}
+
+local ModelFolder = State(false)
+local function UpdateModelFolder()
+	local assetsFolder = game.ReplicatedStorage:FindFirstChild("Assets")
+	ModelFolder:set(
+		assetsFolder and assetsFolder:FindFirstChild("Props") or false
+	)
+end
 
 -- Position/Color
 function module:RepositionProp(part)
@@ -150,7 +155,7 @@ function module:AddProp(basePart)
 	end
 
 	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name)
-		or ModelFolder and ModelFolder:FindFirstChild(basePart.Name)
+		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name)
 	if storedModel then
 		basePart.Transparency = 1
 
@@ -269,24 +274,24 @@ function module:SetEnabled()
 end
 
 local SearchText = State("")
-local SearchResults = Derived(function(text, customProps)
+local SearchResults = Derived(function(text, customProps, modelFolder)
 	local list = {}
-	if ModelFolder then
-		for _, item in pairs(ModelFolder:GetChildren()) do
+	if modelFolder then
+		for _, item in pairs(modelFolder:GetChildren()) do
 			if string.lower(item.Name):match(string.lower(text)) then
 				table.insert(list, item.Name)
 			end
 		end
 		if customProps then
 			for _, item in customProps:GetChildren() do
-				if not ModelFolder:FindFirstChild(item.Name) and string.lower(item.Name):match(string.lower(text)) then
+				if not modelFolder:FindFirstChild(item.Name) and string.lower(item.Name):match(string.lower(text)) then
 					table.insert(list, item.Name)
 				end
 			end
 		end
 	end
 	return list
-end, SearchText, CustomPropsFolder)
+end, SearchText, CustomPropsFolder, ModelFolder)
 
 function module:SetDisabled()
 	if not self.Enabled then
@@ -301,11 +306,16 @@ function module:SetDisabled()
 	end
 	self.AddEvents = nil
 
-	PhysicsService:RemoveCollisionGroup(COLLISON_GROUP)
+	PhysicsService:UnregisterCollisionGroup(COLLISON_GROUP)
 
 	for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 		module:RemoveProp(prop)
 	end
+end
+
+local function ReplicatedStorageChildrenChanged(child: Instance)
+	if not child:IsA("Model") then return end
+	if child.Name == "Assets" then UpdateModelFolder() end
 end
 
 -- Init/Cleanup
@@ -314,6 +324,19 @@ module.Init = function(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
+	
+	if not module.ReplicatedChildAddedConnection then
+		module.ReplicatedChildAddedConnection = game.ReplicatedStorage.ChildAdded:Connect(ReplicatedStorageChildrenChanged)
+	end
+	
+	if not module.ReplicatedChildRemovedConnection then
+		module.ReplicatedChildRemovedConnection = game.ReplicatedStorage.ChildRemoved:Connect(ReplicatedStorageChildrenChanged)
+	end
+	
+	UpdateModelFolder()
+	if not ModelFolder._Value then
+		warn("No Assets folder found! Please read the Quick Start guide found here:\n\thttps://github.com/MoonstoneSkies/InfiltrationEngine-Custom-Missions/blob/main/README.md")
+	end
 
 	CustomPropsFolder:set(
 		workspace:FindFirstChild("DebugMission") and workspace.DebugMission:FindFirstChild("CustomProps") or false
@@ -371,7 +394,7 @@ module.Init = function(mouse: PluginMouse)
 					Enabled = State(false),
 					Activated = function()
 						local model = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(value)
-							or ModelFolder[value]
+							or ModelFolder._Value and ModelFolder._Value[value]
 						local base = model and model:FindFirstChild("Base")
 						if base then
 							local prop = base:Clone()
@@ -393,6 +416,16 @@ module.Clean = function()
 		return
 	end
 	module.Active = false
+
+	if module.ReplicatedChildAddedConnection then
+		module.ReplicatedChildAddedConnection:Disconnect()
+		module.ReplicatedChildAddedConnection = nil
+	end
+	
+	if module.ReplicatedChildRemovedConnection then 
+		module.ReplicatedChildRemovedConnection:Disconnect()
+		module.ReplicatedChildRemovedConnection = nil
+	end
 
 	module.UI:Destroy()
 	module.UI = nil
