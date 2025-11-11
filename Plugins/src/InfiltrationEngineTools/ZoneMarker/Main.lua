@@ -43,8 +43,8 @@ local function CreateTempDoorFolder()
 	doorsFolderTemp.Name = "CellMarkerDoorsTemp"
 	doorsFolderTemp.Parent = workspace
 
-	for _, prop in pairs(propFolder:GetChildren()) do
-		if prop.Name:find("Door") == nil then continue end
+	for _, prop in pairs(propFolder:GetDescendants()) do
+		if prop.Name:find("Door") == nil or not prop:IsA("BasePart") then continue end
 		local tempDoor = prop:Clone()
 		tempDoor.Parent = doorsFolderTemp
 	end
