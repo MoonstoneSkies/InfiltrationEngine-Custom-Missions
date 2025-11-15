@@ -54,6 +54,9 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "CastShadow", "Bool", false },
 		{ "MeshId", "String", "" },
 		{ "TextureID", "String", "" },
+		{ "DoubleSided", "Bool", false },
+		{ "RenderFidelity", "RenderFidelity", "Automatic" },
+		{ "CollisionFidelity", "CollisionFidelity", "Default" }
 	},
 	UnionOperation = {
 		{ "Name", "String", "Part" },

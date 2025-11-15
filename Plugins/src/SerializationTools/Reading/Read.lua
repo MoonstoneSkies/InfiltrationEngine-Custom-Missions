@@ -5,6 +5,8 @@ local Materials = require(script.Parent.Parent.Types.Materials)
 local PartTypes = require(script.Parent.Parent.Types.PartTypes)
 local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
+local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
+local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -196,6 +198,8 @@ Read = {
 	PartType = CreateEnumReader(Enum.PartType, PartTypes),
 	NormalId = CreateEnumReader(Enum.NormalId, NormalId),
 	MeshType = CreateEnumReader(Enum.MeshType, MeshType),
+	RenderFidelity = CreateEnumReader(Enum.RenderFidelity, RenderFidelity),
+	CollisionFidelity = CreateEnumReader(Enum.CollisionFidelity, CollisionFidelity),
 }
 
 return Read
