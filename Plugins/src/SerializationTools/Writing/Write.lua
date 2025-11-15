@@ -5,6 +5,8 @@ local Materials = require(script.Parent.Parent.Types.Materials)
 local PartTypes = require(script.Parent.Parent.Types.PartTypes)
 local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
+local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
+local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -228,6 +230,8 @@ Write = {
 	PartType = CreateEnumWriter(PartTypes),
 	NormalId = CreateEnumWriter(NormalId),
 	MeshType = CreateEnumWriter(MeshType),
+	RenderFidelity = CreateEnumWriter(RenderFidelity),
+	CollisionFidelity = CreateEnumWriter(CollisionFidelity),
 	--[[
 	Material = function(material)
 		return StringConversion.NumberToString(Materials[material.Name], 1)

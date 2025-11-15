@@ -1,3 +1,5 @@
+local InsertService = game:GetService("InsertService")
+
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties)
 local DefaultProperties = require(script.Parent.Parent.Types.DefaultProperties)
@@ -118,6 +120,7 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 		end
 
 		local newInstance = Instance.new("Part")
+		local instanceInitialized = false
 		local meshId = newProperties.MeshId
 		local id = meshId and newProperties.MeshId:match("%d+")
 		if id and #id > 3 then
@@ -134,7 +137,26 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 			for k, v in newProperties do
 				newInstance[k] = v
 			end
-		else
+			instanceInitialized = true
+		elseif meshId then
+			-- CreateMeshPartAsync is likely less reliable than cloning, so prefer using ImportParts when possible
+			local success, instOrReason = pcall(function() 
+				return InsertService:CreateMeshPartAsync(
+					`rbxassetid://{meshId}`,
+					newProperties["CollisionFidelity"] or Enum.CollisionFidelity.Default,
+					newProperties["RenderFidelity"] or Enum.RenderFidelity.Automatic
+				)
+			end)
+			if success then
+				newInstance = instOrReason 
+				for k, v in newProperties do
+					newInstance[k] = v
+				end
+				instanceInitialized = true
+			end
+		end
+
+		if not instanceInitialized then
 			for k, v in newProperties do
 				pcall(function()
 					newInstance[k] = v
