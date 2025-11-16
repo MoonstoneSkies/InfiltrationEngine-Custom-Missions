@@ -1,4 +1,4 @@
---!nocheck
+--!strict
 
 -- Infiltration Engine Tooling created by Cishshato
 -- Modified by GhfjSpero
