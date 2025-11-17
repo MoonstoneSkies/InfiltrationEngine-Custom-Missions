@@ -1,16 +1,21 @@
+--!strict
+
 -- Infiltration Engine Tooling created by Cishshato
 -- Modified by GhfjSpero
 -- All Rights Reserved
 
-local toolbar = plugin:CreateToolbar("Infiltration Engine Tools")
-local MeadowMapButton = toolbar:CreateButton("Meadow Map", "Meadow Map", "rbxassetid://13749858361")
-local DoorAccessButton = toolbar:CreateButton("Door Access", "Door Access", "rbxassetid://72317736899762")
-local PropBarrierButton = toolbar:CreateButton("Prop Barrier", "Prop Barrier", "rbxassetid://119815023380659")
-local PropPreviewButton = toolbar:CreateButton("Prop Preview", "Prop Preview", "rbxassetid://129506771895350")
-local CombatMapButton = toolbar:CreateButton("Combat Flow Map", "Combat Flow Map", "rbxassetid://107812298422418")
-local ZoneMarkerButton = toolbar:CreateButton("Cell Marker", "Cell Editor", "rbxassetid://97000446266881")
-local AttributeSearchButton = toolbar:CreateButton("Attribute Search", "Attribute Search", "rbxassetid://18733558044")
-local SectionVisibilityButton =
+local plugin: Plugin = plugin
+local Workspace = workspace
+
+local toolbar: PluginToolbar = plugin:CreateToolbar("Infiltration Engine Tools")
+local MeadowMapButton: PluginToolbarButton = toolbar:CreateButton("Meadow Map", "Meadow Map", "rbxassetid://13749858361")
+local DoorAccessButton: PluginToolbarButton = toolbar:CreateButton("Door Access", "Door Access", "rbxassetid://72317736899762")
+local PropBarrierButton: PluginToolbarButton = toolbar:CreateButton("Prop Barrier", "Prop Barrier", "rbxassetid://119815023380659")
+local PropPreviewButton: PluginToolbarButton = toolbar:CreateButton("Prop Preview", "Prop Preview", "rbxassetid://129506771895350")
+local CombatMapButton: PluginToolbarButton = toolbar:CreateButton("Combat Flow Map", "Combat Flow Map", "rbxassetid://107812298422418")
+local ZoneMarkerButton: PluginToolbarButton = toolbar:CreateButton("Cell Marker", "Cell Editor", "rbxassetid://97000446266881")
+local AttributeSearchButton: PluginToolbarButton = toolbar:CreateButton("Attribute Search", "Attribute Search", "rbxassetid://18733558044")
+local SectionVisibilityButton: PluginToolbarButton =
 	toolbar:CreateButton("Section Visibility", "Section Visibility", "rbxassetid://8753176416")
 
 local MeadowMap = require(script.Parent.MeadowMap.Main)
@@ -21,118 +26,105 @@ local CombatMap = require(script.Parent.CombatMap.Main)
 local ZoneMarker = require(script.Parent.ZoneMarker.Main)
 local AttributeSearch = require(script.Parent.AttributeSearch.Main)
 local SectionVisibility = require(script.Parent.SectionVisibility.Main)
-local CurrentPlugin = nil
 
 local VisibilityToggle = require(script.Parent.Util.VisibilityToggle)
 
-MeadowMapButton.Click:connect(function()
-	if CurrentPlugin ~= MeadowMap then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = MeadowMap
-		plugin:Activate(true)
-		MeadowMap.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+type PluginModule = {
+	Init: (PluginMouse) -> (),
+	Clean: () -> (),
+}
 
-DoorAccessButton.Click:connect(function()
-	if CurrentPlugin ~= DoorAccess then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = DoorAccess
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+local CurrentPlugin: PluginModule? = nil
 
-PropBarrierButton.Click:connect(function()
-	if CurrentPlugin ~= PropBarrier then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = PropBarrier
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+-- Helper
 
-PropPreviewButton.Click:connect(function()
-	if CurrentPlugin ~= PropPreview then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = PropPreview
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
+local function safeCall(fn: () -> (), ctx: string?)
+	local ok, err = pcall(fn) :: boolean, string
+	if not ok then
+		warn("Plugin error" .. (ctx and (" in " .. ctx) or "") .. ": " .. tostring(err))
 	end
-end)
+end
 
-CombatMapButton.Click:connect(function()
-	if CurrentPlugin ~= CombatMap then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = CombatMap
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
+local function activateModule(mod: PluginModule)
+	if not mod then return end
+	-- deactivate current if different
+	if CurrentPlugin and CurrentPlugin ~= mod then
+		safeCall(CurrentPlugin.Clean, "CurrentPlugin.Clean")
 	end
-end)
+	CurrentPlugin = mod
+	-- ensure plugin is active and mouse provided
+	plugin:Activate(true)
+	local ok, mouseOrErr = pcall(function() return plugin:GetMouse() end)
+	if ok and mouseOrErr then
+		safeCall(function() mod.Init(mouseOrErr :: PluginMouse) end, "Module.Init")
+	else
+		-- fallback: try calling Init without mouse if module supports it
+		safeCall(function() mod.Init(nil :: any) end, "Module.Init(no-mouse)")
+	end
+end
 
-ZoneMarkerButton.Click:connect(function()
-	if CurrentPlugin ~= ZoneMarker then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = ZoneMarker
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
+local function deactivateAll()
+	local modules: { PluginModule } = {
+		MeadowMap, DoorAccess, PropBarrier, PropPreview, CombatMap, ZoneMarker, AttributeSearch,
+	}
+	for _, m in ipairs(modules) do
+		safeCall(m.Clean, tostring(m))
 	end
-end)
+	-- hide any revealed mission parts
+	safeCall(function()
+		local dbg = Workspace:FindFirstChild("DebugMission")
+		VisibilityToggle.HideTempRevealedParts(dbg)
+	end, "HideTempRevealedParts")
+	CurrentPlugin = nil
+	plugin:Deactivate()
+end
 
-AttributeSearchButton.Click:connect(function()
-	if CurrentPlugin ~= AttributeSearch then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
+local function makeToggle(button: PluginToolbarButton, moduleObj: PluginModule)
+	button.Click:Connect(function()
+		-- toggle activation when clicking the toolbar button
+		if CurrentPlugin ~= moduleObj then
+			activateModule(moduleObj)
+		else
+			-- deactivate current plugin only (leave other modules cleaned)
+			deactivateAll()
 		end
-		CurrentPlugin = AttributeSearch
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+	end)
+end
+
+-- Connection
+
+makeToggle(MeadowMapButton, MeadowMap)
+makeToggle(DoorAccessButton, DoorAccess)
+makeToggle(PropBarrierButton, PropBarrier)
+makeToggle(PropPreviewButton, PropPreview)
+makeToggle(CombatMapButton, CombatMap)
+makeToggle(ZoneMarkerButton, ZoneMarker)
+makeToggle(AttributeSearchButton, AttributeSearch)
 
 SectionVisibilityButton.Click:Connect(function()
+	-- ensure no plugin is active while opening the menu
 	plugin:Deactivate()
 	SectionVisibility.OpenMenu(plugin)
 	plugin:Deactivate()
 end)
 
-local function disablePlugin()
-	MeadowMap.Clean()
-	DoorAccess.Clean()
-	PropBarrier.Clean()
-	PropPreview.Clean()
-	CombatMap.Clean()
-	ZoneMarker.Clean()
-	AttributeSearch.Clean()
-	VisibilityToggle.HideTempRevealedParts(workspace:FindFirstChild("DebugMission"))
-	CurrentPlugin = nil
-end
+-- Unloading / Deactivation handlers
 
-plugin.Unloading:connect(disablePlugin)
-plugin.Deactivation:connect(disablePlugin)
+local unloadingConn: RBXScriptConnection? = nil
+local deactivationConn: RBXScriptConnection? = nil
+
+unloadingConn = plugin.Unloading:Connect(function()
+	deactivateAll()
+	if unloadingConn then
+		unloadingConn:Disconnect()
+		unloadingConn = nil
+	end
+	if deactivationConn then
+		deactivationConn:Disconnect()
+		deactivationConn = nil
+	end
+end)
+
+deactivationConn = plugin.Deactivation:Connect(function()
+	deactivateAll()
+end)
