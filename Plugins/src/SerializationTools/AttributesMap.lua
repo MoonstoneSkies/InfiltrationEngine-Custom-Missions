@@ -603,6 +603,11 @@ return {
 	OneWayTrespass = {
 		Condition = {AttributeType.EXPRESSION, ""},
 		EnforceClass = {AttributeType.STRING, ""},
+		MajorTrespass = {AttributeType.BOOL, false},
+		SetMetaTagsOnWarp = {AttributeType.STRING, nil},
+	},
+	PortableMetalDetector = {
+		PowerLevel = {AttributeType.EXPRESSION, ""},
 	},
 	PowerBoxLarge = {
 		TagWhileActive = {AttributeType.BOOL, false},
@@ -845,6 +850,7 @@ return {
 		BotTag0 = {AttributeType.STRING, ""},
 		BotTag1 = {AttributeType.STRING, ""},
 		TriggerRange = {AttributeType.INT, 40},
+		CanStartConversation = {AttributeType.EXPRESSION, ""},
 		Dialogue0 = {AttributeType.STRING, nil},
 		Dialogue0Speaker = {AttributeType.INT, nil},
 		Dialogue0Time = {AttributeType.NUMBER, nil},
@@ -896,6 +902,9 @@ return {
 	DynamicNode = {
 		Id = {AttributeType.STRING, ""},
 		TakedownImmunity = {AttributeType.BOOL, false},
+		Anim = {AttributeType.STRING, nil},
+		CaptureBot = {AttributeType.EXPRESSION, nil},
+		CustomBehavior = {AttributeType.STRING, nil},
 	},
 	ElevatorFunctional = {
 		OpenCondition = {AttributeType.EXPRESSION, ""},
@@ -979,6 +988,7 @@ return {
 		ServerVisible = {AttributeType.EXPRESSION, ""},
 		TitleKey = {AttributeType.STRING, ""},
 		ClientVisible = {AttributeType.EXPRESSION, ""},
+		ClientEnabled = {AttributeType.EXPRESSION, ""},
 		MissingToolSubtitle = {AttributeType.STRING, ""},
 		MissingToolTitle = {AttributeType.STRING, ""},
 		Item = {AttributeType.STRING, ""},
@@ -1273,6 +1283,7 @@ return {
 		BotServerTag = {AttributeType.STRING, ""},
 		Visible = {AttributeType.EXPRESSION, ""},
 		SocialEngineeringLevel = {AttributeType.INT, 0},
+		IntimidationLevel = {AttributeType.INT, 0},
 		Icon = {AttributeType.STRING, "ChatGeneric"},
 		Text = {AttributeType.STRING, ""},
 		Dialogue = {AttributeType.STRING, ""},
@@ -1332,6 +1343,7 @@ return {
 		ScriptedBehavior = {AttributeType.STRING, ""},
 		DisableReason = {AttributeType.EXPRESSION, ""},
 		IconId = {AttributeType.EXPRESSION, 0},
+		IsDeployedVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DelayedStateUpdate = {
 		Watch = {AttributeType.EXPRESSION, ""},
@@ -1430,6 +1442,10 @@ return {
 		ActiveVariable = {AttributeType.STATE_VALUE, ""},
 		WaveResetTime = {AttributeType.EXPRESSION, ""},
 		WaveResetTimeDecrease = {AttributeType.NUMBER, 0},
+	},
+	ScriptedBotSpawn = {
+		TemplateId = {AttributeType.STRING, ""},
+		Condition = {AttributeType.EXPRESSION, ""},
 	},
 	SearchPatternCondition = {
 		Condition = {AttributeType.EXPRESSION, ""},

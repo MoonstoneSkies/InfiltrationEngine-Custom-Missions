@@ -1,5 +1,7 @@
 local InsertService = game:GetService("InsertService")
 
+local ENABLE_ARBITRARY_MESHES = true
+
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties)
 local DefaultProperties = require(script.Parent.Parent.Types.DefaultProperties)
@@ -134,21 +136,25 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 			and game.ReplicatedStorage.Assets.ImportParts:FindFirstChild(meshId)
 		then
 			newInstance = game.ReplicatedStorage.Assets.ImportParts[meshId]:Clone()
+			newProperties.CollisionFidelity = nil
+			newProperties.RenderFidelity = nil
 			for k, v in newProperties do
 				newInstance[k] = v
 			end
 			instanceInitialized = true
-		elseif meshId then
+		elseif meshId and ENABLE_ARBITRARY_MESHES then
 			-- CreateMeshPartAsync is likely less reliable than cloning, so prefer using ImportParts when possible
-			local success, instOrReason = pcall(function() 
+			local success, instOrReason = pcall(function()
 				return InsertService:CreateMeshPartAsync(
 					`rbxassetid://{meshId}`,
 					newProperties["CollisionFidelity"] or Enum.CollisionFidelity.Default,
 					newProperties["RenderFidelity"] or Enum.RenderFidelity.Automatic
 				)
 			end)
+			newProperties.CollisionFidelity = nil
+			newProperties.RenderFidelity = nil
 			if success then
-				newInstance = instOrReason 
+				newInstance = instOrReason
 				for k, v in newProperties do
 					newInstance[k] = v
 				end
