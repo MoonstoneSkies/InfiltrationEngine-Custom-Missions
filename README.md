@@ -17,7 +17,7 @@ Official missions are provided as templates to work off of/learn from for creati
 ## Loading Mission In Game
 To test your mission in game, open the Mission Exporter and hit generate code. If things are set up properly, one or more code segments will by generated that can then be selected and copied. Once you have mission codes, you can enter the game, start a custom mission from the main menu, and then copy your mission codes into the input modal. While in the custom mission or custom mission lobby, you can hit L at any time to reopen the modal and load a different mission code. If multiple code segments are given by the exporter, they must all be copied into the modal individually (Roblox restricts how many characters can be copied into a textbox at once)
 
-Currently, Custom Missions are only available in Entry Point: Freelancer's Cut experimental servers, and can only be played singleplayer.
+Custom missions loaded with a code can only be played in singleplayer or with connections.
 
 ## GitHub Gist Importing
 To make missions easier to share, you can upload the mission data to a GitHub Gist. You can copy the link to the Gist into the load mission modal instead of the code segments. You CANNOT use segmented mission codes for this - You can export large missions as a single code by creating an attribute called `ReadDocs` on workspace and setting it to true. Codes more than 200k characters cannot be directly imported into Roblox.
