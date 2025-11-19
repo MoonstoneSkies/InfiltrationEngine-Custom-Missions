@@ -593,6 +593,7 @@ return {
 		TriggerInvestigation = {AttributeType.EXPRESSION, true},
 	},
 	NoDropZone = {
+		BlockPickups = {AttributeType.BOOL, false},
 	},
 	OldMonitor = {
 		PowerArea = {AttributeType.STATE_VALUE, ""},
@@ -605,6 +606,7 @@ return {
 		EnforceClass = {AttributeType.STRING, ""},
 		MajorTrespass = {AttributeType.BOOL, false},
 		SetMetaTagsOnWarp = {AttributeType.STRING, nil},
+		ConfrontationDialogue = {AttributeType.STRING, nil},
 	},
 	PortableMetalDetector = {
 		PowerLevel = {AttributeType.EXPRESSION, ""},
@@ -616,6 +618,19 @@ return {
 		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
+		InvestigatorTag = {AttributeType.STRING, nil},
+	},
+	PowerBoxPortable = {
+		TagWhileActive = {AttributeType.BOOL, false},
+		AllowDisabling = {AttributeType.EXPRESSION, "1"},
+		PowerArea = {AttributeType.STATE_VALUE, ""},
+		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
+		NoPropDamage = {AttributeType.EXPRESSION, ""},
+		AllowRestoring = {AttributeType.EXPRESSION, "1"},
+		Locked = {AttributeType.BOOL, false},
+		ObjectName = {AttributeType.STRING, ""},
+		PowerAreaParent = {AttributeType.STATE_VALUE, ""},
+		ManualInvestigationBot = {AttributeType.EXPRESSION, ""},
 		InvestigatorTag = {AttributeType.STRING, nil},
 	},
 	PowerBoxSmall = {
@@ -883,6 +898,9 @@ return {
 		Climber3Condition = {AttributeType.EXPRESSION, 1},
 		Color = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(0, 0, 0)},
 		Material = {AttributeType.STRING, "Plastic"},
+	},
+	ControlPanel = {
+		UsedVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	CustomReportPoint = {
 		Hidden = {AttributeType.BOOL, false},
