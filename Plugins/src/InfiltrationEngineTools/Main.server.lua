@@ -12,6 +12,8 @@ local ZoneMarkerButton = toolbar:CreateButton("Cell Marker", "Cell Editor", "rbx
 local AttributeSearchButton = toolbar:CreateButton("Attribute Search", "Attribute Search", "rbxassetid://18733558044")
 local SectionVisibilityButton =
 	toolbar:CreateButton("Section Visibility", "Section Visibility", "rbxassetid://8753176416")
+local TerrainSerializationButton =
+	toolbar:CreateButton("Terrain Serialization", "Terrain Serialization", "rbxassetid://115396940325881")
 
 local MeadowMap = require(script.Parent.MeadowMap.Main)
 local DoorAccess = require(script.Parent.DoorAccess.Main)
@@ -21,100 +23,34 @@ local CombatMap = require(script.Parent.CombatMap.Main)
 local ZoneMarker = require(script.Parent.ZoneMarker.Main)
 local AttributeSearch = require(script.Parent.AttributeSearch.Main)
 local SectionVisibility = require(script.Parent.SectionVisibility.Main)
+local TerrainSerialization = require(script.Parent.TerrainSerialization.Main)
 local CurrentPlugin = nil
 
 local VisibilityToggle = require(script.Parent.Util.VisibilityToggle)
 
-MeadowMapButton.Click:connect(function()
-	if CurrentPlugin ~= MeadowMap then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
+local function ConnectPluginToButton(button, pluginModule)
+	button.Click:Connect(function()
+		if CurrentPlugin ~= pluginModule then
+			if CurrentPlugin then
+				CurrentPlugin.Clean()
+			end
+			CurrentPlugin = pluginModule
+			plugin:Activate(true)
+			pluginModule.Init(plugin:GetMouse())
+		else
+			plugin:Deactivate()
 		end
-		CurrentPlugin = MeadowMap
-		plugin:Activate(true)
-		MeadowMap.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+	end)
+end
 
-DoorAccessButton.Click:connect(function()
-	if CurrentPlugin ~= DoorAccess then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = DoorAccess
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
-
-PropBarrierButton.Click:connect(function()
-	if CurrentPlugin ~= PropBarrier then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = PropBarrier
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
-
-PropPreviewButton.Click:connect(function()
-	if CurrentPlugin ~= PropPreview then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = PropPreview
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
-
-CombatMapButton.Click:connect(function()
-	if CurrentPlugin ~= CombatMap then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = CombatMap
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
-
-ZoneMarkerButton.Click:connect(function()
-	if CurrentPlugin ~= ZoneMarker then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = ZoneMarker
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
-
-AttributeSearchButton.Click:connect(function()
-	if CurrentPlugin ~= AttributeSearch then
-		if CurrentPlugin then
-			CurrentPlugin.Clean()
-		end
-		CurrentPlugin = AttributeSearch
-		plugin:Activate(true)
-		CurrentPlugin.Init(plugin:GetMouse())
-	else
-		plugin:Deactivate()
-	end
-end)
+ConnectPluginToButton(MeadowMapButton, MeadowMap)
+ConnectPluginToButton(DoorAccessButton, DoorAccess)
+ConnectPluginToButton(PropBarrierButton, PropBarrier)
+ConnectPluginToButton(PropPreviewButton, PropPreview)
+ConnectPluginToButton(CombatMapButton, CombatMap)
+ConnectPluginToButton(ZoneMarkerButton, ZoneMarker)
+ConnectPluginToButton(AttributeSearchButton, AttributeSearch)
+ConnectPluginToButton(TerrainSerializationButton, TerrainSerialization)
 
 SectionVisibilityButton.Click:Connect(function()
 	plugin:Deactivate()
@@ -130,6 +66,7 @@ local function disablePlugin()
 	CombatMap.Clean()
 	ZoneMarker.Clean()
 	AttributeSearch.Clean()
+	TerrainSerialization.Clean()
 	VisibilityToggle.HideTempRevealedParts(workspace:FindFirstChild("DebugMission"))
 	CurrentPlugin = nil
 end
