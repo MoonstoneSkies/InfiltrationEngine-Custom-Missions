@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local UserInputService = game:GetService("UserInputService")
+
+local InternalAPI = require(script.Parent.Parent.API.Internal)
 local Write = require(script.Parent.Write)
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local Read = require(script.Parent.Parent.Reading.Read)
@@ -38,6 +40,33 @@ Briefing:
 
 local module = {}
 
+local function GetMission()
+	local mission = workspace:FindFirstChild("DebugMission") or game.ReplicatedStorage:FindFirstChild("DebugMission")
+	if not mission then
+		error("No mission found: Mission must be named 'DebugMission' and placed in workspace or ReplicatedStorage")
+	end
+
+	for _, p in mission:GetChildren() do
+		VisibilityToggle.TempReveal(p)
+	end
+
+	local missionClone = mission:Clone()
+	VisibilityToggle.HideTempRevealedParts(mission)
+
+	local oldMissionParent = mission.Parent
+
+	InternalAPI.InvokeHook("PreSerialize", missionClone)
+
+	return missionClone
+end
+
+local function GetMissionCode()
+	local mission = GetMission()
+	local code = Write.Mission(mission)
+	mission:Destroy()
+	return code
+end
+
 module.Init = function(mouse: PluginMouse)
 	if module.Active then
 		return
@@ -68,6 +97,8 @@ module.Init = function(mouse: PluginMouse)
 		return codeChunks
 	end, CodeState)
 
+	local apiDevEnabled = workspace:GetAttribute("APIDev")
+
 	module.UI = Create("ScreenGui", {
 		Parent = game:GetService("CoreGui"),
 		Archivable = false,
@@ -78,18 +109,7 @@ module.Init = function(mouse: PluginMouse)
 			Position = UDim2.new(0, 50, 0, 50),
 			Text = "Generate Code",
 			Activated = function()
-				local mission = workspace:FindFirstChild("DebugMission")
-					or game.ReplicatedStorage:FindFirstChild("DebugMission")
-				if not mission then
-					error(
-						"No mission found: Mission must be named 'DebugMission' and placed in workspace or ReplicatedStorage"
-					)
-				end
-				for _, p in mission:GetChildren() do
-					VisibilityToggle.TempReveal(p)
-				end
-				local code = Write.Mission(mission)
-				VisibilityToggle.HideTempRevealedParts(mission)
+				local code = GetMissionCode()
 
 				if not workspace:FindFirstChild("DebugMission") then
 					local model = Read.Mission(code, 1)
@@ -105,18 +125,7 @@ module.Init = function(mouse: PluginMouse)
 				Position = UDim2.new(0, 270, 0, 50),
 				Text = "Gist Code",
 				Activated = function()
-					local mission = workspace:FindFirstChild("DebugMission")
-						or game.ReplicatedStorage:FindFirstChild("DebugMission")
-					if not mission then
-						error(
-							"No mission found: Mission must be named 'DebugMission' and placed in workspace or ReplicatedStorage"
-						)
-					end
-					for _, p in mission:GetChildren() do
-						VisibilityToggle.TempReveal(p)
-					end
-					local code = Write.Mission(mission)
-					VisibilityToggle.HideTempRevealedParts(mission)
+					local code = GetMissionCode()
 
 					if not workspace:FindFirstChild("DebugMission") then
 						local model = Read.Mission(code, 1)
@@ -145,12 +154,27 @@ module.Init = function(mouse: PluginMouse)
 				end,
 			})
 			else nil,
+		if apiDevEnabled
+			then
+			Button({
+				Size = UDim2.new(0, 200, 0, 30),
+				Enabled = module.EnabledState,
+				Position = UDim2.new(0, 50, 1, -50),
+				AnchorPoint = Vector2.new(0, 1),
+				Text = "Preserialize Preview",
+				Activated = function()
+					local preprocessed = GetMission()
+					preprocessed.Name = `{preprocessed.Name}_Preserialized`
+					preprocessed.Parent = workspace
+				end,
+			})
+			else nil,
 		Create("ScrollingFrame", {
-			Size = UDim2.new(0, 200, 1, -150),
-			Position = UDim2.new(0, 50, 1, -50),
-			AnchorPoint = Vector2.new(0, 1),
+			Size = UDim2.new(0, 200, 1, apiDevEnabled and -180 or -130),
+			Position = UDim2.new(0, 50, 0, 80),
 			BackgroundColor3 = Color3.new(0, 0, 0),
 			BackgroundTransparency = 0.5,
+			BorderSizePixel = 0,
 			Visible = Derived(function(code)
 				if code == "" then
 					return false

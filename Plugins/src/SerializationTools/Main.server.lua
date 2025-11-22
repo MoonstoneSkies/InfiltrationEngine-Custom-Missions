@@ -1,7 +1,9 @@
 local toolbar = plugin:CreateToolbar("Mission Exporter")
 local ExportButton = toolbar:CreateButton("Exporter", "Exporter", "rbxassetid://86828934223336")
 
+local Api = require(script.Parent.API.Main)
 local Exporter = require(script.Parent.Writing.Main)
+
 local CurrentPlugin = nil
 
 ExportButton.Click:Connect(function()
@@ -22,5 +24,12 @@ local function disablePlugin()
 	CurrentPlugin = nil
 end
 
-plugin.Unloading:Connect(disablePlugin)
+local function unloadPlugin()
+	Api.Clean()
+	disablePlugin()
+end
+
+plugin.Unloading:Connect(unloadPlugin)
 plugin.Deactivation:Connect(disablePlugin)
+
+Api.Init()
