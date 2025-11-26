@@ -10,28 +10,29 @@ local coreGui = game:GetService("CoreGui")
 
 export type Token = string
 export type Hook = (...any) -> nil
-export type HookType = "APIExtensionLoaded"|"APIExtensionUnloaded"|"PreSerialize"|"SerializerUnloaded"
+export type HookType = "APIExtensionLoaded"|"APIExtensionUnloaded"|"PreSerialize"|"PreSerializeMissionSetup"|"SerializerUnloaded"
 export type APIExtension = { [string] : (...any) -> ...any }
 
 export type APIReference = {
 	-- Generic
-	GetAPIVersion 		: () -> number,
-	GetCodeVersion 		: () -> number,
-	GetAttributesMap 	: () -> { [string] : { [number] : any } },
-	GetAttributeTypes 	: () -> { [string] : number },
+	GetAPIVersion 			: () -> number,
+	GetCodeVersion 			: () -> number,
+	GetAttributesMap 		: () -> { [string] : { [number] : any } },
+	GetAttributeTypes 		: () -> { [string] : number },
+	GetRegistrantFactory	: (author: string, plugin: string) -> ((hookName: string) -> string), 
 
 	-- HookTypes
-	GetHookTypes 		: () -> { [number] : string },
-	IsHookTypeValid 	: (hookType: string, warnCaller: string?) -> boolean,
+	GetHookTypes 			: () -> { [number] : string },
+	IsHookTypeValid 		: (hookType: string, warnCaller: string?) -> boolean,
 
 	-- Hooks
-	AddHook 			: (hookType: HookType, registrant: string, hook: Hook, hookState: {any}?) -> Token,
-	RemoveHook 			: (token: Token) -> nil,
+	AddHook 				: (hookType: HookType, registrant: string, hook: Hook, hookState: {any}?) -> Token,
+	RemoveHook 				: (token: Token) -> nil,
 
 	-- APIExtensions
-	AddAPIExtension 	: (name: string, author: string, contents: APIExtension) -> Token,
-	GetAPIExtension		: (name: string, author: string) -> APIExtension,
-	RemoveAPIExtension	: (token: Token) -> nil
+	AddAPIExtension 		: (name: string, author: string, contents: APIExtension) -> Token,
+	GetAPIExtension			: (name: string, author: string) -> APIExtension,
+	RemoveAPIExtension		: (token: Token) -> nil
 }
 
 type AnyTbl = { [string] : any }
@@ -73,6 +74,17 @@ APIConsumer.WaitForAPI = function(timeOut: number?) : APIReference?
 	return apiTbl
 end
 
+-- Attempt to get the API without blocking - returns false + nil if unavailable, otherwise returns true + APIReference
+APIConsumer.TryGetAPI = function() : (boolean, APIReference?)
+	local presenceIndicator = coreGui:FindFirstChild("InfilEngine_SerializerAPIAvailable")
+	if not presenceIndicator then return false, nil end
+
+	local apiTbl = shared.InfilEngine_SerializerAPI
+	if not (tostring(apiTbl) == presenceIndicator.Value) then return false, nil end
+
+	return true, apiTbl
+end
+
 -- Never returns unless there's an error
 -- Continually wires up handling of serializer load/unload as well as unloading of consumer plugin as needed
 -- Avoid doing this yourself if you can help it
@@ -109,17 +121,19 @@ APIConsumer.DoAPILoop = function<StateT>(
 	loadedClbck(api, state)
 
 	local pluginUnloadCallback
+	local unloadToken
 
 	pluginUnloadCallback = callerPlugin.Unloading:Connect(function()
 		pluginUnloadCallback:Disconnect()
 		pluginUnloadCallback = nil
 		unloadedClbck(api, state)
+		if unloadToken ~= nil then api.RemoveHook(unloadToken) end
 	end)
 
-	api.AddHook("SerializerUnloaded", `APIConsumerFramework_{srcname}`, function()
+	unloadToken = api.AddHook("SerializerUnloaded", `APIConsumerFramework_{srcname}`, function()
 		if pluginUnloadCallback then pluginUnloadCallback:Disconnect() pluginUnloadCallback = nil end
 		unloadedClbck(api, state)
-		APIConsumer.DoAPILoop(callerPlugin, srcname, loadedClbck, unloadedClbck, state)
+		task.spawn(APIConsumer.DoAPILoop, callerPlugin, srcname, loadedClbck, unloadedClbck, state)
 	end)
 end
 
