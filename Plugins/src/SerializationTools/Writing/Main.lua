@@ -53,9 +53,8 @@ local function GetMission()
 	local missionClone = mission:Clone()
 	VisibilityToggle.HideTempRevealedParts(mission)
 
-	local oldMissionParent = mission.Parent
-
 	InternalAPI.InvokeHook("PreSerialize", missionClone)
+	InternalAPI.InvokeHook("PreSerializeMissionSetup", missionClone:FindFirstChild("MissionSetup"))
 
 	return missionClone
 end

@@ -10,8 +10,58 @@ internalAPI.Hooks.APIExtensionLoaded = {}
 internalAPI.Hooks.APIExtensionUnloaded = {}
 internalAPI.Hooks.PreSerialize = {}
 internalAPI.Hooks.SerializerUnloaded = {}
+internalAPI.Hooks.PreSerializeMissionSetup = {}
 
 internalAPI.HookTypes = {}
+
+internalAPI.ProtectedStateKeys = {
+	Present = true,
+	Done = false
+}
+
+local function varargs(...)
+	local n = select('#', ...)
+	local t = { ... }
+	local i = 0
+	return function()
+		i = i + 1
+		if i <= n then return i, t[i], n end
+	end, t
+end
+
+local function tblCount(t)
+	local i = 0
+	for k, v in pairs(t) do
+		i = i + 1
+	end
+	return i
+end
+
+local function APIDevPrint(msg)
+	if not workspace:GetAttribute("APIDev") then return end
+	print(`SerializerAPI :\t{msg}`)
+end
+
+internalAPI.DeepClone = function(tbl)
+	local cloned = {}
+	for k, v in pairs(tbl) do
+		if type(v) == "table" then
+			cloned[k] = internalAPI.DeepClone(v)
+		else
+			cloned[k] = v
+		end
+	end
+	return cloned
+end
+
+internalAPI.DeepFreeze = function(tbl)
+	for _, v in pairs(tbl) do
+		if type(v) == "table" then
+			table.freeze(v)
+		end
+	end
+	return table.freeze(tbl)
+end
 
 internalAPI.AddTokenData = function(tbl, data)
 	local id = httpService:GenerateGUID(false)
@@ -27,8 +77,47 @@ internalAPI.RemoveTokenData = function(tbl, token, hookName)
 	tbl[token] = nil
 end
 
+internalAPI.SafeIndex = function(tbl, ...)
+	local indexing = tbl
+	for i, key in varargs(...) do
+		if type(indexing) ~= "table" then
+			return false, indexing
+		end
+		indexing = indexing[tostring(key)]
+	end
+	
+	if type(indexing) == "table" then
+		return true, internalAPI.DeepFreeze(internalAPI.DeepClone(indexing))
+	end
+	
+	return true, indexing
+end
+
+internalAPI.CreateInvokationState = function(invoking)
+	local underlyingState = {}
+	local publicInterface = {}
+	
+	for _, hook in pairs(invoking) do
+		underlyingState[`{hook.Registrant}_Present`] = true
+		underlyingState[hook.Registrant] = internalAPI.DeepClone(internalAPI.ProtectedStateKeys)
+	end
+	
+	publicInterface.Get = function(...)
+		return internalAPI.SafeIndex(underlyingState, ...)
+	end
+	
+	return table.freeze(publicInterface), underlyingState
+end
+
 internalAPI.AddHook = function(hookType: string, registrant, callback, state) : string
 	local hookTbl = internalAPI.Hooks[hookType]
+	for _, hook in pairs(hookTbl) do
+		if hook.Registrant == registrant then
+			warn(`{hookType}Hook Naming Collision! Name \"{registrant}\" already in-use!`)
+			return
+		end
+	end
+	APIDevPrint(`Adding {hookType}Hook \t{registrant}`)
 	return internalAPI.AddTokenData(
 		hookTbl, 
 		{ 
@@ -42,30 +131,63 @@ end
 internalAPI.RemoveHook = function(hookType: string, token: string)
 	local hookName = `{hookType}Hook`
 	local hookTbl = internalAPI.Hooks[hookType]
+	local removing = hookTbl[token] or {}
+	APIDevPrint(`Removing {hookName} \t{removing.Registrant}`)
 	internalAPI.RemoveTokenData(hookTbl, token, hookName)
 end
 
 internalAPI.InvokeHook = function(hookType, ...)
-	for _, hook in pairs(internalAPI.Hooks[hookType]) do
-		--[[
-			Nil here for future extensions without needing to bump API version
-
-			The hope is adding a dynamic phase-based invocation system whereby we pass an "InvocationState"
-				describing which callbacks have finished and which haven't, giving hooks read-only access to this
-				and then letting them run as coroutines, yielding if a dependency has yet to run
+	APIDevPrint(`Running Hooks Of Type \t{hookType}`)
+	
+	local hooksToRun = internalAPI.Hooks[hookType]
+	local unfinishedHooks = hooksToRun
+	local invokeIterations = 1
+	
+	local invokeStatePublic, invokeState = internalAPI.CreateInvokationState(hooksToRun)
+	
+	local hookCoroutines = {}
+	for _, hook in pairs(hooksToRun) do
+		hookCoroutines[hook.Callback] = coroutine.create(hook.Callback)
+	end
+	
+	while tblCount(unfinishedHooks) > 0 and invokeIterations <= 2000 do
+		hooksToRun = unfinishedHooks
+		unfinishedHooks = {}
 		
-			Any values returned by a yielding callback may then be published to the InvocationState for other hooks to read
-				allowing for the export of useful intermediary data from partway through a hooks execution
+		for _, hook in pairs(hooksToRun) do
+			local hookCoroutine = hookCoroutines[hook.Callback]
+			local success, stateVals = coroutine.resume(hookCoroutine, hook.CallbackState, invokeStatePublic, ...)
+			
+			if success and type(stateVals) == "table" then
+				-- Set state values
+				for k, v in pairs(stateVals) do
+					if internalAPI.ProtectedStateKeys[k] ~= nil then
+						warn(`Attempt by {hook.Registrant} to set protected InvokeState value {hook.Registrant}.{k}`)
+						continue
+					end
+					invokeState[hook.Registrant][k] = v
+				end
+			end
+			
+			if success and coroutine.status(hookCoroutine) == "suspended" then
+				unfinishedHooks[#unfinishedHooks+1] = hook
+			elseif success and coroutine.status(hookCoroutine) == "dead" then
+				invokeState[hook.Registrant].Done = true
+			elseif not success then
+				warn(`Error encountered when running {hookType}Hook {hook.Registrant} - {stateVals}`)
+			end
+		end
 		
-			This allows a way to opt-in to deterministic execution order while also allowing for
-				intercommunication of useful data without adding an explicit priority system
-		]]
-		local success, reason = pcall(hook.Callback, hook.CallbackState, nil, ...)
+		invokeIterations = invokeIterations + 1
+	end
 
-		if not success then
-			warn(`Error encountered when running {hookType}Hook {hook.Registrant} - {reason}`)
+	if invokeIterations > 2000 then
+		warn(`Hook {hookType} ran for 2,000 stages and did not finish, unfinished hooks are as follows:`)
+		for _, hook in ipairs(unfinishedHooks) do
+			warn(`\t{hook.Registrant}`)
 		end
 	end
+	
 end
 
 function internalAPI.GetHookTypes()
