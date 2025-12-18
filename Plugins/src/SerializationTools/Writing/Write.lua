@@ -39,6 +39,11 @@ Write = {
 		return if bool then "b" else "c"
 	end,
 
+	ShortestInt = function(num) -- 1 character
+		num = math.clamp(num, 0, SHORTEST_INT_BOUND)
+		return StringConversion.NumberToString(num, 1)
+	end,
+
 	ShortInt = function(num) -- 2 characters
 		if num > SHORT_INT_BOUND then
 			return StringConversion.NumberToString(SHORT_INT_BOUND, 2)
@@ -61,7 +66,7 @@ Write = {
 		end
 	end,
 
-	LongInt = function(num)
+	LongInt = function(num) -- 6 characters
 		if num > LONG_INT_BOUND then
 			warn("Int out of bounds range:", num)
 			return StringConversion.NumberToString(LONG_INT_BOUND, 6)
@@ -151,6 +156,14 @@ Write = {
 		return Write.ShortInt(#stringMap) .. stringStr
 	end,
 
+	MissionCodeHeader = function(mapId, current, total)
+		local header = Write.ShortestInt(VersionConfig.VersionNumber)
+		header = header .. Write.ShortInt(mapId)
+		header = header .. Write.ShortInt(current)
+		header = header .. Write.ShortInt(total)
+		return header
+	end,
+
 	Mission = function(mission)
 		local str = ""
 
@@ -219,8 +232,8 @@ Write = {
 				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap)
 			end
 			return instanceType .. objectProperties .. childrenProperties .. StringConversion.NumberToString(0, 1),
-				colorMap,
-				stringMap
+			colorMap,
+			stringMap
 		else
 			return StringConversion.NumberToString(InstanceTypes.Nil, 1), colorMap, stringMap
 		end

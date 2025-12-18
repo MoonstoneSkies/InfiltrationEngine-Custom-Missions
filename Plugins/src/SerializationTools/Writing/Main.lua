@@ -1,11 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 local InternalAPI = require(script.Parent.Parent.API.Internal)
 local Write = require(script.Parent.Write)
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local Read = require(script.Parent.Parent.Reading.Read)
+local ReadbackButton = require(script.Parent.ReadbackButton)
 
 local Button = require(script.Parent.Parent.Util.Button)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
@@ -66,12 +68,16 @@ local function GetMissionCode()
 	return code
 end
 
+local function GetMapId()
+	return math.random(0, StringConversion.GetMaxNumber(2))
+end
+
 module.Init = function(mouse: PluginMouse)
 	if module.Active then
 		return
 	end
 	module.Active = true
-
+	
 	local CodeState = State("")
 	local Pastes = State({})
 
@@ -81,14 +87,10 @@ module.Init = function(mouse: PluginMouse)
 		local current = PASTE_SIZE -- leaving space for paste information
 		local currentPaste = 1
 		local maxPastes = math.ceil(#code / current)
-		local mapId = math.random(1, StringConversion.GetMaxNumber(2)) -- A 3 character integer that can be used to identify maps
+		local mapId = GetMapId() -- A 2 character integer that can be used to identify maps
 		while first < #code do
-			local prePaste = ""
-			prePaste = StringConversion.NumberToString(VERSION_NUMBER, 1)
-			prePaste = prePaste .. Write.ShortInt(mapId)
-			prePaste = prePaste .. Write.ShortInt(currentPaste)
-			prePaste = prePaste .. Write.ShortInt(maxPastes)
-			codeChunks[#codeChunks + 1] = prePaste .. code:sub(first, current)
+			local header = Write.MissionCodeHeader(mapId, currentPaste, maxPastes)
+			codeChunks[#codeChunks + 1] = header .. code:sub(first, current)
 			first += PASTE_SIZE
 			current += PASTE_SIZE
 			currentPaste += 1
@@ -96,7 +98,10 @@ module.Init = function(mouse: PluginMouse)
 		return codeChunks
 	end, CodeState)
 
-	local apiDevEnabled = workspace:GetAttribute("APIDev")
+	local allEnabled 		= workspace:GetAttribute("SerializerEnableAllFeatures")
+	local apiDevEnabled 	= allEnabled or workspace:GetAttribute("APIDev")
+	local gistEnabled 		= allEnabled or workspace:GetAttribute("ReadDocs")
+	local readbackEnabled 	= allEnabled or workspace:GetAttribute("Readback")
 
 	module.UI = Create("ScreenGui", {
 		Parent = game:GetService("CoreGui"),
@@ -117,7 +122,7 @@ module.Init = function(mouse: PluginMouse)
 				CodeState:set(code)
 			end,
 		}),
-		if workspace:GetAttribute("ReadDocs")
+		if gistEnabled
 			then Button({
 				Size = UDim2.new(0, 200, 0, 30),
 				Enabled = module.EnabledState,
@@ -131,11 +136,7 @@ module.Init = function(mouse: PluginMouse)
 						model.Parent = workspace
 					end
 
-					local output = ""
-					output = StringConversion.NumberToString(VERSION_NUMBER, 1)
-					output = output .. Write.ShortInt(math.random(1, 100))
-					output = output .. Write.ShortInt(1)
-					output = output .. Write.ShortInt(1)
+					local output = Write.MissionCodeHeader(GetMapId(), 1, 1)
 					output = output .. code
 					output = GIST_PREFIX .. output
 
@@ -152,6 +153,9 @@ module.Init = function(mouse: PluginMouse)
 					ScriptEditorService:OpenScriptDocumentAsync(s)
 				end,
 			})
+			else nil,
+		if readbackEnabled
+			then ReadbackButton(module.EnabledState)
 			else nil,
 		if apiDevEnabled
 			then
