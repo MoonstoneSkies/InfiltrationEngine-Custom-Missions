@@ -53,6 +53,10 @@ Read = {
 		return string.sub(str, cursor, cursor) == "b", cursor + 1
 	end,
 
+	ShortestInt = function(str, cursor) -- returns the value read as a shortest int. 1 symbol
+		return StringConversion.StringToNumber(str, cursor, 1), cursor + 1
+	end,
+
 	ShortInt = function(str, cursor) -- returns the value read as a short integer. 2 symbols
 		return StringConversion.StringToNumber(str, cursor, 2), cursor + 2
 	end,
@@ -139,6 +143,22 @@ Read = {
 			stringMap[i], cursor = Read.String(str, cursor)
 		end
 		return stringMap, cursor
+	end,
+
+	MissionCodeHeader = function(str, cursor)
+		local codeVersion, mapId, currentCode, totalCodes
+		
+		codeVersion, cursor = Read.ShortestInt(str, cursor)
+		mapId, cursor = Read.ShortInt(str, cursor)
+		currentCode, cursor = Read.ShortInt(str, cursor)
+		totalCodes, cursor = Read.ShortInt(str, cursor)
+		
+		return {
+			CodeVersion = codeVersion,
+			CodeCurrent = currentCode,
+			CodeTotal = totalCodes,
+			MapId = mapId,
+		}, cursor
 	end,
 
 	Mission = function(str, cursor)
