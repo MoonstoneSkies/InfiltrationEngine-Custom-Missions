@@ -88,6 +88,16 @@ local CreateInstanceReader = function(instanceType, properties)
 	return InstanceReader
 end
 
+local CachedUserMeshFolder = game.ReplicatedStorage:FindFirstChild("Assets")
+if CachedUserMeshFolder then
+	CachedUserMeshFolder = CachedUserMeshFolder:FindFirstChild("LoadedMeshes")
+	if not CachedUserMeshFolder then
+		CachedUserMeshFolder = Instance.new("Folder")
+		CachedUserMeshFolder.Name = "LoadedMeshes"
+		CachedUserMeshFolder.Parent = game.ReplicatedStorage.Assets
+	end
+end
+
 local CreateProtectedInstanceReader = function(instanceType, properties)
 	local defaults = DefaultProperties[instanceType]
 
@@ -129,13 +139,17 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 			meshId = id
 		end
 		newProperties.MeshId = nil
-		if
-			meshId
-			and game.ReplicatedStorage:FindFirstChild("Assets")
-			and game.ReplicatedStorage.Assets:FindFirstChild("ImportParts")
-			and game.ReplicatedStorage.Assets.ImportParts:FindFirstChild(meshId)
-		then
-			newInstance = game.ReplicatedStorage.Assets.ImportParts[meshId]:Clone()
+
+		local cachedMeshPart = meshId
+			and (
+				(
+					game.ReplicatedStorage:FindFirstChild("Assets")
+					and game.ReplicatedStorage.Assets:FindFirstChild("ImportParts")
+					and game.ReplicatedStorage.Assets.ImportParts:FindFirstChild(meshId)
+				) or (CachedUserMeshFolder and CachedUserMeshFolder:FindFirstChild(meshId))
+			)
+		if cachedMeshPart then
+			newInstance = cachedMeshPart:Clone()
 			newProperties.CollisionFidelity = nil
 			newProperties.RenderFidelity = nil
 			for k, v in newProperties do
@@ -145,11 +159,17 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 		elseif meshId and ENABLE_ARBITRARY_MESHES then
 			-- CreateMeshPartAsync is likely less reliable than cloning, so prefer using ImportParts when possible
 			local success, instOrReason = pcall(function()
-				return InsertService:CreateMeshPartAsync(
+				local part = InsertService:CreateMeshPartAsync(
 					`rbxassetid://{meshId}`,
 					newProperties["CollisionFidelity"] or Enum.CollisionFidelity.Default,
 					newProperties["RenderFidelity"] or Enum.RenderFidelity.Automatic
 				)
+				if CachedUserMeshFolder then
+					local copy = part:Clone()
+					copy.Name = meshId
+					copy.Parent = CachedUserMeshFolder
+				end
+				return part
 			end)
 			newProperties.CollisionFidelity = nil
 			newProperties.RenderFidelity = nil
