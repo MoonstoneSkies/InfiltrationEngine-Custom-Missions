@@ -10,6 +10,7 @@ local Read = require(script.Parent.Parent.Reading.Read)
 local ReadbackButton = require(script.Parent.ReadbackButton)
 
 local Button = require(script.Parent.Parent.Util.Button)
+local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -68,7 +69,7 @@ local function GetMissionCode()
 	return code
 end
 
-local function GetMapId()
+local function GenerateMapId()
 	return math.random(0, StringConversion.GetMaxNumber(2))
 end
 
@@ -77,7 +78,7 @@ module.Init = function(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
-	
+
 	local CodeState = State("")
 	local Pastes = State({})
 
@@ -87,7 +88,7 @@ module.Init = function(mouse: PluginMouse)
 		local current = PASTE_SIZE -- leaving space for paste information
 		local currentPaste = 1
 		local maxPastes = math.ceil(#code / current)
-		local mapId = GetMapId() -- A 2 character integer that can be used to identify maps
+		local mapId = GenerateMapId() -- A 2 character integer that can be used to identify maps
 		while first < #code do
 			local header = Write.MissionCodeHeader(mapId, currentPaste, maxPastes)
 			codeChunks[#codeChunks + 1] = header .. code:sub(first, current)
@@ -98,10 +99,9 @@ module.Init = function(mouse: PluginMouse)
 		return codeChunks
 	end, CodeState)
 
-	local allEnabled 		= workspace:GetAttribute("SerializerEnableAllFeatures")
-	local apiDevEnabled 	= allEnabled or workspace:GetAttribute("APIDev")
-	local gistEnabled 		= allEnabled or workspace:GetAttribute("ReadDocs")
-	local readbackEnabled 	= allEnabled or workspace:GetAttribute("Readback")
+	local apiDevEnabled 	= FeatureCheck("APIDev")   == true
+	local gistEnabled 		= FeatureCheck("ReadDocs") == true
+	local readbackEnabled 	= FeatureCheck("Readback") == true
 
 	module.UI = Create("ScreenGui", {
 		Parent = game:GetService("CoreGui"),
@@ -136,7 +136,7 @@ module.Init = function(mouse: PluginMouse)
 						model.Parent = workspace
 					end
 
-					local output = Write.MissionCodeHeader(GetMapId(), 1, 1)
+					local output = Write.MissionCodeHeader(GenerateMapId(), 1, 1)
 					output = output .. code
 					output = GIST_PREFIX .. output
 
