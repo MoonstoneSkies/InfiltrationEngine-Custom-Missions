@@ -1,16 +1,8 @@
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local ReadInstance = require(script.Parent.ReadInstance)
-local Materials = require(script.Parent.Parent.Types.Materials)
-local PartTypes = require(script.Parent.Parent.Types.PartTypes)
-local NormalId = require(script.Parent.Parent.Types.NormalId)
-local MeshType = require(script.Parent.Parent.Types.MeshType)
-local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
-local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
-local ParticleEmitterShape = require(script.Parent.Parent.Types.ParticleEmitterShape)
-local ParticleEmitterShapeInOut = require(script.Parent.Parent.Types.ParticleEmitterShapeInOut)
-local ParticleEmitterShapeStyle = require(script.Parent.Parent.Types.ParticleEmitterShapeStyle)
-local ParticleOrientation = require(script.Parent.Parent.Types.ParticleOrientation)
+
+local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -79,11 +71,58 @@ Read = {
 		return afterDecimal + beforeDecimal, cursor + 2
 	end,
 
+	FloatRange = function(str, cursor)
+		local rangeVec
+		rangeVec, cursor = Read.Vector2(str, cursor)
+		return NumberRange.new(rangeVec.X, rangeVec.Y), cursor
+	end,
+
+	FloatSequence = function(str, cursor)
+		local numberSequenceKeypoints = {}
+		local numberSequenceLength
+		numberSequenceLength, cursor = Read.ShortInt(str, cursor)
+		-- The NumberSequence array constructor only accepts an array with 2+ indicies.
+		if numberSequenceLength == 1 then
+			local num
+			_, cursor = Read.ShortBoundedFloat(str, cursor)
+			num, cursor = Read.Float(str, cursor)
+			_, cursor = Read.Float(str, cursor)
+			return NumberSequence.new(num), cursor
+		end
+		local time, number, envelope
+		for i = 1, numberSequenceLength do
+			time, cursor = Read.ShortBoundedFloat(str, cursor)
+			number, cursor = Read.Float(str, cursor)
+			envelope, cursor = Read.Float(str, cursor)
+			numberSequenceKeypoints[i] = NumberSequenceKeypoint.new(time, number, envelope)
+		end
+		return NumberSequence.new(numberSequenceKeypoints), cursor
+	end,
+
+	Vector2 = function(str, cursor)
+		local X, cursor = Read.Float(str, cursor)
+		local Y, cursor = Read.Float(str, cursor)
+		return Vector2.new(X, Y), cursor
+	end,
+
 	Vector3 = function(str, cursor) -- returns the value read as a Vector3. 24 symbols
 		local X, cursor = Read.Float(str, cursor)
 		local Y, cursor = Read.Float(str, cursor)
 		local Z, cursor = Read.Float(str, cursor)
 		return Vector3.new(X, Y, Z), cursor
+	end,
+
+	UDim = function(str, cursor)
+		local udimVec
+		udimVec, cursor = Read.Vector2(str, cursor)
+		return UDim.new(udimVec.X, udimVec.Y), cursor
+	end,
+
+	UDim2 = function(str, cursor)
+		local xUdim, yUdim
+		xUdim, cursor = Read.UDim(str, cursor)
+		yUdim, cursor = Read.UDim(str, cursor)
+		return UDim2.new(xUdim, yUdim), cursor
 	end,
 
 	CFrame = function(str, cursor) -- returns the value read as a CFrame. 36 symbols
@@ -114,37 +153,6 @@ Read = {
 		return Color3.new(R, G, B), cursor
 	end,
 
-	String = function(str, cursor)
-		local length, cursor = Read.Int(str, cursor)
-		local value = str:sub(cursor, cursor + length - 1)
-
-		if VersionConfig.ReplaceNewlines then
-			value = value:gsub("&.", NewlineGSub)
-		end
-
-		return value, cursor + length
-	end,
-
-	ColorMap = function(str, cursor)
-		local colorMap = {}
-		local colorMapLength
-		colorMapLength, cursor = Read.ShortInt(str, cursor)
-		for i = 1, colorMapLength do
-			colorMap[i], cursor = Read.Color3(str, cursor)
-		end
-		return colorMap, cursor
-	end,
-
-	StringMap = function(str, cursor)
-		local stringMap = {}
-		local stringMapLength
-		stringMapLength, cursor = Read.ShortInt(str, cursor)
-		for i = 1, stringMapLength do
-			stringMap[i], cursor = Read.String(str, cursor)
-		end
-		return stringMap, cursor
-	end,
-
 	ColorSequence = function(str, cursor)
 		local colorSequenceKeypoints = {}
 		local colorSequenceLength, cursor = Read.ShortInt(str, cursor)
@@ -163,34 +171,35 @@ Read = {
 		return ColorSequence.new(colorSequenceKeypoints), cursor
 	end,
 
-	FloatNumberRange = function(str, cursor)
-		local min, cursor = Read.Float(str, cursor)
-		local max, cursor = Read.Float(str, cursor)
-		return NumberRange.new(min, max), cursor
+	ColorMap = function(str, cursor)
+		local colorMap = {}
+		local colorMapLength
+		colorMapLength, cursor = Read.ShortInt(str, cursor)
+		for i = 1, colorMapLength do
+			colorMap[i], cursor = Read.Color3(str, cursor)
+		end
+		return colorMap, cursor
 	end,
 
-	FloatNumberSequence = function(str, cursor)
-		local numberSequenceKeypoints = {}
-		local numberSequenceLength, cursor = Read.ShortInt(str, cursor)
-		-- The NumberSequence array constructor only accepts an array with 2+ indicies.
-		if numberSequenceLength == 1 then
-			local _, cursor = Read.ShortBoundedFloat(str, cursor)
-			local number, cursor = Read.Color3(str, cursor)
-			return NumberSequence.new(color), cursor
+	String = function(str, cursor)
+		local length, cursor = Read.Int(str, cursor)
+		local value = str:sub(cursor, cursor + length - 1)
+
+		if VersionConfig.ReplaceNewlines then
+			value = value:gsub("&.", NewlineGSub)
 		end
-		local time, number
-		for i = 1, numberSequenceLength do
-			time, cursor = Read.ShortBoundedFloat(str, cursor)
-			number, cursor = Read.Float(str, cursor)
-			numberSequenceKeypoints[i] = NumberSequenceKeypoint.new(time, number)
-		end
-		return NumberSequence.new(numberSequenceKeypoints), cursor
+
+		return value, cursor + length
 	end,
 
-	Vector2 = function(str, cursor)
-		local X, cursor = Read.Float(str, cursor)
-		local Y, cursor = Read.Float(str, cursor)
-		return Vector2.new(X, Y), cursor
+	StringMap = function(str, cursor)
+		local stringMap = {}
+		local stringMapLength
+		stringMapLength, cursor = Read.ShortInt(str, cursor)
+		for i = 1, stringMapLength do
+			stringMap[i], cursor = Read.String(str, cursor)
+		end
+		return stringMap, cursor
 	end,
 
 	Mission = function(str, cursor)
@@ -246,16 +255,21 @@ Read = {
 		end
 	end,
 
-	Material = CreateEnumReader(Enum.Material, Materials),
-	PartType = CreateEnumReader(Enum.PartType, PartTypes),
-	NormalId = CreateEnumReader(Enum.NormalId, NormalId),
-	MeshType = CreateEnumReader(Enum.MeshType, MeshType),
-	RenderFidelity = CreateEnumReader(Enum.RenderFidelity, RenderFidelity),
-	CollisionFidelity = CreateEnumReader(Enum.CollisionFidelity, CollisionFidelity),
-	ParticleEmitterShape = CreateEnumReader(Enum.ParticleEmitterShape, ParticleEmitterShape),
-	ParticleEmitterShapeInOut = CreateEnumReader(Enum.ParticleEmitterShapeInOut, ParticleEmitterShapeInOut),
-	ParticleEmitterShapeStyle = CreateEnumReader(Enum.ParticleEmitterShapeStyle, ParticleEmitterShapeStyle),
-	ParticleOrientation = CreateEnumReader(Enum.ParticleOrientation, ParticleOrientation)
+	Material = CreateEnumReader(Enum.Material, EnumTypes.Materials),
+	PartType = CreateEnumReader(Enum.PartType, EnumTypes.PartTypes),
+	NormalId = CreateEnumReader(Enum.NormalId, EnumTypes.NormalId),
+
+	MeshType = CreateEnumReader(Enum.MeshType, EnumTypes.MeshType),
+	RenderFidelity = CreateEnumReader(Enum.RenderFidelity, EnumTypes.RenderFidelity),
+	CollisionFidelity = CreateEnumReader(Enum.CollisionFidelity, EnumTypes.CollisionFidelity),
+
+	ParticleEmitterShape = CreateEnumReader(Enum.ParticleEmitterShape, EnumTypes.ParticleEmitterShape),
+	ParticleEmitterShapeInOut = CreateEnumReader(Enum.ParticleEmitterShapeInOut, EnumTypes.ParticleEmitterShapeInOut),
+	ParticleEmitterShapeStyle = CreateEnumReader(Enum.ParticleEmitterShapeStyle, EnumTypes.ParticleEmitterShapeStyle),
+	ParticleOrientation = CreateEnumReader(Enum.ParticleOrientation, EnumTypes.ParticleOrientation),
+
+	ResamplerMode = CreateEnumReader(Enum.ResamplerMode, EnumTypes.ResamplerMode),
+	SurfaceGuiSizingMode = CreateEnumReader(Enum.SurfaceGuiSizingMode, EnumTypes.SurfaceGuiSizingMode),
 }
 
 return Read

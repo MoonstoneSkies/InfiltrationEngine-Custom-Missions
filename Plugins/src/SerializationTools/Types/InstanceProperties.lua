@@ -158,35 +158,58 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 	ParticleEmitter = {
 		{ "Name", "String", "ParticleEmitter" },
 		{ "Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1)) },
-		{ "Size", "FloatNumberSequence", NumberSequence.new(1) },
+		{ "Size", "FloatSequence", NumberSequence.new(1) },
 		{ "Texture", "String", "rbxasset://textures/particles/sparkles_main.dds" },
-		{ "Transparency", "FloatNumberSequence", NumberSequence.new(1) },
+		{ "Transparency", "FloatSequence", NumberSequence.new(1) },
 		{ "Orientation", "ParticleOrientation", Enum.ParticleOrientation.FacingCamera},
 		{ "Rate", "Float", 20 },
-		{ "Rotation", "FloatNumberRange", NumberRange.new(0) },
-		{ "RotSpeed", "FloatNumberRange", NumberRange.new(0) },
+		{ "Rotation", "FloatRange", NumberRange.new(0) },
+		{ "RotSpeed", "FloatRange", NumberRange.new(0) },
 		{ "Shape", "ParticleEmitterShape", Enum.ParticleEmitterShape.Box },
 		{ "ShapeInOut", "ParticleEmitterShapeInOut", Enum.ParticleEmitterShapeInOut.Outward },
 		{ "ShapePartial", "Float", 1 },
 		{ "ShapeStyle", "ParticleEmitterShapeStyle", Enum.ParticleEmitterShapeStyle.Volume },
-		{ "Speed", "FloatNumberRange", NumberRange.new(5) },
-		{ "Lifetime", "FloatNumberRange", NumberRange.new(5, 10) },
+		{ "Speed", "FloatRange", NumberRange.new(5) },
+		{ "Lifetime", "FloatRange", NumberRange.new(5, 10) },
 		{ "EmissionDirection", "NormalId", Enum.NormalId.Top },
 		{ "SpreadAngle", "Vector2", Vector2.new(0, 0) },
 		{ "Acceleration", "Vector3", Vector3.new(0, 0, 0) },
+		{ "Brightness", "Float", 1 },
+		{ "Squash", "FloatSequence", NumberSequence.new(0) }
 	},
 	Sparkles = {
 		{ "Name", "String", "Sparkles" },
 		{ "SparkleColor", "Color3", Color3.new(144, 25, 255) },
 		{ "TimeScale", "Float", 1 },
 	},
-	-- Should allow one to AltPropModel a laptop or other computer
 	SurfaceGui = {
 		{ "Name", "String", "SurfaceGui" },
+		{ "Face", "NormalId", Enum.NormalId.Front },
+		{ "Brightness", "Float", 1 },
+		{ "LightInfluence", "ShortBoundedFloat", 0.5 },
+		{ "MaxDistance", "Int", 0 },
+		{ "ClipsDescendants", "Bool", true },
+		{ "SizingMode", "SurfaceGuiSizingMode", Enum.SurfaceGuiSizingMode.PixelsPerStud }
 	},
 	ImageLabel = {
 		{ "Name", "String", "ImageLabel" },
-	},
+
+		{ "Position", "UDim2", UDim2.new() },
+		{ "Size", "UDim2", UDim2.new() },
+		{ "Rotation", "Float", 0 },
+		{ "AnchorPoint", "Vector2", Vector2.new() },
+		{ "BackgroundColor3", "Color3", Color3.new() },
+		{ "BackgroundTransparency", "ShortBoundedFloat", 0 },
+		{ "BorderSizePixel", "Int", 0 },
+		{ "ClipsDescendants", "Bool", false },
+		{ "ZIndex", "Int", 0 },
+
+		{ "Image", "String", "" },
+		{ "ImageTransparency", "ShortBoundedFloat", 0 },
+		{ "ImageRectOffset", "Vector2", Vector2.new() },
+		{ "ImageRectSize", "Vector2", Vector2.new() },
+		{ "ResampleMode", "ResamplerMode", Enum.ResamplerMode.Default },
+	}
 }
 
 return InstanceProperties
