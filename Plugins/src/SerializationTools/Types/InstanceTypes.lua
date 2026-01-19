@@ -21,6 +21,8 @@ local InstanceTypes = {
 	Attachment = 20,
 	ParticleEmitter = 21,
 	Sparkles = 22,
+	SurfaceGui = 23,
+	ImageLabel = 24,
 }
 
 return InstanceTypes

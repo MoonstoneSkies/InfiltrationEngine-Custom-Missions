@@ -22,6 +22,8 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "Material", "Material", "Plastic" },
 		{ "CastShadow", "Bool", false },
 		{ "Shape", "PartType", "Block" },
+		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
+		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
 	},
 	BoolValue = {
 		{ "Name", "String", "Value" },
@@ -177,6 +179,13 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "Name", "String", "Sparkles" },
 		{ "SparkleColor", "Color3", Color3.new(144, 25, 255) },
 		{ "TimeScale", "Float", 1 },
+	},
+	-- Should allow one to AltPropModel a laptop or other computer
+	SurfaceGui = {
+		{ "Name", "String", "SurfaceGui" },
+	},
+	ImageLabel = {
+		{ "Name", "String", "ImageLabel" },
 	},
 }
 
