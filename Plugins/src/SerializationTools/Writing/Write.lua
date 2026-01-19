@@ -7,6 +7,10 @@ local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
 local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
 local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
+local ParticleEmitterShape = require(script.Parent.Parent.Types.ParticleEmitterShape)
+local ParticleEmitterShapeInOut = require(script.Parent.Parent.Types.ParticleEmitterShapeInOut)
+local ParticleEmitterShapeStyle = require(script.Parent.Parent.Types.ParticleEmitterShapeStyle)
+local ParticleOrientation = require(script.Parent.Parent.Types.ParticleOrientation)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -90,7 +94,7 @@ Write = {
 		return beforeDecimalStr .. afterDecimalStr
 	end,
 
-	Vector3 = function(vector) -- 24 characters, 8 for each float of X, Y, & Z
+	Vector3 = function(vector) -- 24 characters, 8 for each float of X, Y, & Z -- May someone please fact check this? I think it's wrong but I can't prove it. Shouldn't 3 floats * 5 be 15 characters?
 		return Write.Float(vector.X) .. Write.Float(vector.Y) .. Write.Float(vector.Z)
 	end,
 
@@ -133,6 +137,32 @@ Write = {
 			str = str:gsub("&", "&&"):gsub("\n", "&n"):gsub("\r", "&r"):gsub(TAB_CHAR, "&t")
 		end
 		return Write.Int(#str) .. str
+	end,
+	
+	ColorSequence = function (colorSequence) -- 2 + 8 * keypoints characters
+		local keypoints = colorSequence.Keypoints
+		local colorSequenceStr = Write.ShortInt(#keypoints)
+		for i, v in pairs(keypoints) do
+			colorSequenceStr = colorSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Color3(v.Value)
+		end
+		return colorSequenceStr
+	end,
+
+	FloatNumberRange = function (numberRange) -- 10 characters
+		return Write.Float(numberRange.Min) .. Write.Float(numberRange.Max)
+	end,
+
+	FloatNumberSequence = function (numberSequence) -- 2 + 7 * keypoints characters
+		local keypoints = numberSequence.Keypoints
+		local numberSequenceStr = Write.ShortInt(#keypoints)
+		for i, v in pairs(keypoints) do
+			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value)
+		end
+		return numberSequenceStr
+	end,
+
+	Vector2 = function(vector) -- 16 characters, 8 for each float of X, Y
+		return Write.Float(vector.X) .. Write.Float(vector.Y)
 	end,
 
 	ColorMap = function(colorMap)
@@ -232,19 +262,10 @@ Write = {
 	MeshType = CreateEnumWriter(MeshType),
 	RenderFidelity = CreateEnumWriter(RenderFidelity),
 	CollisionFidelity = CreateEnumWriter(CollisionFidelity),
-	--[[
-	Material = function(material)
-		return StringConversion.NumberToString(Materials[material.Name], 1)
-	end,
-
-	PartType = function(pType)
-		return StringConversion.NumberToString(PartTypes[pType.Name], 1)
-	end,
-
-	NormalId = function(pType)
-		return StringConversion.NumberToString(NormalId[pType.Name], 1)
-	end,
-	]]
+	ParticleEmitterShape = CreateEnumWriter(ParticleEmitterShape),
+	ParticleEmitterShapeInOut = CreateEnumWriter(ParticleEmitterShapeInOut),
+	ParticleEmitterShapeStyle = CreateEnumWriter(ParticleEmitterShapeStyle),
+	ParticleOrientation = CreateEnumWriter(ParticleOrientation)
 }
 
 return Write

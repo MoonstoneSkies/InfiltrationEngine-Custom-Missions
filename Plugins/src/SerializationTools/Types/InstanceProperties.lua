@@ -4,7 +4,7 @@ local InstanceProperties
 -- [TypeName], [ValueType], [DefaultValue]
 -- eg. "Position", "Vector3", "Vector3.new(0, 0, 0)"
 
-InstanceProperties = { -- any changes to this table should be changed in InstanceTypes.lua
+InstanceProperties = { -- any changes to this table should be changed in InstanceTypes.lua, WriteInstance.lua, and ReadInstance.lua
 	Model = {
 		{ "Name", "String", "Model" },
 	},
@@ -123,15 +123,15 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TextureId", "String", "" },
 	},
 	Decal = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Decal" },
 		{ "Color3", "Color3", Color3.new() },
 		{ "Texture", "String", "" },
 		{ "Transparency", "ShortBoundedFloat", 0 },
 		{ "ZIndex", "Int", 0 },
-		{ "Face", "NormalId", "Front" },
+		{ "Face", "NormalId", Enum.NormalId.Front },
 	},
 	Fire = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Fire" },
 		{ "Color", "Color3", Color3.new() },
 		{ "Enabled", "Bool", true },
 		{ "Heat", "Float", 9 },
@@ -140,7 +140,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TimeScale", "Float", 1 },
 	},
 	Smoke = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Smoke" },
 		{ "Color", "Color3", Color3.new() },
 		{ "Enabled", "Bool", true },
 		{ "Opacity", "Float", 1 },
@@ -149,9 +149,34 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TimeScale", "Float", 1 },
 	},
 	Attachment = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Attachment" },
 		{ "CFrame", "CFrame", CFrame.new() },
 		{ "Visible", "Bool", false },
+	},
+	ParticleEmitter = {
+		{ "Name", "String", "ParticleEmitter" },
+		{ "Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1)) },
+		{ "Size", "FloatNumberSequence", NumberSequence.new(1) },
+		{ "Texture", "String", "rbxasset://textures/particles/sparkles_main.dds" },
+		{ "Transparency", "FloatNumberSequence", NumberSequence.new(1) },
+		{ "Orientation", "ParticleOrientation", Enum.ParticleOrientation.FacingCamera},
+		{ "Rate", "Float", 20 },
+		{ "Rotation", "FloatNumberRange", NumberRange.new(0) },
+		{ "RotSpeed", "FloatNumberRange", NumberRange.new(0) },
+		{ "Shape", "ParticleEmitterShape", Enum.ParticleEmitterShape.Box },
+		{ "ShapeInOut", "ParticleEmitterShapeInOut", Enum.ParticleEmitterShapeInOut.Outward },
+		{ "ShapePartial", "Float", 1 },
+		{ "ShapeStyle", "ParticleEmitterShapeStyle", Enum.ParticleEmitterShapeStyle.Volume },
+		{ "Speed", "FloatNumberRange", NumberRange.new(5) },
+		{ "Lifetime", "FloatNumberRange", NumberRange.new(5, 10) },
+		{ "EmissionDirection", "NormalId", Enum.NormalId.Top },
+		{ "SpreadAngle", "Vector2", Vector2.new(0, 0) },
+		{ "Acceleration", "Vector3", Vector3.new(0, 0, 0) },
+	},
+	Sparkles = {
+		{ "Name", "String", "Sparkles" },
+		{ "SparkleColor", "Color3", Color3.new(144, 25, 255) },
+		{ "TimeScale", "Float", 1 },
 	},
 }
 

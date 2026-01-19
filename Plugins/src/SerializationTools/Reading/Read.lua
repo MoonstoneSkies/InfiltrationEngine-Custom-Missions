@@ -7,6 +7,10 @@ local NormalId = require(script.Parent.Parent.Types.NormalId)
 local MeshType = require(script.Parent.Parent.Types.MeshType)
 local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
 local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
+local ParticleEmitterShape = require(script.Parent.Parent.Types.ParticleEmitterShape)
+local ParticleEmitterShapeInOut = require(script.Parent.Parent.Types.ParticleEmitterShapeInOut)
+local ParticleEmitterShapeStyle = require(script.Parent.Parent.Types.ParticleEmitterShapeStyle)
+local ParticleOrientation = require(script.Parent.Parent.Types.ParticleOrientation)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -141,6 +145,54 @@ Read = {
 		return stringMap, cursor
 	end,
 
+	ColorSequence = function(str, cursor)
+		local colorSequenceKeypoints = {}
+		local colorSequenceLength, cursor = Read.ShortInt(str, cursor)
+		-- The ColorSequence array constructor only accepts an array with 2+ indicies.
+		if colorSequenceLength == 1 then
+			local _, cursor = Read.ShortBoundedFloat(str, cursor)
+			local color, cursor = Read.Color3(str, cursor)
+			return ColorSequence.new(color), cursor
+		end
+		local time, color
+		for i = 1, colorSequenceLength do
+			time, cursor = Read.ShortBoundedFloat(str, cursor)
+			color, cursor = Read.Color3(str, cursor)
+			colorSequenceKeypoints[i] = ColorSequenceKeypoint.new(time, color)
+		end
+		return ColorSequence.new(colorSequenceKeypoints), cursor
+	end,
+
+	FloatNumberRange = function(str, cursor)
+		local min, cursor = Read.Float(str, cursor)
+		local max, cursor = Read.Float(str, cursor)
+		return NumberRange.new(min, max), cursor
+	end,
+
+	FloatNumberSequence = function(str, cursor)
+		local numberSequenceKeypoints = {}
+		local numberSequenceLength, cursor = Read.ShortInt(str, cursor)
+		-- The NumberSequence array constructor only accepts an array with 2+ indicies.
+		if numberSequenceLength == 1 then
+			local _, cursor = Read.ShortBoundedFloat(str, cursor)
+			local number, cursor = Read.Color3(str, cursor)
+			return NumberSequence.new(color), cursor
+		end
+		local time, number
+		for i = 1, numberSequenceLength do
+			time, cursor = Read.ShortBoundedFloat(str, cursor)
+			number, cursor = Read.Float(str, cursor)
+			numberSequenceKeypoints[i] = NumberSequenceKeypoint.new(time, number)
+		end
+		return NumberSequence.new(numberSequenceKeypoints), cursor
+	end,
+
+	Vector2 = function(str, cursor)
+		local X, cursor = Read.Float(str, cursor)
+		local Y, cursor = Read.Float(str, cursor)
+		return Vector2.new(X, Y), cursor
+	end,
+
 	Mission = function(str, cursor)
 		if str:sub(1, 3) == "!!!" then
 			local code = str:match("!!!.-!!!(.+)")
@@ -200,6 +252,10 @@ Read = {
 	MeshType = CreateEnumReader(Enum.MeshType, MeshType),
 	RenderFidelity = CreateEnumReader(Enum.RenderFidelity, RenderFidelity),
 	CollisionFidelity = CreateEnumReader(Enum.CollisionFidelity, CollisionFidelity),
+	ParticleEmitterShape = CreateEnumReader(Enum.ParticleEmitterShape, ParticleEmitterShape),
+	ParticleEmitterShapeInOut = CreateEnumReader(Enum.ParticleEmitterShapeInOut, ParticleEmitterShapeInOut),
+	ParticleEmitterShapeStyle = CreateEnumReader(Enum.ParticleEmitterShapeStyle, ParticleEmitterShapeStyle),
+	ParticleOrientation = CreateEnumReader(Enum.ParticleOrientation, ParticleOrientation)
 }
 
 return Read

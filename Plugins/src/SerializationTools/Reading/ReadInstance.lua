@@ -215,6 +215,8 @@ ReadInstance = {
 	Fire = CreateInstanceReader("Fire", InstanceProperties.Fire),
 	Smoke = CreateInstanceReader("Smoke", InstanceProperties.Smoke),
 	Attachment = CreateInstanceReader("Attachment", InstanceProperties.Attachment),
+	ParticleEmitter = CreateInstanceReader("ParticleEmitter", InstanceProperties.ParticleEmitter),
+	Sparkles = CreateInstanceReader("Sparkles", InstanceProperties.Sparkles),
 }
 
 return ReadInstance

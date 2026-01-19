@@ -19,6 +19,8 @@ local InstanceTypes = {
 	Fire = 18,
 	Smoke = 19,
 	Attachment = 20,
+	ParticleEmitter = 21,
+	Sparkles = 22,
 }
 
 return InstanceTypes
