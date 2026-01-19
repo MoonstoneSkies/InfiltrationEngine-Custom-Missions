@@ -1,16 +1,8 @@
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local WriteInstance = require(script.Parent.WriteInstance)
-local Materials = require(script.Parent.Parent.Types.Materials)
-local PartTypes = require(script.Parent.Parent.Types.PartTypes)
-local NormalId = require(script.Parent.Parent.Types.NormalId)
-local MeshType = require(script.Parent.Parent.Types.MeshType)
-local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
-local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
-local ParticleEmitterShape = require(script.Parent.Parent.Types.ParticleEmitterShape)
-local ParticleEmitterShapeInOut = require(script.Parent.Parent.Types.ParticleEmitterShapeInOut)
-local ParticleEmitterShapeStyle = require(script.Parent.Parent.Types.ParticleEmitterShapeStyle)
-local ParticleOrientation = require(script.Parent.Parent.Types.ParticleOrientation)
+
+local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -65,7 +57,7 @@ Write = {
 		end
 	end,
 
-	LongInt = function(num)
+	LongInt = function(num) -- 6 characters
 		if num > LONG_INT_BOUND then
 			warn("Int out of bounds range:", num)
 			return StringConversion.NumberToString(LONG_INT_BOUND, 6)
@@ -94,11 +86,36 @@ Write = {
 		return beforeDecimalStr .. afterDecimalStr
 	end,
 
-	Vector3 = function(vector) -- 24 characters, 8 for each float of X, Y, & Z -- May someone please fact check this? I think it's wrong but I can't prove it. Shouldn't 3 floats * 5 be 15 characters?
+	FloatRange = function(numberRange) -- Vector2 wrapper
+		return Write.Vector2(Vector2.new(numberRange.Min, numberRange.Max))
+	end,
+
+	FloatSequence = function (numberSequence) -- 2 + 7 * keypoints characters
+		local keypoints = numberSequence.Keypoints
+		local numberSequenceStr = Write.ShortInt(#keypoints)
+		for i, v in pairs(keypoints) do
+			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value) .. Write.Float(v.Envelope)
+		end
+		return numberSequenceStr
+	end,
+
+	Vector2 = function(vector) -- 10 characters, 5 for each float XY
+		return Write.Float(vector.X) .. Write.Float(vector.Y)
+	end,
+
+	Vector3 = function(vector) -- 15 characters, 5 per float XYZ
 		return Write.Float(vector.X) .. Write.Float(vector.Y) .. Write.Float(vector.Z)
 	end,
 
-	CFrame = function(frame) -- 27 characters, 15 for position, 12 for rotation
+	UDim = function(udim)
+		return Write.Vector2(Vector2.new(udim.Scale, udim.Offset))
+	end,
+
+	UDim2 = function(udim2)
+		return Write.UDim(udim2.X) .. Write.UDim(udim2.Y)
+	end,
+
+	CFrame = function(frame) -- 24 characters, 15 for position, 9 for rotation
 		local rx, ry, rz = frame:ToEulerAnglesXYZ()
 		return Write.Float(frame.X)
 			.. Write.Float(frame.Y)
@@ -132,13 +149,6 @@ Write = {
 		return Write.ShortBoundedFloat(color.R) .. Write.ShortBoundedFloat(color.G) .. Write.ShortBoundedFloat(color.B)
 	end,
 
-	String = function(str) -- 4 + length characters
-		if ESCAPED_NEWLINES_ACTIVE then
-			str = str:gsub("&", "&&"):gsub("\n", "&n"):gsub("\r", "&r"):gsub(TAB_CHAR, "&t")
-		end
-		return Write.Int(#str) .. str
-	end,
-	
 	ColorSequence = function (colorSequence) -- 2 + 8 * keypoints characters
 		local keypoints = colorSequence.Keypoints
 		local colorSequenceStr = Write.ShortInt(#keypoints)
@@ -148,21 +158,11 @@ Write = {
 		return colorSequenceStr
 	end,
 
-	FloatNumberRange = function (numberRange) -- 10 characters
-		return Write.Float(numberRange.Min) .. Write.Float(numberRange.Max)
-	end,
-
-	FloatNumberSequence = function (numberSequence) -- 2 + 7 * keypoints characters
-		local keypoints = numberSequence.Keypoints
-		local numberSequenceStr = Write.ShortInt(#keypoints)
-		for i, v in pairs(keypoints) do
-			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value)
+	String = function(str) -- 4 + length characters
+		if ESCAPED_NEWLINES_ACTIVE then
+			str = str:gsub("&", "&&"):gsub("\n", "&n"):gsub("\r", "&r"):gsub(TAB_CHAR, "&t")
 		end
-		return numberSequenceStr
-	end,
-
-	Vector2 = function(vector) -- 16 characters, 8 for each float of X, Y
-		return Write.Float(vector.X) .. Write.Float(vector.Y)
+		return Write.Int(#str) .. str
 	end,
 
 	ColorMap = function(colorMap)
@@ -256,16 +256,21 @@ Write = {
 		end
 	end,
 
-	Material = CreateEnumWriter(Materials),
-	PartType = CreateEnumWriter(PartTypes),
-	NormalId = CreateEnumWriter(NormalId),
-	MeshType = CreateEnumWriter(MeshType),
-	RenderFidelity = CreateEnumWriter(RenderFidelity),
-	CollisionFidelity = CreateEnumWriter(CollisionFidelity),
-	ParticleEmitterShape = CreateEnumWriter(ParticleEmitterShape),
-	ParticleEmitterShapeInOut = CreateEnumWriter(ParticleEmitterShapeInOut),
-	ParticleEmitterShapeStyle = CreateEnumWriter(ParticleEmitterShapeStyle),
-	ParticleOrientation = CreateEnumWriter(ParticleOrientation)
+	Material = CreateEnumWriter(EnumTypes.Materials),
+	PartType = CreateEnumWriter(EnumTypes.PartTypes),
+	NormalId = CreateEnumWriter(EnumTypes.NormalId),
+
+	MeshType = CreateEnumWriter(EnumTypes.MeshType),
+	RenderFidelity = CreateEnumWriter(EnumTypes.RenderFidelity),
+	CollisionFidelity = CreateEnumWriter(EnumTypes.CollisionFidelity),
+
+	ParticleEmitterShape = CreateEnumWriter(EnumTypes.ParticleEmitterShape),
+	ParticleEmitterShapeInOut = CreateEnumWriter(EnumTypes.ParticleEmitterShapeInOut),
+	ParticleEmitterShapeStyle = CreateEnumWriter(EnumTypes.ParticleEmitterShapeStyle),
+	ParticleOrientation = CreateEnumWriter(EnumTypes.ParticleOrientation),
+
+	ResamplerMode = CreateEnumWriter(EnumTypes.ResamplerMode),
+	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode)
 }
 
 return Write
