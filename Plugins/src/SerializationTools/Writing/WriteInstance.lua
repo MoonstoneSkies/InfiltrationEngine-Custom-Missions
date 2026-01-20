@@ -123,6 +123,10 @@ WriteInstance = {
 	Fire = CreateInstanceWriter(InstanceProperties.Fire),
 	Smoke = CreateInstanceWriter(InstanceProperties.Smoke),
 	Attachment = CreateInstanceWriter(InstanceProperties.Attachment),
+	ParticleEmitter = CreateInstanceWriter(InstanceProperties.ParticleEmitter),
+	Sparkles = CreateInstanceWriter(InstanceProperties.Sparkles),
+	SurfaceGui = CreateInstanceWriter(InstanceProperties.SurfaceGui),
+	ImageLabel = CreateInstanceWriter(InstanceProperties.ImageLabel)
 }
 
 return WriteInstance

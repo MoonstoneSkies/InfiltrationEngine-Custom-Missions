@@ -4,7 +4,7 @@ local InstanceProperties
 -- [TypeName], [ValueType], [DefaultValue]
 -- eg. "Position", "Vector3", "Vector3.new(0, 0, 0)"
 
-InstanceProperties = { -- any changes to this table should be changed in InstanceTypes.lua
+InstanceProperties = { -- any changes to this table should be changed in InstanceTypes.lua, WriteInstance.lua, and ReadInstance.lua
 	Model = {
 		{ "Name", "String", "Model" },
 	},
@@ -22,6 +22,8 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "Material", "Material", "Plastic" },
 		{ "CastShadow", "Bool", false },
 		{ "Shape", "PartType", "Block" },
+		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
+		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
 	},
 	BoolValue = {
 		{ "Name", "String", "Value" },
@@ -123,15 +125,15 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TextureId", "String", "" },
 	},
 	Decal = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Decal" },
 		{ "Color3", "Color3", Color3.new() },
 		{ "Texture", "String", "" },
 		{ "Transparency", "ShortBoundedFloat", 0 },
 		{ "ZIndex", "Int", 0 },
-		{ "Face", "NormalId", "Front" },
+		{ "Face", "NormalId", Enum.NormalId.Front },
 	},
 	Fire = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Fire" },
 		{ "Color", "Color3", Color3.new() },
 		{ "Enabled", "Bool", true },
 		{ "Heat", "Float", 9 },
@@ -140,7 +142,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TimeScale", "Float", 1 },
 	},
 	Smoke = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Smoke" },
 		{ "Color", "Color3", Color3.new() },
 		{ "Enabled", "Bool", true },
 		{ "Opacity", "Float", 1 },
@@ -149,10 +151,65 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "TimeScale", "Float", 1 },
 	},
 	Attachment = {
-		{ "Name", "String", "Mesh" },
+		{ "Name", "String", "Attachment" },
 		{ "CFrame", "CFrame", CFrame.new() },
 		{ "Visible", "Bool", false },
 	},
+	ParticleEmitter = {
+		{ "Name", "String", "ParticleEmitter" },
+		{ "Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1)) },
+		{ "Size", "FloatSequence", NumberSequence.new(1) },
+		{ "Texture", "String", "rbxasset://textures/particles/sparkles_main.dds" },
+		{ "Transparency", "FloatSequence", NumberSequence.new(1) },
+		{ "Orientation", "ParticleOrientation", Enum.ParticleOrientation.FacingCamera},
+		{ "Rate", "Float", 20 },
+		{ "Rotation", "FloatRange", NumberRange.new(0) },
+		{ "RotSpeed", "FloatRange", NumberRange.new(0) },
+		{ "Shape", "ParticleEmitterShape", Enum.ParticleEmitterShape.Box },
+		{ "ShapeInOut", "ParticleEmitterShapeInOut", Enum.ParticleEmitterShapeInOut.Outward },
+		{ "ShapePartial", "Float", 1 },
+		{ "ShapeStyle", "ParticleEmitterShapeStyle", Enum.ParticleEmitterShapeStyle.Volume },
+		{ "Speed", "FloatRange", NumberRange.new(5) },
+		{ "Lifetime", "FloatRange", NumberRange.new(5, 10) },
+		{ "EmissionDirection", "NormalId", Enum.NormalId.Top },
+		{ "SpreadAngle", "Vector2", Vector2.new(0, 0) },
+		{ "Acceleration", "Vector3", Vector3.new(0, 0, 0) },
+		{ "Brightness", "Float", 1 },
+		{ "Squash", "FloatSequence", NumberSequence.new(0) }
+	},
+	Sparkles = {
+		{ "Name", "String", "Sparkles" },
+		{ "SparkleColor", "Color3", Color3.new(144, 25, 255) },
+		{ "TimeScale", "Float", 1 },
+	},
+	SurfaceGui = {
+		{ "Name", "String", "SurfaceGui" },
+		{ "Face", "NormalId", Enum.NormalId.Front },
+		{ "Brightness", "Float", 1 },
+		{ "LightInfluence", "ShortBoundedFloat", 0.5 },
+		{ "MaxDistance", "Int", 0 },
+		{ "ClipsDescendants", "Bool", true },
+		{ "SizingMode", "SurfaceGuiSizingMode", Enum.SurfaceGuiSizingMode.PixelsPerStud }
+	},
+	ImageLabel = {
+		{ "Name", "String", "ImageLabel" },
+
+		{ "Position", "UDim2", UDim2.new() },
+		{ "Size", "UDim2", UDim2.new() },
+		{ "Rotation", "Float", 0 },
+		{ "AnchorPoint", "Vector2", Vector2.new() },
+		{ "BackgroundColor3", "Color3", Color3.new() },
+		{ "BackgroundTransparency", "ShortBoundedFloat", 0 },
+		{ "BorderSizePixel", "Int", 0 },
+		{ "ClipsDescendants", "Bool", false },
+		{ "ZIndex", "Int", 0 },
+
+		{ "Image", "String", "" },
+		{ "ImageTransparency", "ShortBoundedFloat", 0 },
+		{ "ImageRectOffset", "Vector2", Vector2.new() },
+		{ "ImageRectSize", "Vector2", Vector2.new() },
+		{ "ResampleMode", "ResamplerMode", Enum.ResamplerMode.Default },
+	}
 }
 
 return InstanceProperties
