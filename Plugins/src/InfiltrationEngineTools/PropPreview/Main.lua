@@ -153,38 +153,56 @@ function module:AddProp(basePart)
 		self:RecolorProp(basePart)
 		return
 	end
-
-	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name)
-		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name)
-	if storedModel then
-		basePart.Transparency = 1
-
-		local model = storedModel:Clone()
-		for _, p in pairs(model:GetDescendants()) do
-			if p:IsA("BasePart") then
-				p.Archivable = false
-				p.CollisionGroup = COLLISON_GROUP
-			end
+	
+	local altModelName = basePart:GetAttribute("AltPropModel")
+	local storedModel = nil
+	if typeof(altModelName) == "string" and altModelName ~= "" then
+		if CustomPropsFolder._Value then
+			storedModel = CustomPropsFolder._Value:FindFirstChild(altModelName)
 		end
-
-		Prop[basePart] = {
-			Model = model,
-			Events = {
-				basePart:GetPropertyChangedSignal("CFrame"):Connect(function()
-					self:RepositionProp(basePart)
-				end),
-				basePart.AttributeChanged:Connect(function()
-					HiddenModels[basePart] = nil
-					model.Parent = self.Folder
-					self:RecolorProp(basePart)
-				end),
-			},
-		}
-		model.Parent = self.Folder
-		BaseByModel[model] = basePart
-		self:RepositionProp(basePart)
-		self:RecolorProp(basePart)
+		if not storedModel and ModelFolder._Value then
+			storedModel = ModelFolder._Value:FindFirstChild(altModelName)
+		end
 	end
+	if not storedModel then
+		storedModel = (CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name))
+			or (ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name))
+	end
+	if not storedModel then return end
+	local modelDescendants = storedModel:GetDescendants()
+	if #modelDescendants == 1 then
+		local onlyPart = modelDescendants[1]
+			if onlyPart:IsA("BasePart") and string.lower(onlyPart.Name) == "base" then
+			return
+		end
+	end
+	basePart.Transparency = 1
+
+	local model = storedModel:Clone()
+	for _, p in pairs(model:GetDescendants()) do
+		if p:IsA("BasePart") then
+			p.Archivable = false
+			p.CollisionGroup = COLLISON_GROUP
+		end
+	end
+
+	Prop[basePart] = {
+		Model = model,
+		Events = {
+			basePart:GetPropertyChangedSignal("CFrame"):Connect(function()
+				self:RepositionProp(basePart)
+			end),
+			basePart.AttributeChanged:Connect(function()
+				HiddenModels[basePart] = nil
+				model.Parent = self.Folder
+				self:RecolorProp(basePart)
+			end),
+		},
+	}
+	model.Parent = self.Folder
+	BaseByModel[model] = basePart
+	self:RepositionProp(basePart)
+	self:RecolorProp(basePart)
 end
 
 function module:RemoveProp(basePart)
