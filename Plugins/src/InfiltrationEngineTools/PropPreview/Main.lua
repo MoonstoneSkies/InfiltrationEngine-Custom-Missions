@@ -153,10 +153,29 @@ function module:AddProp(basePart)
 		self:RecolorProp(basePart)
 		return
 	end
-
-	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name)
-		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name)
+	
+	local alt = basePart:GetAttribute("AltPropModel")
+	local storedModel = nil
+	if typeof(alt) == "string" and alt ~= "" then
+		if CustomPropsFolder._Value then
+			storedModel = CustomPropsFolder._Value:FindFirstChild(alt)
+		end
+		if not storedModel and ModelFolder._Value then
+			storedModel = ModelFolder._Value:FindFirstChild(alt)
+		end
+	end
+	if not storedModel then
+		storedModel = (CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name))
+			or (ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name))
+	end
 	if storedModel then
+		local descendants = storedModel:GetDescendants()
+		if #descendants == 1 then
+			local only = descendants[1]
+			if only:IsA("BasePart") and string.lower(only.Name) == "base" then
+				return
+			end
+		end
 		basePart.Transparency = 1
 
 		local model = storedModel:Clone()
