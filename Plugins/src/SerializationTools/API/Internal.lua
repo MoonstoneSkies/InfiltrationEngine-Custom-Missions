@@ -1,6 +1,7 @@
 local httpService = game:GetService("HttpService")
 
 local attributesMap = require(script.Parent.Parent.AttributesMap)
+local featureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 
 local internalAPI = {}
 internalAPI.APIExtensions = {}
@@ -37,8 +38,14 @@ local function tblCount(t)
 	return i
 end
 
+local function co_xpcall(co, ...)
+	local out = { coroutine.resume(co, ...) }
+	if out[1] == false then return false, debug.traceback(co, out[2]) end
+	return unpack(out)
+end
+
 local function APIDevPrint(msg)
-	if not workspace:GetAttribute("APIDev") then return end
+	if not featureCheck("APIDev") then return end
 	print(`SerializerAPI :\t{msg}`)
 end
 
@@ -71,7 +78,11 @@ end
 
 internalAPI.RemoveTokenData = function(tbl, token, hookName)
 	if tbl[token] == nil then
-		warn(`Attempt made to remove {hookName} using invalid GUID!`)
+		local outMsg = `Attempt made to remove {hookName} using invalid GUID!`
+		if featureCheck("APIDev") then
+			outMsg = debug.traceback(outMsg)
+		end
+		warn(outMsg)
 		return
 	end
 	tbl[token] = nil
@@ -85,27 +96,27 @@ internalAPI.SafeIndex = function(tbl, ...)
 		end
 		indexing = indexing[tostring(key)]
 	end
-	
+
 	if type(indexing) == "table" then
 		return true, internalAPI.DeepFreeze(internalAPI.DeepClone(indexing))
 	end
-	
+
 	return true, indexing
 end
 
 internalAPI.CreateInvokationState = function(invoking)
 	local underlyingState = {}
 	local publicInterface = {}
-	
+
 	for _, hook in pairs(invoking) do
 		underlyingState[`{hook.Registrant}_Present`] = true
 		underlyingState[hook.Registrant] = internalAPI.DeepClone(internalAPI.ProtectedStateKeys)
 	end
-	
+
 	publicInterface.Get = function(...)
 		return internalAPI.SafeIndex(underlyingState, ...)
 	end
-	
+
 	return table.freeze(publicInterface), underlyingState
 end
 
@@ -138,26 +149,26 @@ end
 
 internalAPI.InvokeHook = function(hookType, ...)
 	APIDevPrint(`Running Hooks Of Type \t{hookType}`)
-	
+
 	local hooksToRun = internalAPI.Hooks[hookType]
 	local unfinishedHooks = hooksToRun
 	local invokeIterations = 1
-	
+
 	local invokeStatePublic, invokeState = internalAPI.CreateInvokationState(hooksToRun)
-	
+
 	local hookCoroutines = {}
 	for _, hook in pairs(hooksToRun) do
 		hookCoroutines[hook.Callback] = coroutine.create(hook.Callback)
 	end
-	
+
 	while tblCount(unfinishedHooks) > 0 and invokeIterations <= 2000 do
 		hooksToRun = unfinishedHooks
 		unfinishedHooks = {}
-		
+
 		for _, hook in pairs(hooksToRun) do
 			local hookCoroutine = hookCoroutines[hook.Callback]
-			local success, stateVals = coroutine.resume(hookCoroutine, hook.CallbackState, invokeStatePublic, ...)
-			
+			local success, stateVals = co_xpcall(hookCoroutine, hook.CallbackState, invokeStatePublic, ...)
+
 			if success and type(stateVals) == "table" then
 				-- Set state values
 				for k, v in pairs(stateVals) do
@@ -168,7 +179,7 @@ internalAPI.InvokeHook = function(hookType, ...)
 					invokeState[hook.Registrant][k] = v
 				end
 			end
-			
+
 			if success and coroutine.status(hookCoroutine) == "suspended" then
 				unfinishedHooks[#unfinishedHooks+1] = hook
 			elseif success and coroutine.status(hookCoroutine) == "dead" then
@@ -177,7 +188,7 @@ internalAPI.InvokeHook = function(hookType, ...)
 				warn(`Error encountered when running {hookType}Hook {hook.Registrant} - {stateVals}`)
 			end
 		end
-		
+
 		invokeIterations = invokeIterations + 1
 	end
 
@@ -187,7 +198,7 @@ internalAPI.InvokeHook = function(hookType, ...)
 			warn(`\t{hook.Registrant}`)
 		end
 	end
-	
+
 end
 
 function internalAPI.GetHookTypes()
