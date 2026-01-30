@@ -91,6 +91,7 @@ return {
 		RewiredVariable = {AttributeType.STATE_VALUE, ""},
 		CodeSeed = {AttributeType.INT, 1},
 		InteractionAlertLevel = {AttributeType.EXPRESSION, ""},
+		PowerCutVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	CombatCuttableFence = {
 	},
@@ -531,6 +532,7 @@ return {
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		PowerArea = {AttributeType.STATE_VALUE, ""},
 		DisabledInCombat = {AttributeType.BOOL, false},
+		RewiredVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	EventGift = {
 	},
@@ -647,6 +649,13 @@ return {
 	},
 	IntroCam = {
 	},
+	KeyBox = {
+		Key0 = {AttributeType.STRING, ""},
+		Key1 = {AttributeType.STRING, ""},
+		Key2 = {AttributeType.STRING, ""},
+		Keycard = {AttributeType.STRING, ""},
+		Usb = {AttributeType.STRING, ""},
+	},
 	Ladder = {
 		Decorative = {AttributeType.BOOL, false},
 	},
@@ -720,6 +729,7 @@ return {
 	},
 	LowVent = {
 		Blocked = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	MetalDetector = {
 		PowerLevel = {AttributeType.EXPRESSION, ""},
@@ -765,6 +775,7 @@ return {
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
 		InvestigatorTag = {AttributeType.STRING, nil},
+		PossibleAlertRaise = {AttributeType.EXPRESSION, ""},
 	},
 	PowerBoxPortable = {
 		TagWhileActive = {AttributeType.BOOL, false},
@@ -791,6 +802,7 @@ return {
 		PowerAreaParent = {AttributeType.STATE_VALUE, ""},
 		ManualInvestigationBot = {AttributeType.EXPRESSION, ""},
 		InvestigatorTag = {AttributeType.STRING, nil},
+		PossibleAlertRaise = {AttributeType.EXPRESSION, ""},
 	},
 	PropBase = {
 	},
@@ -994,6 +1006,12 @@ return {
 	AlarmButton = {
 	},
 	ArmoredTruck = {
+	},
+	AudioGlassAlarm = {
+		NetworkDependencies = {AttributeType.STRING, ""},
+		TriggeredVariable = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.STRING, ""},
+		Area = {AttributeType.STRING, ""},
 	},
 	BagSpawn = {
 		ItemTagString = {AttributeType.STATE_VALUE, ""},
@@ -1275,6 +1293,10 @@ return {
 	SawCutPoint = {
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
 	},
+	ScriptedEMP = {
+		BlastRadius = {AttributeType.NUMBER, 20},
+		Active = {AttributeType.EXPRESSION, ""},
+	},
 	ScriptedExplosion = {
 		BlastRadius = {AttributeType.NUMBER, 20},
 		Active = {AttributeType.EXPRESSION, ""},
@@ -1459,6 +1481,9 @@ return {
 		ClientVisible = {AttributeType.EXPRESSION, "1"},
 		HoldTime = {AttributeType.NUMBER, 1},
 		SubtitleKey = {AttributeType.STRING, ""},
+		ClientEnabled = {AttributeType.EXPRESSION, ""},
+		DisabledTitleKey = {AttributeType.STRING, ""},
+		DisabledSubtitleKey = {AttributeType.STRING, ""},
 	},
 	BotItemSpawn = {
 		Condition = {AttributeType.EXPRESSION, ""},
