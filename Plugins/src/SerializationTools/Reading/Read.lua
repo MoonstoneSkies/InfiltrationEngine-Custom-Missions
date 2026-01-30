@@ -79,17 +79,8 @@ Read = {
 
 	FloatSequence = function(str, cursor)
 		local numberSequenceKeypoints = {}
-		local numberSequenceLength
+		local numberSequenceLength, time, number, envelope
 		numberSequenceLength, cursor = Read.ShortInt(str, cursor)
-		-- The NumberSequence array constructor only accepts an array with 2+ indicies.
-		if numberSequenceLength == 1 then
-			local num
-			_, cursor = Read.ShortBoundedFloat(str, cursor)
-			num, cursor = Read.Float(str, cursor)
-			_, cursor = Read.Float(str, cursor)
-			return NumberSequence.new(num), cursor
-		end
-		local time, number, envelope
 		for i = 1, numberSequenceLength do
 			time, cursor = Read.ShortBoundedFloat(str, cursor)
 			number, cursor = Read.Float(str, cursor)
