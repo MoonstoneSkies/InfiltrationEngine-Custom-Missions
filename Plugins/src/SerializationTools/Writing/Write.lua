@@ -1,12 +1,8 @@
 local StringConversion = require(script.Parent.Parent.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local WriteInstance = require(script.Parent.WriteInstance)
-local Materials = require(script.Parent.Parent.Types.Materials)
-local PartTypes = require(script.Parent.Parent.Types.PartTypes)
-local NormalId = require(script.Parent.Parent.Types.NormalId)
-local MeshType = require(script.Parent.Parent.Types.MeshType)
-local RenderFidelity = require(script.Parent.Parent.Types.RenderFidelity)
-local CollisionFidelity = require(script.Parent.Parent.Types.CollisionFidelity)
+
+local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -95,11 +91,36 @@ Write = {
 		return beforeDecimalStr .. afterDecimalStr
 	end,
 
-	Vector3 = function(vector) -- 24 characters, 8 for each float of X, Y, & Z
+	FloatRange = function(numberRange) -- Vector2 wrapper
+		return Write.Vector2(Vector2.new(numberRange.Min, numberRange.Max))
+	end,
+
+	FloatSequence = function (numberSequence) -- 2 + 7 * keypoints characters
+		local keypoints = numberSequence.Keypoints
+		local numberSequenceStr = Write.ShortInt(#keypoints)
+		for i, v in pairs(keypoints) do
+			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value) .. Write.Float(v.Envelope)
+		end
+		return numberSequenceStr
+	end,
+
+	Vector2 = function(vector) -- 10 characters, 5 for each float XY
+		return Write.Float(vector.X) .. Write.Float(vector.Y)
+	end,
+
+	Vector3 = function(vector) -- 15 characters, 5 per float XYZ
 		return Write.Float(vector.X) .. Write.Float(vector.Y) .. Write.Float(vector.Z)
 	end,
 
-	CFrame = function(frame) -- 27 characters, 15 for position, 12 for rotation
+	UDim = function(udim)
+		return Write.Vector2(Vector2.new(udim.Scale, udim.Offset))
+	end,
+
+	UDim2 = function(udim2)
+		return Write.UDim(udim2.X) .. Write.UDim(udim2.Y)
+	end,
+
+	CFrame = function(frame) -- 24 characters, 15 for position, 9 for rotation
 		local rx, ry, rz = frame:ToEulerAnglesXYZ()
 		return Write.Float(frame.X)
 			.. Write.Float(frame.Y)
@@ -131,6 +152,15 @@ Write = {
 
 	Color3 = function(color) -- 6 characters
 		return Write.ShortBoundedFloat(color.R) .. Write.ShortBoundedFloat(color.G) .. Write.ShortBoundedFloat(color.B)
+	end,
+
+	ColorSequence = function (colorSequence) -- 2 + 8 * keypoints characters
+		local keypoints = colorSequence.Keypoints
+		local colorSequenceStr = Write.ShortInt(#keypoints)
+		for i, v in pairs(keypoints) do
+			colorSequenceStr = colorSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Color3(v.Value)
+		end
+		return colorSequenceStr
 	end,
 
 	String = function(str) -- 4 + length characters
@@ -239,25 +269,21 @@ Write = {
 		end
 	end,
 
-	Material = CreateEnumWriter(Materials),
-	PartType = CreateEnumWriter(PartTypes),
-	NormalId = CreateEnumWriter(NormalId),
-	MeshType = CreateEnumWriter(MeshType),
-	RenderFidelity = CreateEnumWriter(RenderFidelity),
-	CollisionFidelity = CreateEnumWriter(CollisionFidelity),
-	--[[
-	Material = function(material)
-		return StringConversion.NumberToString(Materials[material.Name], 1)
-	end,
+	Material = CreateEnumWriter(EnumTypes.Materials),
+	PartType = CreateEnumWriter(EnumTypes.PartTypes),
+	NormalId = CreateEnumWriter(EnumTypes.NormalId),
 
-	PartType = function(pType)
-		return StringConversion.NumberToString(PartTypes[pType.Name], 1)
-	end,
+	MeshType = CreateEnumWriter(EnumTypes.MeshType),
+	RenderFidelity = CreateEnumWriter(EnumTypes.RenderFidelity),
+	CollisionFidelity = CreateEnumWriter(EnumTypes.CollisionFidelity),
 
-	NormalId = function(pType)
-		return StringConversion.NumberToString(NormalId[pType.Name], 1)
-	end,
-	]]
+	ParticleEmitterShape = CreateEnumWriter(EnumTypes.ParticleEmitterShape),
+	ParticleEmitterShapeInOut = CreateEnumWriter(EnumTypes.ParticleEmitterShapeInOut),
+	ParticleEmitterShapeStyle = CreateEnumWriter(EnumTypes.ParticleEmitterShapeStyle),
+	ParticleOrientation = CreateEnumWriter(EnumTypes.ParticleOrientation),
+
+	ResamplerMode = CreateEnumWriter(EnumTypes.ResamplerMode),
+	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode)
 }
 
 return Write
