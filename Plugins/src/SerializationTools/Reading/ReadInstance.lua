@@ -79,7 +79,7 @@ local CreateInstanceReader = function(instanceType, properties)
 				newInstance[typeName] = stringMap[stringMapIndex]
 			else
 				local set, newCursor = Read[valueType](str, cursor)
-				if typeof(set) == "function" then -- TODO: optimize this somehow because I doubt Cish will be a fan of checking if every single property value is a function
+				if type(set) == "function" then
 					cursor = newCursor
 					task.spawn(function()
 						newInstance[typeName] = set()

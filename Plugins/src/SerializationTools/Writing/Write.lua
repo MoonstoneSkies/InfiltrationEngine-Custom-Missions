@@ -29,19 +29,19 @@ end
 
 local function GetIndex(object)
 	local parent = object.Parent
-	local index do	
-		local children = parent:GetChildren()
-		for i,v in (children) do
-			if not WriteInstance[v.ClassName] then -- Clear out unserialized instances to not break order during mission loading
-				table.remove(children, table.find(children, v))
-			end
+	local children = parent:GetChildren()
+	
+	local index
+	for i,v in (children) do
+		if not WriteInstance[v.ClassName] then -- Clear out unserialized instances to not break order during mission loading
+			table.remove(children, table.find(children, v))
 		end
-		
-		for i,v in (children) do
-			if v == object then
-				index = i
-				break
-			end
+	end
+	
+	for i,v in (children) do
+		if v == object then
+			index = i
+			break
 		end
 	end
 	
@@ -327,7 +327,9 @@ Write = {
 	ParticleOrientation = CreateEnumWriter(EnumTypes.ParticleOrientation),
 
 	ResamplerMode = CreateEnumWriter(EnumTypes.ResamplerMode),
-	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode)
+	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode),
+
+	TextureMode = CreateEnumWriter(EnumTypes.TextureMode),
 }
 
 return Write
