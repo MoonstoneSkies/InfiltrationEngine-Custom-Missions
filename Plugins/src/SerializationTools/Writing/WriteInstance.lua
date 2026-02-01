@@ -129,6 +129,8 @@ WriteInstance = {
 	ImageLabel = CreateInstanceWriter(InstanceProperties.ImageLabel),
 	BillboardGui = CreateInstanceWriter(InstanceProperties.BillboardGui),
 	Frame = CreateInstanceWriter(InstanceProperties.Frame),
+	Beam = CreateInstanceWriter(InstanceProperties.Beam),
+	Trail = CreateInstanceWriter(InstanceProperties.Trail),
 }
 
 return WriteInstance
