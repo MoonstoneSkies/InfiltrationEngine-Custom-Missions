@@ -209,7 +209,33 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "ImageRectOffset", "Vector2", Vector2.new() },
 		{ "ImageRectSize", "Vector2", Vector2.new() },
 		{ "ResampleMode", "ResamplerMode", Enum.ResamplerMode.Default },
-	}
+	},
+	BillboardGui = {
+		{ "Name", "String", "BillboardGui" },
+		{ "AlwaysOnTop", "Bool", false },
+		{ "Enabled", "Bool", true },
+		{ "ExtentsOffset", "Vector3", Vector3.new(0, 0, 0) },
+		{ "ExtentsOffsetWorldSpace", "Vector3", Vector3.new(0, 0, 0) },
+		{ "LightInfluence", "ShortBoundedFloat", 1 },
+		{ "MaxDistance", "Int", math.huge },
+		{ "Size", "UDim2", UDim2.new(0, 200, 0, 50) },
+		{ "SizeOffset", "Vector2", Vector2.new(0, 0) },
+		{ "StudsOffset", "Vector3", Vector3.new(0, 0, 0) },
+		{ "StudsOffsetWorldSpace", "Vector3", Vector3.new(0, 0, 0) },
+		{ "ClipsDescendants", "Bool", true },
+	},
+	Frame = {
+		{ "Name", "String", "ImageLabel" },
+		{ "Position", "UDim2", UDim2.new(0, 0, 0, 0) },
+		{ "Size", "UDim2", UDim2.new(0, 100, 0, 100) },
+		{ "Rotation", "Float", 0 },
+		{ "AnchorPoint", "Vector2", Vector2.new() },
+		{ "BackgroundColor3", "Color3", Color3.new() },
+		{ "BackgroundTransparency", "ShortBoundedFloat", 0 },
+		{ "BorderSizePixel", "Int", 0 },
+		{ "ClipsDescendants", "Bool", false },
+		{ "ZIndex", "Int", 0 },
+	},
 }
 
 return InstanceProperties

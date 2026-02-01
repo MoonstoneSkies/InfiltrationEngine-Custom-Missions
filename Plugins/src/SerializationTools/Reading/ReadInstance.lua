@@ -219,6 +219,8 @@ ReadInstance = {
 	Sparkles = CreateInstanceReader("Sparkles", InstanceProperties.Sparkles),
 	SurfaceGui = CreateInstanceReader("SurfaceGui", InstanceProperties.SurfaceGui),
 	ImageLabel = CreateInstanceReader("ImageLabel", InstanceProperties.ImageLabel),
+	BillboardGui = CreateInstanceReader("BillboardGui", InstanceProperties.BillboardGui),
+	Frame = CreateInstanceReader("Frame", InstanceProperties.Frame),
 }
 
 return ReadInstance
