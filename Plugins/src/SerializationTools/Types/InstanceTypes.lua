@@ -23,6 +23,10 @@ local InstanceTypes = {
 	Sparkles = 22,
 	SurfaceGui = 23,
 	ImageLabel = 24,
+	BillboardGui = 25,
+	Frame = 26,
+	Beam = 27,
+	Trail = 28,
 }
 
 return InstanceTypes

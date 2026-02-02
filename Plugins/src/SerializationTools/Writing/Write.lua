@@ -27,6 +27,27 @@ local function CreateEnumWriter(keys)
 	end
 end
 
+local function GetIndex(object)
+	local parent = object.Parent
+	local children = parent:GetChildren()
+	
+	local index
+	for i,v in (children) do
+		if not WriteInstance[v.ClassName] then -- Clear out unserialized instances to not break order during mission loading
+			table.remove(children, table.find(children, v))
+		end
+	end
+	
+	for i,v in (children) do
+		if v == object then
+			index = i
+			break
+		end
+	end
+	
+	return index
+end
+
 local ESCAPED_NEWLINES_ACTIVE = VersionConfig.ReplaceNewlines
 local TAB_CHAR = utf8.char(9)
 
@@ -169,6 +190,29 @@ Write = {
 		end
 		return Write.Int(#str) .. str
 	end,
+	
+	InstanceReference = function(object)
+		local path = {}
+		local current = object
+		
+		-- Get parent path
+		while current and current.Parent and (current.Name ~= `DebugMission` and current ~= workspace) do
+			local index = GetIndex(current)
+			if index then
+				table.insert(path, index)
+			end
+			current = current.Parent
+		end
+		
+		-- Reverse order
+		for i = 1, math.floor(#path / 2) do
+			path[i], path[#path - i + 1] = path[#path - i + 1], path[i]
+		end
+		
+		-- Concat
+		path = table.concat(path, `.`)
+		return Write.Int(#path) .. path
+	end,
 
 	ColorMap = function(colorMap)
 		local colorStr = ""
@@ -283,7 +327,9 @@ Write = {
 	ParticleOrientation = CreateEnumWriter(EnumTypes.ParticleOrientation),
 
 	ResamplerMode = CreateEnumWriter(EnumTypes.ResamplerMode),
-	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode)
+	SurfaceGuiSizingMode = CreateEnumWriter(EnumTypes.SurfaceGuiSizingMode),
+
+	TextureMode = CreateEnumWriter(EnumTypes.TextureMode),
 }
 
 return Write

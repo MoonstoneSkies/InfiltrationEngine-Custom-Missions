@@ -78,7 +78,15 @@ local CreateInstanceReader = function(instanceType, properties)
 				stringMapIndex, cursor = Read.ShortInt(str, cursor)
 				newInstance[typeName] = stringMap[stringMapIndex]
 			else
-				newInstance[typeName], cursor = Read[valueType](str, cursor)
+				local set, newCursor = Read[valueType](str, cursor)
+				if type(set) == "function" then
+					cursor = newCursor
+					task.spawn(function()
+						newInstance[typeName] = set()
+					end)
+				else
+					newInstance[typeName], cursor = set, newCursor
+				end
 			end
 			propertyId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
@@ -219,6 +227,10 @@ ReadInstance = {
 	Sparkles = CreateInstanceReader("Sparkles", InstanceProperties.Sparkles),
 	SurfaceGui = CreateInstanceReader("SurfaceGui", InstanceProperties.SurfaceGui),
 	ImageLabel = CreateInstanceReader("ImageLabel", InstanceProperties.ImageLabel),
+	BillboardGui = CreateInstanceReader("BillboardGui", InstanceProperties.BillboardGui),
+	Frame = CreateInstanceReader("Frame", InstanceProperties.Frame),
+	Beam = CreateInstanceReader("Beam", InstanceProperties.Beam),
+	Trail = CreateInstanceReader("Trail", InstanceProperties.Trail),
 }
 
 return ReadInstance

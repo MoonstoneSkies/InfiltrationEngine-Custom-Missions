@@ -126,7 +126,11 @@ WriteInstance = {
 	ParticleEmitter = CreateInstanceWriter(InstanceProperties.ParticleEmitter),
 	Sparkles = CreateInstanceWriter(InstanceProperties.Sparkles),
 	SurfaceGui = CreateInstanceWriter(InstanceProperties.SurfaceGui),
-	ImageLabel = CreateInstanceWriter(InstanceProperties.ImageLabel)
+	ImageLabel = CreateInstanceWriter(InstanceProperties.ImageLabel),
+	BillboardGui = CreateInstanceWriter(InstanceProperties.BillboardGui),
+	Frame = CreateInstanceWriter(InstanceProperties.Frame),
+	Beam = CreateInstanceWriter(InstanceProperties.Beam),
+	Trail = CreateInstanceWriter(InstanceProperties.Trail),
 }
 
 return WriteInstance
