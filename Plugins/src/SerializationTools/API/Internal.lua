@@ -6,6 +6,7 @@ local featureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 local internalAPI = {}
 internalAPI.APIExtensions = {}
 
+internalAPI.RunningThread = nil
 internalAPI.Hooks = {}
 internalAPI.Hooks.APIExtensionLoaded = {}
 internalAPI.Hooks.APIExtensionUnloaded = {}
@@ -19,6 +20,49 @@ internalAPI.ProtectedStateKeys = {
 	Present = true,
 	Done = false
 }
+
+local wait_event = Instance.new("BindableEvent")
+internalAPI.StateCommands = {
+	CMD_WAIT = function(caller, duration)
+		local validDuration = duration
+		if type(duration) ~= "number" then validDuration = 0 end
+		validDuration = math.clamp(validDuration, 0, 2.5)
+		if validDuration ~= duration then
+			warn(`SerializerAPI : {caller}'s CMD_WAIT stateCommand provided invalid waiting duration - number between 0 & 2.5 expected, got {duration} - will wait for {validDuration} instead!`)
+		end
+		return { task.wait(validDuration) }
+	end,
+	CMD_WAIT_EVENT = function(caller, event)
+		if typeof(event) ~= "RBXScriptSignal" then return { `Expected RBXScriptSignal, got {typeof(event)}!` } end
+		local fired = false
+		local args = {}
+		task.spawn(function()
+			task.wait(2.5)
+			if fired then return end
+			wait_event:Fire(false)
+		end)
+		
+		local connection
+		connection = event:Connect(function(...)
+			if fired then return end
+			wait_event:Fire(true)
+			args = { ... }
+		end)
+		local success = wait_event.Event:Wait()
+		fired = true
+		connection:Disconnect()
+		return { success, unpack(args) }
+	end,
+}
+
+local function arg_merge(...)
+	local n = select('#', ...)
+	local t = table.create(n, nil)
+	for i=1, n do
+		t[#t+1] = select(i, ...)
+	end
+	return unpack(t)
+end
 
 local function varargs(...)
 	local n = select('#', ...)
@@ -134,7 +178,8 @@ internalAPI.AddHook = function(hookType: string, registrant, callback, state) : 
 		{ 
 			Registrant = registrant,
 			Callback = callback,
-			CallbackState = state
+			CallbackState = state,
+			CMD_Result = {}
 		}
 	)
 end
@@ -167,17 +212,33 @@ internalAPI.InvokeHook = function(hookType, ...)
 
 		for _, hook in pairs(hooksToRun) do
 			local hookCoroutine = hookCoroutines[hook.Callback]
-			local success, stateVals = co_xpcall(hookCoroutine, hook.CallbackState, invokeStatePublic, ...)
+			
+			internalAPI.RunningThread = hookCoroutine
+			local success, stateOut, arg1 = co_xpcall(hookCoroutine, arg_merge(unpack(hook.CMD_Result), hook.CallbackState, invokeStatePublic, ...))
+			internalAPI.RunningThread = nil
 
-			if success and type(stateVals) == "table" then
+			if type(stateOut) == "string" then
+				stateOut = stateOut:upper()
+			else
+				hook.CMD_Result = {}
+			end
+
+			if stateOut == "CMD_STATE_SET" then
+				stateOut = arg1
+				arg1 = nil
+			end
+
+			if success and type(stateOut) == "table" then
 				-- Set state values
-				for k, v in pairs(stateVals) do
+				for k, v in pairs(stateOut) do
 					if internalAPI.ProtectedStateKeys[k] ~= nil then
 						warn(`Attempt by {hook.Registrant} to set protected InvokeState value {hook.Registrant}.{k}`)
 						continue
 					end
 					invokeState[hook.Registrant][k] = v
 				end
+			elseif success and type(stateOut) == "string" then
+				hook.CMD_Result = internalAPI.StateCommands[stateOut](hook.Registrant, arg1)
 			end
 
 			if success and coroutine.status(hookCoroutine) == "suspended" then

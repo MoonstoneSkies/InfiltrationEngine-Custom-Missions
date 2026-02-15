@@ -14,7 +14,7 @@ local versionConfig = {
 	LatestVersion = VERSION_LATEST,
 
 	VersionNumber = VERSION_LATEST,
-	VersionNumber_API = 0,
+	VersionNumber_API = 1,
 	
 	ReplaceNewlines = true,
 }
