@@ -1,5 +1,3 @@
-local httpService = game:GetService("HttpService")
-
 local attributesMap = require(script.Parent.Parent.AttributesMap)
 local attributeTypes = require(script.Parent.Parent.PropAttributeTypes)
 local versionCfg = require(script.Parent.Parent.Util.VersionConfig)
@@ -78,6 +76,22 @@ end
 
 --[[
 	[Args]
+		 Title // Description                                  // Example             //
+		------ // -------------------------------------------- // ------------------- //
+		thread // The thread to compare against the API thread // coroutine.running() //
+	[Returns]
+		1 - If the threads are the same
+]]
+function publicAPI.IsAPIThread(thread: thread) : boolean
+	if not ValidateArgTypes(
+		"IsAPIThread",
+		{ "thread", thread, "thread" }
+		) then return false end
+	return thread == internalAPI.RunningThread
+end
+
+--[[
+	[Args]
 		 Title // Description                                        // Example    //
 		------ // -------------------------------------------------- // ---------- //
 		author // Name/alias for the author(s) of the calling plugin // "Sprix"    //
@@ -86,6 +100,11 @@ end
 		1 - Helper function which constructs registrant names
 ]]
 function publicAPI.GetRegistrantFactory(author: string, plugin: string) : (string) -> string
+	if not ValidateArgTypes(
+		"GetRegistrantFactory",
+		{ "author", author, "string" },
+		{ "plugin", plugin, "string" }
+		) then return nil end
 	local prefix = author .. '_' .. plugin
 	return function(hookName) return prefix .. '_' .. hookName end
 end
@@ -116,7 +135,7 @@ end
 	[Args]
 		     Title // Description                                                                       // Example                                   //
 		---------- // --------------------------------------------------------------------------------- // ----------------------------------------- //
-		  hookType // String corresponding to the type of hook being removed                            // "PreSerialize"                            //
+		  hookType // String corresponding to the type of hook being added                              // "PreSerialize"                            //
 		registrant // String representing the source of the hook. Should be unique                      // "MyPlugin"                                //
 		      hook // Function to be invoked when the corresponding hookType is invoked                 // function() print("Hook!") end             //
 		 hookState // (Optional) Extra state to be passed as the last argument to the hook when invoked // { PartCol = Color3.fromHex("#FFFFFF") }   //
