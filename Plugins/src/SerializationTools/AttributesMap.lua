@@ -1357,6 +1357,7 @@ return {
 		RollOffMinDistance = {AttributeType.NUMBER, 10},
 	},
 	SpawnLocation = {
+		StartingLocationId = {AttributeType.STRING, "Default"},
 	},
 	StandingCover = {
 		AllowSpawning = {AttributeType.EXPRESSION, false},
@@ -1545,6 +1546,7 @@ return {
 		Notification = {AttributeType.STRING, ""},
 		NotificationDelay = {AttributeType.NUMBER, 2.5},
 		Disguise = {AttributeType.STRING, ""},
+		Label = {AttributeType.STRING, ""},
 	},
 	ConversationResponseCustomBehavior = {
 		BotServerTag = {AttributeType.STATE_VALUE, ""},
@@ -1737,6 +1739,11 @@ return {
 	},
 	StateScript = {
 	},
+	StateUpdate = {
+		Watch = {AttributeType.EXPRESSION, ""},
+		SetVariable = {AttributeType.STATE_VALUE, ""},
+		SetInternal = {AttributeType.STATE_VALUE, ""},
+	},
 	TargetLureHack = {
 	},
 	TimerComponent = {
@@ -1755,6 +1762,14 @@ return {
 	TrackItemHeldServer = {
 	},
 	TrackNodeReserved = {
+	},
+	VariableShuffle = {
+		Prefix0 = {AttributeType.STRING, ""},
+		Prefix1 = {AttributeType.STRING, ""},
+		Set0 = {AttributeType.STRING, ""},
+		Set1 = {AttributeType.STRING, ""},
+		Seed = {AttributeType.EXPRESSION, ""},
+		InternalOnly = {AttributeType.BOOL, false},
 	},
 	AutoConversationTrigger = {
 		BotClientTag = {AttributeType.STRING, ""},
