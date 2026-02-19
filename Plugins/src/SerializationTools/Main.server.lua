@@ -1,8 +1,17 @@
+local runService = game:GetService("RunService")
+
 local toolbar = plugin:CreateToolbar("Mission Exporter")
 local ExportButton = toolbar:CreateButton("Exporter", "Exporter", "rbxassetid://86828934223336")
 
-local Api = require(script.Parent.API.Main)
 local Exporter = require(script.Parent.Writing.Main)
+
+-- Should silence morgan's studio warnings about anti-tamper
+local Api
+if runService:IsStudio() and not runService:IsRunMode() then
+	Api = require("./API/Main")
+else
+	Api = { Clean = function() end, Init = function() end }
+end
 
 local CurrentPlugin = nil
 
