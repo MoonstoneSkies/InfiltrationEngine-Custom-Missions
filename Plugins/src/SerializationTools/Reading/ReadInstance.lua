@@ -77,16 +77,14 @@ local CreateInstanceReader = function(instanceType, properties)
 				local stringMapIndex
 				stringMapIndex, cursor = Read.ShortInt(str, cursor)
 				newInstance[typeName] = stringMap[stringMapIndex]
-			else
+			elseif valueType == "InstanceReference" then
 				local set, newCursor = Read[valueType](str, cursor)
-				if type(set) == "function" then
-					cursor = newCursor
-					task.spawn(function()
-						newInstance[typeName] = set()
-					end)
-				else
-					newInstance[typeName], cursor = set, newCursor
-				end
+				cursor = newCursor
+				task.spawn(function()
+					newInstance[typeName] = set()
+				end)
+			else
+				newInstance[typeName], cursor = Read[valueType](str, cursor)
 			end
 			propertyId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1

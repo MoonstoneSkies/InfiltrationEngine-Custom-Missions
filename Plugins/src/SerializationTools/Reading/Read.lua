@@ -154,11 +154,12 @@ Read = {
 		local value = str:sub(cursor, cursor + length - 1)
 
 		return function()
-			if not Root then return end
-			Root:GetAttributeChangedSignal(`Loaded`):Wait()
-			
-			local object = ResolvePath(Root, value)
-			return object
+			if Root and not Root:GetAttribute(`Loaded`) then
+				Root:GetAttributeChangedSignal(`Loaded`):Wait()
+				
+				local object = ResolvePath(Root, value)
+				return object
+			end
 		end, cursor + length
 	end,
 
@@ -286,6 +287,7 @@ Read = {
 			local object, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap)
 			if not Root and object.Name == `DebugMission` then
 				Root = object
+				Root:SetAttribute(`Loaded`, false)
 			end
 			
 			while StringConversion.StringToNumber(str, cursor, 1) ~= 0 do

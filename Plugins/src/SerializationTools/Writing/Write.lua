@@ -31,17 +31,12 @@ local function GetIndex(object)
 	local parent = object.Parent
 	local children = parent:GetChildren()
 	
-	local index
-	for i,v in (children) do
-		if not WriteInstance[v.ClassName] then -- Clear out unserialized instances to not break order during mission loading
-			table.remove(children, table.find(children, v))
-		end
-	end
-	
-	for i,v in (children) do
-		if v == object then
-			index = i
-			break
+	local index = 1
+	for _, child in children do
+		if child == object then
+			return index
+		elseif WriteInstance[child.ClassName] then -- Ignore unserialized instances
+			index += 1
 		end
 	end
 	
