@@ -169,13 +169,6 @@ function module:AddProp(basePart)
 			or (ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name))
 	end
 	if not storedModel then return end
-	local modelDescendants = storedModel:GetDescendants()
-	if #modelDescendants == 1 then
-		local onlyPart = modelDescendants[1]
-			if onlyPart:IsA("BasePart") and string.lower(onlyPart.Name) == "base" then
-			return
-		end
-	end
 	basePart.Transparency = 1
 
 	local model = storedModel:Clone()
