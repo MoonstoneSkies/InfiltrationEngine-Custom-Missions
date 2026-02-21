@@ -154,8 +154,10 @@ Read = {
 		local value = str:sub(cursor, cursor + length - 1)
 
 		return function()
-			if Root and not Root:GetAttribute(`Loaded`) then
-				Root:GetAttributeChangedSignal(`Loaded`):Wait()
+			if Root then
+				if not Root:GetAttribute(`Loaded`) then
+					Root:GetAttributeChangedSignal(`Loaded`):Wait()
+				end
 				
 				local object = ResolvePath(Root, value)
 				return object
