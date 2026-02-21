@@ -77,6 +77,12 @@ local CreateInstanceReader = function(instanceType, properties)
 				local stringMapIndex
 				stringMapIndex, cursor = Read.ShortInt(str, cursor)
 				newInstance[typeName] = stringMap[stringMapIndex]
+			elseif valueType == "InstanceReference" then
+				local set, newCursor = Read[valueType](str, cursor)
+				cursor = newCursor
+				task.spawn(function()
+					newInstance[typeName] = set()
+				end)
 			else
 				newInstance[typeName], cursor = Read[valueType](str, cursor)
 			end
@@ -219,6 +225,10 @@ ReadInstance = {
 	Sparkles = CreateInstanceReader("Sparkles", InstanceProperties.Sparkles),
 	SurfaceGui = CreateInstanceReader("SurfaceGui", InstanceProperties.SurfaceGui),
 	ImageLabel = CreateInstanceReader("ImageLabel", InstanceProperties.ImageLabel),
+	BillboardGui = CreateInstanceReader("BillboardGui", InstanceProperties.BillboardGui),
+	Frame = CreateInstanceReader("Frame", InstanceProperties.Frame),
+	Beam = CreateInstanceReader("Beam", InstanceProperties.Beam),
+	Trail = CreateInstanceReader("Trail", InstanceProperties.Trail),
 }
 
 return ReadInstance

@@ -16,7 +16,9 @@ local ALL_ENUMS = {
 	ParticleEmitterShape      = PARTICLE_ENUM.ParticleEmitterShape,
 	ParticleEmitterShapeInOut = PARTICLE_ENUM.ParticleEmitterShapeInOut,
 	ParticleEmitterShapeStyle = PARTICLE_ENUM.ParticleEmitterShapeStyle,
-	ParticleOrientation       = PARTICLE_ENUM.ParticleOrientation
+	ParticleOrientation       = PARTICLE_ENUM.ParticleOrientation,
+	
+	TextureMode = ENUM.TextureMode,
 }
 
 local enumsMain = {}

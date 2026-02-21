@@ -11,6 +11,7 @@ local INT_BOUND = StringConversion.GetMaxNumber(4)
 local BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(3)
 local SHORT_BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(2)
 
+local Root
 local Read
 
 local denormalize = function(value)
@@ -42,6 +43,21 @@ local function NewlineGSub(capture)
 		return utf8.char(9)
 	end
 	return "&"
+end
+
+local function ResolvePath(root, pathString)
+	local current = root
+
+	for index in string.gmatch(pathString, "%d+") do
+		index = tonumber(index)
+		current = current:GetChildren()[index]
+
+		if not current then
+			return nil
+		end
+	end
+
+	return current
 end
 
 Read = {
@@ -132,6 +148,22 @@ Read = {
 		rz = denormalize(rz)
 		return CFrame.new(X, Y, Z) * CFrame.fromEulerAnglesXYZ(rx, ry, rz), cursor
 	end,
+	
+	InstanceReference = function(str, cursor)
+		local length, cursor = Read.Int(str, cursor)
+		local value = str:sub(cursor, cursor + length - 1)
+
+		return function()
+			if Root then
+				if not Root:GetAttribute(`Loaded`) then
+					Root:GetAttributeChangedSignal(`Loaded`):Wait()
+				end
+				
+				local object = ResolvePath(Root, value)
+				return object
+			end
+		end, cursor + length
+	end,
 
 	BoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 3 symbols.
 		return StringConversion.StringToNumber(str, cursor, 3) / BOUNDED_FLOAT_BOUND, cursor + 3
@@ -221,7 +253,8 @@ Read = {
 			end
 			str = code
 		end
-
+		
+		Root = nil
 		local colorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		local stringMap
@@ -243,7 +276,8 @@ Read = {
 			MissionSetup.Parent = mission
 			MissionSetup.Source = StringMissionSetup.Value
 		end
-
+		
+		mission:SetAttribute(`Loaded`, true)
 		return mission
 	end,
 
@@ -253,6 +287,11 @@ Read = {
 		if InstanceId ~= InstanceTypes.Nil then
 			local InstanceType = InstanceKeys[InstanceId]
 			local object, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap)
+			if not Root and object.Name == `DebugMission` then
+				Root = object
+				Root:SetAttribute(`Loaded`, false)
+			end
+			
 			while StringConversion.StringToNumber(str, cursor, 1) ~= 0 do
 				local child
 				child, cursor = Read.Instance(str, cursor, colorMap, stringMap)
@@ -281,6 +320,8 @@ Read = {
 
 	ResamplerMode = CreateEnumReader(Enum.ResamplerMode, EnumTypes.ResamplerMode),
 	SurfaceGuiSizingMode = CreateEnumReader(Enum.SurfaceGuiSizingMode, EnumTypes.SurfaceGuiSizingMode),
+	
+	TextureMode = CreateEnumReader(Enum.TextureMode, EnumTypes.TextureMode),
 }
 
 return Read
