@@ -1,7 +1,4 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ScriptEditorService = game:GetService("ScriptEditorService")
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
 
 local InternalAPI = require(script.Parent.Parent.API.Internal)
 local Write = require(script.Parent.Write)
@@ -12,7 +9,6 @@ local ReadbackButton = require(script.Parent.ReadbackButton)
 local Button = require(script.Parent.Parent.Util.Button)
 local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
-local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
@@ -23,23 +19,6 @@ local DerivedTable = Actor.DerivedTable
 local MAX_PASTE_SIZE = 199999
 local PASTE_INFO_SIZE = 7
 local PASTE_SIZE = MAX_PASTE_SIZE - PASTE_INFO_SIZE
-
-local VERSION_NUMBER = VersionConfig.VersionNumber
-
-local GIST_PREFIX = [[!!! 
-How to play custom missions:
-
-1) Join the game and find "Custom Mission" in the mission menu
-2) Start a custom mission lobby
-3) Go to the table and open the custom mission loader
-4) Copy the URL of this page into the box and hit enter. It will NOT work if you copy the contents of this page instead of the URL.
-
-Mission Name:
-Creator:
-Version:
-Briefing:
-
-!!!]]
 
 local module = {}
 
@@ -60,6 +39,44 @@ local function GetMission()
 	InternalAPI.InvokeHook("PreSerializeMissionSetup", missionClone:FindFirstChild("MissionSetup"))
 
 	return missionClone
+end
+
+local function GetMissionSetting(missionRoot, settingName, settingType, defaultValue)
+	if not missionRoot:FindFirstChild("CustomMissionSettings") then
+		local settings = Instance.new("BoolValue")
+		settings.Name = "CustomMissionSettings"
+		settings.Parent = missionRoot
+	end
+	if not missionRoot.CustomMissionSettings:FindFirstChild(settingName) then
+		local setting = Instance.new(settingType)
+		setting.Name = settingName
+		setting.Value = defaultValue
+		setting.Parent = missionRoot.CustomMissionSettings
+	end
+	return missionRoot.CustomMissionSettings[settingName]
+end
+
+local function InitCustomMissionSettings(incrementVersionNumber)
+	local mission = workspace:FindFirstChild("DebugMission") or game.ReplicatedStorage:FindFirstChild("DebugMission")
+	if not mission then
+		error("No mission found: Mission must be named 'DebugMission' and placed in workspace or ReplicatedStorage")
+	end
+
+	GetMissionSetting(mission, "EnforceCellLinks", "BoolValue", true)
+	local versionNumber = GetMissionSetting(mission, "ExportVersion", "StringValue", "0")
+	if incrementVersionNumber then
+		local front, minorVersion = versionNumber.Value:match("^(.-)(%d+)$")
+		if not (minorVersion and tonumber(minorVersion)) then
+			front = ""
+			minorVersion = "0"
+		end
+		versionNumber.Value = `{front}{tonumber(minorVersion) + 1}`
+	end
+	GetMissionSetting(mission, "MissionName", "StringValue", "")
+	GetMissionSetting(mission, "MissionDesc", "StringValue", "")
+	GetMissionSetting(mission, "AuthorName", "StringValue", "")
+
+	return mission.CustomMissionSettings
 end
 
 local function GetMissionCode()
@@ -99,9 +116,9 @@ module.Init = function(mouse: PluginMouse)
 		return codeChunks
 	end, CodeState)
 
-	local apiDevEnabled 	= FeatureCheck("APIDev")   == true
-	local gistEnabled 		= FeatureCheck("ReadDocs") == true
-	local readbackEnabled 	= FeatureCheck("Readback") == true
+	local apiDevEnabled = FeatureCheck("APIDev") == true
+	local gistEnabled = FeatureCheck("ReadDocs") == true
+	local readbackEnabled = FeatureCheck("Readback") == true
 
 	module.UI = Create("ScreenGui", {
 		Parent = game:GetService("CoreGui"),
@@ -113,6 +130,7 @@ module.Init = function(mouse: PluginMouse)
 			Position = UDim2.new(0, 50, 0, 50),
 			Text = "Generate Code",
 			Activated = function()
+				InitCustomMissionSettings(false)
 				local code = GetMissionCode()
 
 				if not workspace:FindFirstChild("DebugMission") then
@@ -129,6 +147,7 @@ module.Init = function(mouse: PluginMouse)
 				Position = UDim2.new(0, 270, 0, 50),
 				Text = "Gist Code",
 				Activated = function()
+					local customSettings = InitCustomMissionSettings(true)
 					local code = GetMissionCode()
 
 					if not workspace:FindFirstChild("DebugMission") then
@@ -138,7 +157,8 @@ module.Init = function(mouse: PluginMouse)
 
 					local output = Write.MissionCodeHeader(GenerateMapId(), 1, 1)
 					output = output .. code
-					output = GIST_PREFIX .. output
+					output = `!!!{not customSettings.EnforceCellLinks.Value and "\n\nEnforceCellLinks is disabled on this map\nThis mission is ineligible to be featured in the community missions tab\n" or ""}\nHow to play custom missions:\n\n1) Join the game and find "Custom Mission" in the mission menu\n2) Start a custom mission lobby\n3) Go to the table and open the custom mission loader\n4) Copy the URL of this page into the box and hit enter. It will NOT work if you copy the contents of this page instead of the URL.\n\nMission Name: {customSettings.MissionName.Value}\nCreator: {customSettings.AuthorName.Value}\nVersion: {customSettings.ExportVersion.Value}\nBriefing: {customSettings.MissionDesc.Value}\n\n!!!`
+						.. output
 
 					if workspace:FindFirstChild("CustomMissionCode") then
 						workspace.CustomMissionCode:Destroy()
@@ -154,12 +174,9 @@ module.Init = function(mouse: PluginMouse)
 				end,
 			})
 			else nil,
-		if readbackEnabled
-			then ReadbackButton(module.EnabledState)
-			else nil,
+		if readbackEnabled then ReadbackButton(module.EnabledState) else nil,
 		if apiDevEnabled
-			then
-			Button({
+			then Button({
 				Size = UDim2.new(0, 200, 0, 30),
 				Enabled = module.EnabledState,
 				Position = UDim2.new(0, 50, 1, -50),

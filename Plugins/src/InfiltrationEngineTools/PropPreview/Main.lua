@@ -1,7 +1,3 @@
-local PhysicsService = game:GetService("PhysicsService")
-
-local COLLISON_GROUP = "PluginNoCollision"
-
 local Button = require(script.Parent.Parent.Util.Button)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
@@ -12,6 +8,12 @@ local DerivedTable = Actor.DerivedTable
 
 local CustomPropsFolder = State(false)
 
+local NoModelPlaceholder = Instance.new("Model")
+local NoModelBase = Instance.new("Part")
+NoModelBase.Parent = NoModelPlaceholder
+NoModelBase.Transparency = 1
+NoModelBase.Size = Vector3.new(0.2, 0.2, 0.2)
+
 local module = {}
 
 local ColorMap = {}
@@ -20,9 +22,7 @@ local Prop = {}
 local ModelFolder = State(false)
 local function UpdateModelFolder()
 	local assetsFolder = game.ReplicatedStorage:FindFirstChild("Assets")
-	ModelFolder:set(
-		assetsFolder and assetsFolder:FindFirstChild("Props") or false
-	)
+	ModelFolder:set(assetsFolder and assetsFolder:FindFirstChild("Props") or false)
 end
 
 -- Position/Color
@@ -113,7 +113,6 @@ function module:AddProp(basePart)
 			for _, p in pairs(model:GetDescendants()) do
 				if p:IsA("BasePart") then
 					p.Archivable = false
-					p.CollisionGroup = COLLISON_GROUP
 				end
 			end
 			model.Archivable = false
@@ -136,7 +135,7 @@ function module:AddProp(basePart)
 					newModel.Parent = self.Folder
 					self:RecolorProp(basePart)
 				end),
-				basePart.AttributeChanged:Connect(function()
+				basePart.AttributeChanged:Connect(function(attribute)
 					Prop[basePart].Model:Destroy()
 					local newModel = generateModel()
 					Prop[basePart].Model = newModel
@@ -154,37 +153,70 @@ function module:AddProp(basePart)
 		return
 	end
 
-	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(basePart.Name)
-		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(basePart.Name)
-	if storedModel then
+	local modelName = basePart:GetAttribute("AltPropModel") or basePart.Name
+	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(modelName)
+		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(modelName)
+
+	if not storedModel then
+		storedModel = NoModelPlaceholder
+	else
 		basePart.Transparency = 1
-
-		local model = storedModel:Clone()
-		for _, p in pairs(model:GetDescendants()) do
-			if p:IsA("BasePart") then
-				p.Archivable = false
-				p.CollisionGroup = COLLISON_GROUP
-			end
-		end
-
-		Prop[basePart] = {
-			Model = model,
-			Events = {
-				basePart:GetPropertyChangedSignal("CFrame"):Connect(function()
-					self:RepositionProp(basePart)
-				end),
-				basePart.AttributeChanged:Connect(function()
-					HiddenModels[basePart] = nil
-					model.Parent = self.Folder
-					self:RecolorProp(basePart)
-				end),
-			},
-		}
-		model.Parent = self.Folder
-		BaseByModel[model] = basePart
-		self:RepositionProp(basePart)
-		self:RecolorProp(basePart)
 	end
+
+	local model = storedModel:Clone()
+	model.Archivable = false
+	for _, p in pairs(model:GetDescendants()) do
+		if p:IsA("BasePart") then
+			p.Archivable = false
+		end
+	end
+
+	if basePart:GetAttribute("DoubleDoor") then
+		local baseInverse = model.Base.CFrame:Inverse()
+		local leftShift = model.Base.CFrame * CFrame.Angles(0, math.pi, 0) * CFrame.new(2.5, 0, 0) * baseInverse
+		local rightShift = model.Base.CFrame * CFrame.new(2.5, 0, 0) * baseInverse
+		for _, p in pairs(model:GetDescendants()) do
+			if p.Name == "Base" or not p:IsA("BasePart") then
+				continue
+			end
+			p.Archivable = true
+			local left = p:Clone()
+			left.CFrame = leftShift * left.CFrame
+			left.Parent = p.Parent
+			p.CFrame = rightShift * p.CFrame
+			p.Archivable = false
+			left.Archivable = false
+		end
+	end
+
+	Prop[basePart] = {
+		Model = model,
+		Events = {
+			basePart:GetPropertyChangedSignal("CFrame"):Connect(function()
+				self:RepositionProp(basePart)
+			end),
+			basePart.AttributeChanged:Connect(function(attribute)
+				HiddenModels[basePart] = nil
+				model.Parent = self.Folder
+				if attribute == "AltPropModel" or attribute == "DoubleDoor" then
+					self:RemoveProp(basePart)
+					self:AddProp(basePart)
+					return
+				end
+				self:RecolorProp(basePart)
+			end),
+			basePart:GetPropertyChangedSignal("Name"):Connect(function()
+				HiddenModels[basePart] = nil
+				model.Parent = self.Folder
+				self:RemoveProp(basePart)
+				self:AddProp(basePart)
+			end),
+		},
+	}
+	model.Parent = self.Folder
+	BaseByModel[model] = basePart
+	self:RepositionProp(basePart)
+	self:RecolorProp(basePart)
 end
 
 function module:RemoveProp(basePart)
@@ -222,9 +254,6 @@ function module:SetEnabled()
 	module.Folder.Parent = workspace
 	module.Folder.Name = "PropPreviewModels"
 
-	PhysicsService:RegisterCollisionGroup(COLLISON_GROUP)
-	PhysicsService:CollisionGroupSetCollidable("Default", COLLISON_GROUP, false)
-
 	for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 		module:AddProp(prop)
 	end
@@ -258,7 +287,7 @@ function module:SetEnabled()
 			else
 				for base, model in HiddenModels do
 					if not selectedParts[base] then
-						model.Parent = workspace
+						model.Parent = self.Folder
 						HiddenModels[base] = nil
 					end
 				end
@@ -306,16 +335,18 @@ function module:SetDisabled()
 	end
 	self.AddEvents = nil
 
-	PhysicsService:UnregisterCollisionGroup(COLLISON_GROUP)
-
-	for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
-		module:RemoveProp(prop)
+	for propBase in Prop do
+		module:RemoveProp(propBase)
 	end
 end
 
 local function ReplicatedStorageChildrenChanged(child: Instance)
-	if not child:IsA("Model") then return end
-	if child.Name == "Assets" then UpdateModelFolder() end
+	if not child:IsA("Model") then
+		return
+	end
+	if child.Name == "Assets" then
+		UpdateModelFolder()
+	end
 end
 
 -- Init/Cleanup
@@ -324,18 +355,57 @@ module.Init = function(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
-	
+
 	if not module.ReplicatedChildAddedConnection then
-		module.ReplicatedChildAddedConnection = game.ReplicatedStorage.ChildAdded:Connect(ReplicatedStorageChildrenChanged)
+		module.ReplicatedChildAddedConnection =
+			game.ReplicatedStorage.ChildAdded:Connect(ReplicatedStorageChildrenChanged)
 	end
-	
+
 	if not module.ReplicatedChildRemovedConnection then
-		module.ReplicatedChildRemovedConnection = game.ReplicatedStorage.ChildRemoved:Connect(ReplicatedStorageChildrenChanged)
+		module.ReplicatedChildRemovedConnection =
+			game.ReplicatedStorage.ChildRemoved:Connect(ReplicatedStorageChildrenChanged)
 	end
-	
+
 	UpdateModelFolder()
 	if not ModelFolder._Value then
-		warn("No Assets folder found! Please read the Quick Start guide found here:\n\thttps://github.com/MoonstoneSkies/InfiltrationEngine-Custom-Missions/blob/main/README.md")
+		warn(
+			"No Assets folder found! Please read the Quick Start guide found here:\n\thttps://github.com/MoonstoneSkies/InfiltrationEngine-Custom-Missions/blob/main/README.md"
+		)
+	else
+		-- Autogenerate scalable props for insert
+		local api = shared.InfilEngine_SerializerAPI
+		local validation = game:GetService("CoreGui"):FindFirstChild("InfilEngine_SerializerAPIAvailable")
+		if validation and tostring(api) == validation.Value then
+			local attributeMap = api:GetAttributesMap()
+			for _, scalableProp in script.Parent.ScalableProps:GetChildren() do
+				local scalablePropData = require(scalableProp)
+				if
+					ModelFolder._Value:FindFirstChild(scalableProp.Name)
+					or not scalablePropData.DefaultSize
+					or not attributeMap[scalableProp.Name]
+				then
+					continue
+				end
+				local model = Create(
+					"Model",
+					{
+						Name = scalableProp.Name,
+						Archivable = false,
+					},
+					Create("Part", {
+						TopSurface = Enum.SurfaceType.SmoothNoOutlines,
+						BottomSurface = Enum.SurfaceType.SmoothNoOutlines,
+						Size = scalablePropData.DefaultSize,
+						Transparency = 0.5,
+						Name = "Base",
+					})
+				)
+				for k, v in attributeMap[scalableProp.Name] do
+					model.Base:SetAttribute(k, v[2])
+				end
+				model.Parent = ModelFolder._Value
+			end
+		end
 	end
 
 	CustomPropsFolder:set(
@@ -421,8 +491,8 @@ module.Clean = function()
 		module.ReplicatedChildAddedConnection:Disconnect()
 		module.ReplicatedChildAddedConnection = nil
 	end
-	
-	if module.ReplicatedChildRemovedConnection then 
+
+	if module.ReplicatedChildRemovedConnection then
 		module.ReplicatedChildRemovedConnection:Disconnect()
 		module.ReplicatedChildRemovedConnection = nil
 	end

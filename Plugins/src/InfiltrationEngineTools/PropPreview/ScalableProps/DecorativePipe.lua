@@ -72,7 +72,7 @@ local function createModel(self)
 	).CollisionGroup =
 		"Default" -- Main pipe part
 
-	local ringDist = self.Base:GetAttribute("RingSpace") or RING_DIST
+	local ringDist = math.max(self.Base:GetAttribute("RingSpace") or RING_DIST, 0.2)
 	local ringCount = math.floor((bendHeight - 2) / ringDist)
 
 	for i = 0, ringCount do
@@ -87,4 +87,5 @@ end
 
 return {
 	InitModel = createModel,
+	DefaultSize = Vector3.new(0.8, 10, 0.8),
 }

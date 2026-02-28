@@ -97,4 +97,5 @@ end
 
 return {
 	InitModel = createServerGlass,
+	DefaultSize = Vector3.new(0.4, 6, 20),
 }

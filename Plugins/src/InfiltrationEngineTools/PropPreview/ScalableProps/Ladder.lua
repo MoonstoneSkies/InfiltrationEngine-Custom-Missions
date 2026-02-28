@@ -81,4 +81,5 @@ end
 
 return {
 	InitModel = createModel,
+	DefaultSize = Vector3.new(2.9, 12, 0.65),
 }

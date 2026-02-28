@@ -60,8 +60,41 @@ local SearchResults = Derived(function(text)
 			match = {}
 		end
 	end
+
+	if text:lower() == "powerarea" then
+		local areaList = {}
+		for instance in results do
+			local area = instance:GetAttribute("PowerArea")
+			if not area then
+				continue
+			end
+			areaList[area] = (areaList[area] or 0) + 1
+		end
+		if next(areaList) then
+			print("--- POWER AREAS ---")
+			for k, v in areaList do
+				print(`{k}: {v}`)
+			end
+			print("-------------------")
+		end
+	end
+
 	return results
 end, SearchText)
+
+local function StringToColor(name)
+	if name == "Default" then
+		return Color3.new(0, 0, 0)
+	end
+
+	local h = 5 ^ 7
+	local n = 0
+	for i = 1, #name do
+		n = (n * 257 + string.byte(name, i, i)) % h
+	end
+	local color = Color3.fromHSV((n % 1000) / 1000, 0.3, 1)
+	return color
+end
 
 module.PropMarkers = {}
 local function ClearPropMarkers()
@@ -72,7 +105,7 @@ local function ClearPropMarkers()
 end
 local function UpdatePropMarkers(list)
 	ClearPropMarkers()
-	for k in list do
+	for k, v in list do
 		if k:IsA("BasePart") then
 			table.insert(
 				module.PropMarkers,
@@ -86,7 +119,7 @@ local function UpdatePropMarkers(list)
 					Create("Frame", {
 						Size = UDim2.new(0, 20, 0, 20),
 						BorderSizePixel = 0,
-						BackgroundColor3 = Color3.new(1, 1, 1),
+						BackgroundColor3 = StringToColor(next(v) and v[next(v)] or ""),
 					}, {
 						Create("UICorner", {
 							CornerRadius = UDim.new(0.5, 0),
