@@ -20,11 +20,10 @@ local function lookupMapIndex(map, value)
 end
 
 local WithAttributes = function(DefaultWriter)
-	return function(object, Write, colorMap, stringMap)
-		local str = DefaultWriter(object, Write, colorMap, stringMap)
+	return function(object, Write, colorMap, stringMap, buffer)
+		colorMap, stringMap = DefaultWriter(object, Write, colorMap, stringMap, buffer)
 		local attributes = object:GetAttributes()
 		attributes = AttributeValidation.Validate(object.ClassName, object.Name, attributes, false)
-		local attString = ""
 
 		-- Encoding Attributes
 		for k, v in pairs(attributes) do
@@ -48,28 +47,25 @@ local WithAttributes = function(DefaultWriter)
 			end
 
 			local index = lookupMapIndex(stringMap, k)
-			attString = attString
-				.. StringConversion.NumberToString(AttributeTypes[attributeType], 1)
-				.. Write.ShortInt(index)
+			table.insert(buffer, StringConversion.NumberToString(AttributeTypes[attributeType], 1) .. Write.ShortInt(index))
 
 			if attributeType == "Color3" then
 				local index = lookupMapIndex(colorMap, v)
-				attString = attString .. Write.ShortInt(index)
+				table.insert(buffer, Write.ShortInt(index))
 			elseif attributeType == "String" then
 				local index = lookupMapIndex(stringMap, v)
-				attString = attString .. Write.ShortInt(index)
+				table.insert(buffer, Write.ShortInt(index))
 			else
-				attString = attString .. Write[attributeType](v)
+				table.insert(buffer, Write[attributeType](v))
 			end
 		end
-		str = str .. attString .. StringConversion.NumberToString(0, 1)
-		return str, colorMap, stringMap
+		table.insert(buffer, StringConversion.NumberToString(0, 1))
+		return colorMap, stringMap
 	end
 end
 
 local CreateInstanceWriter = function(properties)
-	local WriteInstance = function(object, Write, colorMap, stringMap)
-		local str = ""
+	local WriteInstance = function(object, Write, colorMap, stringMap, buffer)
 		for i, v in pairs(properties) do
 			local value
 			if v[1] == "MeshId" and object.ClassName == "UnionOperation" then
@@ -81,22 +77,19 @@ local CreateInstanceWriter = function(properties)
 			local defaultValue = v[3]
 			if (valueType == "Color3") and (value ~= defaultValue) then
 				local index = lookupMapIndex(colorMap, value)
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write.ShortInt(index)
+				table.insert(buffer, StringConversion.NumberToString(i, 1) .. Write.ShortInt(index))
 				continue
 			elseif (valueType == "String") and (value ~= defaultValue) then
 				local index = lookupMapIndex(stringMap, value)
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write.ShortInt(index)
+				table.insert(buffer, StringConversion.NumberToString(i, 1) .. Write.ShortInt(index))
 				continue
 			elseif value ~= defaultValue then
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write[valueType](value)
+				table.insert(buffer, StringConversion.NumberToString(i, 1) .. Write[valueType](value))
 			end
 		end
 
-		str = str .. StringConversion.NumberToString(0, 1)
-		return str, colorMap, stringMap
+		table.insert(buffer, StringConversion.NumberToString(0, 1))
+		return colorMap, stringMap
 	end
 	return WriteInstance
 end
