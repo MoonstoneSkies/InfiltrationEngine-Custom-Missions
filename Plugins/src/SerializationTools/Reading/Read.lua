@@ -14,6 +14,8 @@ local SHORT_BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(2)
 local Root
 local Read
 
+local childrenCache = {}
+
 local denormalize = function(value)
 	return value * (2 * math.pi) - math.pi
 end
@@ -50,7 +52,12 @@ local function ResolvePath(root, pathString)
 
 	for index in string.gmatch(pathString, "%d+") do
 		index = tonumber(index)
-		current = current:GetChildren()[index]
+		local children = childrenCache[current]
+		if not children then
+			children = current:GetChildren()
+			childrenCache[current] = children
+		end
+		current = children[index]
 
 		if not current then
 			return nil
