@@ -3,6 +3,7 @@ local HttpService = game:GetService("HttpService")
 local AxisAlign = require(script.Parent.Parent.Util.AxisAlign)
 local ZoneUtil = require(script.Parent.Parent.Util.ZoneUtil)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local UserInputService = game:GetService("UserInputService")
 local UserInputConnection
@@ -13,8 +14,14 @@ local CurrentZone = nil
 local CurrentMap = {}
 local CurrentModel = nil
 local LinkWith = nil
+local PathChangedConnection = nil
+local IsSaving = false
 
 local function CloseZone()
+	if PathChangedConnection then
+		PathChangedConnection:Disconnect()
+		PathChangedConnection = nil
+	end
 	if CurrentModel then
 		CurrentModel:Destroy()
 		CurrentModel = nil
@@ -129,6 +136,15 @@ local function OpenZone(newZone)
 	CurrentMap = {}
 	CurrentZone = newZone
 
+	if PathChangedConnection then
+		PathChangedConnection:Disconnect()
+	end
+	PathChangedConnection = CurrentZone:GetPropertyChangedSignal("Path"):Connect(function()
+		if not IsSaving then
+			OpenZoneWithoutRegenerating(CurrentZone)
+		end
+	end)
+
 	for _, pos in pairs(DoorNodes) do
 		CreateNode(pos, false, true)
 	end
@@ -152,6 +168,15 @@ local function OpenZoneWithoutRegenerating(newZone)
 	CurrentModel.Parent = workspace
 	CurrentMap = {}
 	CurrentZone = newZone
+
+	if PathChangedConnection then
+		PathChangedConnection:Disconnect()
+	end
+	PathChangedConnection = CurrentZone:GetPropertyChangedSignal("Path"):Connect(function()
+		if not IsSaving then
+			OpenZoneWithoutRegenerating(CurrentZone)
+		end
+	end)
 
 	game.Selection:Set({ newZone })
 
@@ -245,7 +270,11 @@ local function Serialize()
 end
 
 local function Save()
-	CurrentZone:SetAttribute("Path", Serialize())
+	HistoryService.Record("Save Meadow Map", function()
+		IsSaving = true
+		CurrentZone:SetAttribute("Path", Serialize())
+		IsSaving = false
+	end)
 end
 
 local LastCTap = 0

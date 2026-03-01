@@ -3,6 +3,7 @@
 local UserInputService = game:GetService("UserInputService")
 
 local Button = require(script.Parent.Parent.Util.Button)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
@@ -97,24 +98,26 @@ local function setBitMaskValue(mask: number, bit: number, enabled: boolean)
 	return n
 end
 
-function module:WriteData(part: Part, side: number, data: DoorData)
-	local atr = part:GetAttributes()
-	local req = table.concat(data.Restrictions, " ")
-	part:SetAttribute("PathReq" .. side, if req ~= "" then req else nil)
+function module:WriteData(part, side, data)
+	HistoryService.Record("Set Door Access", function()
+		local atr = part:GetAttributes()
+		local req = table.concat(data.Restrictions, " ")
+		part:SetAttribute("PathReq" .. side, if req ~= "" then req else nil)
 
-	part:SetAttribute(side == 1 and "LockFront" or "LockBack", data.Locked)
+		part:SetAttribute(side == 1 and "LockFront" or "LockBack", data.Locked)
 
-	local recover = setBitMaskValue(atr.PathRecover or 0, side, data.Recover)
-	part:SetAttribute("PathRecover", if recover ~= 0 then recover else nil)
+		local recover = setBitMaskValue(atr.PathRecover or 0, side, data.Recover)
+		part:SetAttribute("PathRecover", if recover ~= 0 then recover else nil)
 
-	local ignoreOpen = setBitMaskValue(atr.PathIgnoreOpen or 0, side, data.IgnoreWhenOpen)
-	part:SetAttribute("PathIgnoreOpen", if ignoreOpen ~= 0 then ignoreOpen else nil)
+		local ignoreOpen = setBitMaskValue(atr.PathIgnoreOpen or 0, side, data.IgnoreWhenOpen)
+		part:SetAttribute("PathIgnoreOpen", if ignoreOpen ~= 0 then ignoreOpen else nil)
 
-	local ignoreUnlocked = setBitMaskValue(atr.PathIgnoreUnlocked or 0, side, data.IgnoreWhenUnlocked)
-	part:SetAttribute("PathIgnoreUnlocked", if ignoreUnlocked ~= 0 then ignoreUnlocked else nil)
+		local ignoreUnlocked = setBitMaskValue(atr.PathIgnoreUnlocked or 0, side, data.IgnoreWhenUnlocked)
+		part:SetAttribute("PathIgnoreUnlocked", if ignoreUnlocked ~= 0 then ignoreUnlocked else nil)
 
-	local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
-	part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
+		local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
+		part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
+	end)
 
 	local newData = self:ReadData(part, side)
 	newData.Display = self.DoorState[part][side].Display

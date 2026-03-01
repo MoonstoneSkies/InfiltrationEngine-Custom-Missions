@@ -2,6 +2,7 @@ local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
 
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local module = {}
 
@@ -45,20 +46,22 @@ local function GetNodeId(node)
 end
 
 local function ToggleNodeLink(node1, node2)
-	local node1Links = HttpService:JSONDecode(node1:GetAttribute("LinkedIds") or "[]")
-	local node2Links = HttpService:JSONDecode(node2:GetAttribute("LinkedIds") or "[]")
+	HistoryService.Record("Toggle Flow Node Link", function()
+		local node1Links = HttpService:JSONDecode(node1:GetAttribute("LinkedIds") or "[]")
+		local node2Links = HttpService:JSONDecode(node2:GetAttribute("LinkedIds") or "[]")
 
-	local idx = table.find(node1Links, GetNodeId(node2))
-	if idx == nil then
-		table.insert(node1Links, GetNodeId(node2))
-		table.insert(node2Links, GetNodeId(node1))
-	else
-		table.remove(node1Links, idx)
-		table.remove(node2Links, table.find(node2Links, GetNodeId(node1)))
-	end
+		local idx = table.find(node1Links, GetNodeId(node2))
+		if idx == nil then
+			table.insert(node1Links, GetNodeId(node2))
+			table.insert(node2Links, GetNodeId(node1))
+		else
+			table.remove(node1Links, idx)
+			table.remove(node2Links, table.find(node2Links, GetNodeId(node1)))
+		end
 
-	node1:SetAttribute("LinkedIds", HttpService:JSONEncode(node1Links))
-	node2:SetAttribute("LinkedIds", HttpService:JSONEncode(node2Links))
+		node1:SetAttribute("LinkedIds", HttpService:JSONEncode(node1Links))
+		node2:SetAttribute("LinkedIds", HttpService:JSONEncode(node2Links))
+	end)
 end
 
 local function InputNodeName(box)
@@ -176,11 +179,15 @@ function module.Init(mouse: PluginMouse)
 			end
 
 			-- Remove links to now-deleted nodes
-			for _, dead in pairs(deadLinks) do
-				warn(`Found dead link to "{dead}" on node {checkId}, removing...`)
-				table.remove(linkTo, table.find(linkTo, dead))
+			if #deadLinks > 0 then
+				HistoryService.Record("Prune Dead Links", function()
+					for _, dead in pairs(deadLinks) do
+						warn(`Found dead link to "{dead}" on node {checkId}, removing...`)
+						table.remove(linkTo, table.find(linkTo, dead))
+					end
+					part:SetAttribute("LinkedIds", HttpService:JSONEncode(linkTo))
+				end)
 			end
-			part:SetAttribute("LinkedIds", HttpService:JSONEncode(linkTo))
 		end
 
 		part:SetAttribute("FilteredLinks", HttpService:JSONEncode(FilteredLinks))
@@ -260,17 +267,17 @@ function module.Init(mouse: PluginMouse)
 			end
 
 			newNode.Transparency = 0
-			newNode.Name = newNodeName
-			newNode:SetAttribute("Id", newNode.Name)
+				newNode.Name = newNodeName
+				newNode:SetAttribute("Id", newNode.Name)
 
-			if flowElem:IsA("Part") then
-				-- If flow node was selected before adding, connect to it
-				ToggleNodeLink(newNode, flowElem)
-			end
+				if flowElem:IsA("Part") then
+					-- If flow node was selected before adding, connect to it
+					ToggleNodeLink(newNode, flowElem)
+				end
 
-			game.Selection:Set({ newNode })
+				game.Selection:Set({ newNode })
 
-			RedrawMap(GetNodeId(newNode))
+				RedrawMap(GetNodeId(newNode))
 
 			return
 		end
@@ -310,7 +317,9 @@ function module.Init(mouse: PluginMouse)
 			local beingBlocked = not blocked[part.Name]
 			blocked[part.Name] = if beingBlocked then true else nil
 
-			node:SetAttribute("BlockedLinks", HttpService:JSONEncode(blocked))
+			HistoryService.Record("Toggle Blocked Link", function()
+				node:SetAttribute("BlockedLinks", HttpService:JSONEncode(blocked))
+			end)
 
 			RedrawMap(node.Name)
 		else
