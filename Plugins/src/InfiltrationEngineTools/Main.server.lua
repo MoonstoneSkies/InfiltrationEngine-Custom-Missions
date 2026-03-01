@@ -71,5 +71,5 @@ local function disablePlugin()
 	CurrentPlugin = nil
 end
 
-plugin.Unloading:connect(disablePlugin)
-plugin.Deactivation:connect(disablePlugin)
+plugin.Unloading:Connect(disablePlugin)
+plugin.Deactivation:Connect(disablePlugin)
