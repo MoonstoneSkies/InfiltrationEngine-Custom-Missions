@@ -90,13 +90,17 @@ local module = {
 		local values = {}
 		local lastValue = channel[1][1][1]
 		local sequenceLength = 0
+		local insertIndex = 1
 		for x = 1, BLOCK_SIZE do
+			local cx = channel[x]
 			for y = 1, BLOCK_SIZE do
+				local cxy = cx[y]
 				for z = 1, BLOCK_SIZE do
-					local value = channel[x][y][z]
+					local value = cxy[z]
 					if value ~= lastValue or sequenceLength == BUFFER_RANGE then
-						table.insert(counts, sequenceLength)
-						table.insert(values, lastValue)
+						counts[insertIndex] = sequenceLength
+						values[insertIndex] = lastValue
+						insertIndex += 1
 						lastValue = value
 						sequenceLength = 0
 					end
@@ -105,12 +109,12 @@ local module = {
 			end
 		end
 
-		table.insert(counts, sequenceLength)
-		table.insert(values, lastValue)
+		counts[insertIndex] = sequenceLength
+		values[insertIndex] = lastValue
 
-		local channelBuffer = buffer.create(#counts * 2)
-		for index, count in counts do
-			buffer.writeu8(channelBuffer, index * 2 - 2, count + BUFFER_OFFSET)
+		local channelBuffer = buffer.create(insertIndex * 2)
+		for index = 1, insertIndex do
+			buffer.writeu8(channelBuffer, index * 2 - 2, counts[index] + BUFFER_OFFSET)
 			buffer.writeu8(channelBuffer, index * 2 - 1, values[index] + BUFFER_OFFSET)
 		end
 
@@ -127,9 +131,11 @@ local module = {
 
 		local channel = {}
 		for x = 1, BLOCK_SIZE do
-			channel[x] = {}
+			local cx = {}
+			channel[x] = cx
 			for y = 1, BLOCK_SIZE do
-				channel[x][y] = {}
+				local cxy = {}
+				cx[y] = cxy
 				for z = 1, BLOCK_SIZE do
 					if applyCount <= 0 and readIndex < bufferLen then
 						applyCount = buffer.readu8(channelBuffer, readIndex) - BUFFER_OFFSET
@@ -137,7 +143,7 @@ local module = {
 						readIndex += 2
 					end
 					applyCount -= 1
-					channel[x][y][z] = applyValue
+					cxy[z] = applyValue
 				end
 			end
 		end
@@ -146,9 +152,11 @@ local module = {
 	end,
 	TransformChannel = function(self, channel, modify)
 		for x = 1, BLOCK_SIZE do
+			local cx = channel[x]
 			for y = 1, BLOCK_SIZE do
+				local cxy = cx[y]
 				for z = 1, BLOCK_SIZE do
-					channel[x][y][z] = modify(channel[x][y][z])
+					cxy[z] = modify(cxy[z])
 				end
 			end
 		end

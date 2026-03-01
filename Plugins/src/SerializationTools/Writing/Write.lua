@@ -27,20 +27,26 @@ local function CreateEnumWriter(keys)
 	end
 end
 
+local IndexCache = {}
+
 local function GetIndex(object)
-	local parent = object.Parent
-	local children = parent:GetChildren()
+	if IndexCache[object] then
+		return IndexCache[object]
+	end
 	
+	local parent = object.Parent
+	if not parent then return 1 end
+
+	local children = parent:GetChildren()
 	local index = 1
 	for _, child in children do
-		if child == object then
-			return index
-		elseif WriteInstance[child.ClassName] then -- Ignore unserialized instances
+		if WriteInstance[child.ClassName] then -- Ignore unserialized instances
+			IndexCache[child] = index
 			index += 1
 		end
 	end
 	
-	return index
+	return IndexCache[object] or 1
 end
 
 local ESCAPED_NEWLINES_ACTIVE = VersionConfig.ReplaceNewlines
@@ -113,11 +119,13 @@ Write = {
 
 	FloatSequence = function (numberSequence) -- 2 + 7 * keypoints characters
 		local keypoints = numberSequence.Keypoints
-		local numberSequenceStr = Write.ShortInt(#keypoints)
+		local sequenceBuffer = { Write.ShortInt(#keypoints) }
 		for i, v in pairs(keypoints) do
-			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value) .. Write.Float(v.Envelope)
+			table.insert(sequenceBuffer, Write.ShortBoundedFloat(v.Time))
+			table.insert(sequenceBuffer, Write.Float(v.Value))
+			table.insert(sequenceBuffer, Write.Float(v.Envelope))
 		end
-		return numberSequenceStr
+		return table.concat(sequenceBuffer)
 	end,
 
 	Vector2 = function(vector) -- 10 characters, 5 for each float XY
@@ -172,11 +180,12 @@ Write = {
 
 	ColorSequence = function (colorSequence) -- 2 + 8 * keypoints characters
 		local keypoints = colorSequence.Keypoints
-		local colorSequenceStr = Write.ShortInt(#keypoints)
+		local sequenceBuffer = { Write.ShortInt(#keypoints) }
 		for i, v in pairs(keypoints) do
-			colorSequenceStr = colorSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Color3(v.Value)
+			table.insert(sequenceBuffer, Write.ShortBoundedFloat(v.Time))
+			table.insert(sequenceBuffer, Write.Color3(v.Value))
 		end
-		return colorSequenceStr
+		return table.concat(sequenceBuffer)
 	end,
 
 	String = function(str) -- 4 + length characters
@@ -205,24 +214,24 @@ Write = {
 		end
 		
 		-- Concat
-		path = table.concat(path, `.`)
-		return Write.Int(#path) .. path
+		local pathStr = table.concat(path, `.`)
+		return Write.Int(#pathStr) .. pathStr
 	end,
 
 	ColorMap = function(colorMap)
-		local colorStr = ""
+		local mapBuffer = {}
 		for i, v in pairs(colorMap) do
-			colorStr = colorStr .. Write.Color3(v)
+			table.insert(mapBuffer, Write.Color3(v))
 		end
-		return Write.ShortInt(#colorMap) .. colorStr
+		return Write.ShortInt(#colorMap) .. table.concat(mapBuffer)
 	end,
 
 	StringMap = function(stringMap)
-		local stringStr = ""
+		local mapBuffer = {}
 		for i, v in pairs(stringMap) do
-			stringStr = stringStr .. Write.String(v)
+			table.insert(mapBuffer, Write.String(v))
 		end
-		return Write.ShortInt(#stringMap) .. stringStr
+		return Write.ShortInt(#stringMap) .. table.concat(mapBuffer)
 	end,
 
 	MissionCodeHeader = function(mapId, current, total)
@@ -234,7 +243,8 @@ Write = {
 	end,
 
 	Mission = function(mission)
-		local str = ""
+		local str
+		table.clear(IndexCache)
 
 		local MissionSetup = require(mission:FindFirstChild("MissionSetup"):Clone())
 
@@ -278,8 +288,8 @@ Write = {
 			colorMapArr[colidx] = Color3.fromHex(colHex)
 		end
 
-		for str, stridx in pairs(stringMap) do
-			stringMapArr[stridx] = str
+		for stringValue, stridx in pairs(stringMap) do
+			stringMapArr[stridx] = stringValue
 		end
 
 		local colorMapStr = Write.ColorMap(colorMapArr)
@@ -288,23 +298,39 @@ Write = {
 		return colorMapStr .. stringMapStr .. str
 	end,
 
-	Instance = function(object, colorMap, stringMap)
+	Instance = function(object, colorMap, stringMap, buffer)
+		local returnStr = false
+		if buffer == nil then
+			buffer = {}
+			returnStr = true
+		end
+
 		local className = object.ClassName
 		if InstanceTypes[object.ClassName] ~= nil then
 			if next(object:GetAttributes()) == nil and object.ClassName == "Part" then
 				className = className .. "NoAttributes"
 			end
 			local instanceType = StringConversion.NumberToString(InstanceTypes[className], 1)
-			local objectProperties, colorMap, stringMap = WriteInstance[className](object, Write, colorMap, stringMap)
-			local childrenProperties = ""
+			table.insert(buffer, instanceType)
+			
+			colorMap, stringMap = WriteInstance[className](object, Write, colorMap, stringMap, buffer)
 			for i, v in pairs(object:GetChildren()) do
-				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap)
+				colorMap, stringMap = Write.Instance(v, colorMap, stringMap, buffer)
 			end
-			return instanceType .. objectProperties .. childrenProperties .. StringConversion.NumberToString(0, 1),
-			colorMap,
-			stringMap
+			table.insert(buffer, StringConversion.NumberToString(0, 1))
+			
+			if returnStr then
+				return table.concat(buffer), colorMap, stringMap
+			else
+				return colorMap, stringMap
+			end
 		else
-			return StringConversion.NumberToString(InstanceTypes.Nil, 1), colorMap, stringMap
+			table.insert(buffer, StringConversion.NumberToString(InstanceTypes.Nil, 1))
+			if returnStr then
+				return table.concat(buffer), colorMap, stringMap
+			else
+				return colorMap, stringMap
+			end
 		end
 	end,
 

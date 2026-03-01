@@ -36,6 +36,11 @@ local GlobalPropAttributes = {
 	BreakAlarm = { PropAttributeTypes.STRING, nil },
 }
 
+local reverseAttributeTypes = {}
+for i, v in pairs(PropAttributeTypes) do
+	reverseAttributeTypes[v] = i
+end
+
 local testAttributeCompatibility = function(attributeType, value, objectName, attributeName)
 	if attributeType == "NUMBER" then
 		if type(value) == "number" then
@@ -266,12 +271,7 @@ return {
 					continue
 				end
 				local givenValue = attributes[attName]
-				local attributeTypeName = ""
-				for i, v in pairs(PropAttributeTypes) do
-					if tableOfInfo[1] == v then
-						attributeTypeName = i
-					end
-				end
+				local attributeTypeName = reverseAttributeTypes[tableOfInfo[1]] or ""
 				if attributeTypeName == "" then
 					error(`attribute type does not exist: {name} {attName}`)
 				end
@@ -290,12 +290,7 @@ return {
 			for attribute, value in pairs(attributes) do -- add the remaining attributes that are defined in the global attributes table above
 				if GlobalPropAttributes[attribute] then
 					local tableOfInfo = GlobalPropAttributes[attribute]
-					local attributeTypeName = ""
-					for i, v in pairs(PropAttributeTypes) do
-						if tableOfInfo[1] == v then
-							attributeTypeName = i
-						end
-					end
+					local attributeTypeName = reverseAttributeTypes[tableOfInfo[1]] or ""
 					if testAttributeCompatibility(attributeTypeName, value, name, attribute) then
 						newAttributes[attribute] = value
 					else

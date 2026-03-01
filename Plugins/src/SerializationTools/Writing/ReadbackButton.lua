@@ -155,10 +155,7 @@ local function createReadbackBox(enabledState)
 		readStatusState:set({ receivedCount, readbackState.MapInfo.CodeTotal })
 
 		if not allReceived then return end
-		local finalCode = ""
-		for codePart, codeContent in ipairs(readbackState.Codes) do
-			finalCode = finalCode .. codeContent
-		end
+		local finalCode = table.concat(readbackState.Codes)
 		
 		local success, errReason = VersionConfig:change_version(readbackState.MapInfo.CodeVersion)
 		if not success then

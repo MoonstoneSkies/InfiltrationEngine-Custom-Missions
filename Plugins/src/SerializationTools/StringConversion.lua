@@ -93,15 +93,13 @@ return {
 	end,
 
 	NumberToString = function(number, charCount)
-		local str = ""
-		local iteration = 0
-		while number >= 0 and iteration < charCount do
+		local buf = table.create(charCount)
+		for i = charCount, 1, -1 do
 			local value = number % CHAR_COUNT
-			str = characterValues[value] .. str
+			buf[i] = characterValues[value]
 			number = math.floor(number / CHAR_COUNT)
-			iteration += 1
 		end
-		return str
+		return table.concat(buf)
 	end,
 
 	GetMaxNumber = function(charCount)
