@@ -11,7 +11,8 @@ for i, v in pairs(CHARACTER_SET) do
 end
 
 local CHAR_COUNT = #CHARACTER_SET
-return {
+local stringConversion
+stringConversion = {
 	StringToNumber = function(str, cursor, size)
 		local total = 0
 		for i = cursor, cursor + size - 1 do
@@ -23,6 +24,19 @@ return {
 	end,
 	
 	NumberToString = function(number, charCount)
+		if math.isinf(number) then
+			if math.sign(number) > 0 then
+				local max = stringConversion.GetMaxNumber(charCount)
+				warn(`Converting +Inf to a finite number! Will use maximum representable number ({max}), fix if unintended`)
+				number = max
+			else
+				warn(`Converting -Inf to a finite number! Will use minimum representable number (0), fix if unintended`)
+				number = 0
+			end
+		elseif math.isnan(number) then
+			warn("Converting NaN (not a number) to a number! Will use 0, fix if unintended")
+			number = 0
+		end
 		local str = ""
 		local iteration = 0
 		while number >= 0 and iteration < charCount do
@@ -38,3 +52,5 @@ return {
 		return math.pow(CHAR_COUNT, charCount) - 1
 	end,
 }
+
+return stringConversion

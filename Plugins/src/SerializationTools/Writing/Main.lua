@@ -2,7 +2,7 @@ local ScriptEditorService = game:GetService("ScriptEditorService")
 
 local InternalAPI = require(script.Parent.Parent.API.Internal)
 local Write = require(script.Parent.Write)
-local StringConversion = require(script.Parent.Parent.StringConversion)
+local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local Read = require(script.Parent.Parent.Reading.Read)
 local ReadbackButton = require(script.Parent.ReadbackButton)
 
