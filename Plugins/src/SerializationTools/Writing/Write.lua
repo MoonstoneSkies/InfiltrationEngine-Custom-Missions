@@ -1,4 +1,4 @@
-local StringConversion = require(script.Parent.Parent.StringConversion)
+local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local WriteInstance = require(script.Parent.WriteInstance)
 
@@ -102,8 +102,12 @@ Write = {
 
 	Float = function(num) -- 5 characters, 3 before decimal, 2 after
 		local beforeDecimalStr = Write.SignedInt(math.floor(num))
-		local afterDecimalStr =
-			StringConversion.NumberToString(math.round((num - math.floor(num)) * SHORT_INT_BOUND), 2)
+		local afterDecimalStr = StringConversion.NumberToString(
+			math.round(
+				(num - math.floor(num)) * SHORT_INT_BOUND
+			), 
+			2
+		)
 		return beforeDecimalStr .. afterDecimalStr
 	end,
 
@@ -206,7 +210,7 @@ Write = {
 		
 		-- Concat
 		path = table.concat(path, `.`)
-		return Write.Int(#path) .. path
+		return Write.String(path)
 	end,
 
 	ColorMap = function(colorMap)

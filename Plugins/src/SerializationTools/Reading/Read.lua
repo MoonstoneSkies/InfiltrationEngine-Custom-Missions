@@ -1,4 +1,4 @@
-local StringConversion = require(script.Parent.Parent.StringConversion)
+local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local ReadInstance = require(script.Parent.ReadInstance)
 
@@ -150,8 +150,7 @@ Read = {
 	end,
 	
 	InstanceReference = function(str, cursor)
-		local length, cursor = Read.Int(str, cursor)
-		local value = str:sub(cursor, cursor + length - 1)
+		local value, cursor = Read.String(str, cursor)
 
 		return function()
 			if Root then
@@ -162,7 +161,7 @@ Read = {
 				local object = ResolvePath(Root, value)
 				return object
 			end
-		end, cursor + length
+		end, cursor
 	end,
 
 	BoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 3 symbols.
