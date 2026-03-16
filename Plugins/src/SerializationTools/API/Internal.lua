@@ -3,6 +3,8 @@ local httpService = game:GetService("HttpService")
 local attributesMap = require(script.Parent.Parent.AttributesMap)
 local featureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 
+local notifMan = require(script.Parent.Parent.Util.Notifications.Manager)
+
 local internalAPI = {}
 internalAPI.APIExtensions = {}
 
@@ -20,6 +22,14 @@ internalAPI.ProtectedStateKeys = {
 	Present = true,
 	Done = false
 }
+
+local function truncateString(str, to)
+	if #str > to then
+		return str:sub(1, to) .. "..."
+	else
+		return str
+	end
+end
 
 local wait_event = Instance.new("BindableEvent")
 internalAPI.StateCommands = {
@@ -217,7 +227,7 @@ internalAPI.InvokeHook = function(hookType, ...)
 			local success, stateOut, arg1 = co_xpcall(hookCoroutine, arg_merge(unpack(hook.CMD_Result), hook.CallbackState, invokeStatePublic, ...))
 			internalAPI.RunningThread = nil
 
-			if type(stateOut) == "string" then
+			if success and type(stateOut) == "string" then
 				stateOut = stateOut:upper()
 			else
 				hook.CMD_Result = {}
@@ -246,7 +256,13 @@ internalAPI.InvokeHook = function(hookType, ...)
 			elseif success and coroutine.status(hookCoroutine) == "dead" then
 				invokeState[hook.Registrant].Done = true
 			elseif not success then
-				warn(`Error encountered when running {hookType}Hook {hook.Registrant} - {stateVals}`)
+				warn(`Error encountered when running {hookType}Hook {hook.Registrant} - {stateOut}`)
+				notifMan.Push{
+					Title = `Plugin Error ({truncateString(hook.Registrant, 16)})`,
+					Description = `{hookType}Hook {hook.Registrant} experienced an error. Check the Script Output window for details.\n\n` .. 
+								  `MiniError:\n{truncateString(stateOut, 32)}`,
+					Severity = "WARN"
+				}
 			end
 		end
 
@@ -258,6 +274,12 @@ internalAPI.InvokeHook = function(hookType, ...)
 		for _, hook in ipairs(unfinishedHooks) do
 			warn(`\t{hook.Registrant}`)
 		end
+		notifMan.Push{
+			Title = "Plugin Error",
+			Description = `{#unfinishedHooks} {hookType}Hook plugins failed to finish execution!\n` .. 
+						  "Please check your Script Output window.",
+			Severity = "WARN"
+		}
 	end
 
 end

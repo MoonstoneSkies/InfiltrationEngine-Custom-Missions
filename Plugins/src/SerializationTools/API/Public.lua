@@ -1,8 +1,13 @@
+local httpService = game:GetService("HttpService")
+
 local attributesMap = require(script.Parent.Parent.AttributesMap)
 local attributeTypes = require(script.Parent.Parent.PropAttributeTypes)
 local versionCfg = require(script.Parent.Parent.Util.VersionConfig)
 
+local notificationMan = require(script.Parent.Parent.Util.Notifications.Manager)
 local internalAPI = require(script.Parent.Internal)
+
+local apiThread = coroutine.running()
 
 local function ValidateArgTypes(fname, ...)
 	local args = {...}
@@ -26,6 +31,28 @@ local function ValidateArgTypes(fname, ...)
 		end
 	end
 	return true
+end
+
+local function ValidateTableShape(fname, tbl, expected)
+	local keysMatch = true
+	local keyBad = nil
+
+	local argSettings = {}
+	for k, v in pairs(tbl) do
+		if expected[k] == nil then
+			keysMatch = false
+			keyBad = k
+			break
+		end
+		argSettings[#argSettings+1] = { k, v, expected[k] }
+	end
+
+	if not keysMatch then
+		warn(`Invalid table key {keyBad} passed to API function {fname}!`)
+		return false
+	end
+
+	return ValidateArgTypes(fname, unpack(argSettings))
 end
 
 type APIExtension = { [string] : (...any) -> ...any }
@@ -133,9 +160,32 @@ end
 
 --[[
 	[Args]
+		     Title // Description                                     // Example                                                                                       //
+		---------- // ----------------------------------------------- // -------------- -------------------------------------------------------------------------------//
+		notif_data // Table describing the relevant notification data // { Title = "Hello, World!", Description = "This is my first notification", Severity = "INFO" } //
+	[Returns]
+		1 - Nil if notification data did not pass validation
+			If notif data *did* pass validation, then returns a boolean indicating if the notification was displayed or not
+]]
+function publicAPI.PushNotification(notif_data) : boolean?
+	if not ValidateTableShape(
+		"PushNotification",
+		notif_data,
+		{
+			Title = "string",
+			Description = "string",
+			Severity = "number|string",
+			Rich = "boolean?"
+		}
+	) then return nil end
+	return notificationMan.Push(notif_data)
+end
+
+--[[
+	[Args]
 		     Title // Description                                                                       // Example                                   //
 		---------- // --------------------------------------------------------------------------------- // ----------------------------------------- //
-		  hookType // String corresponding to the type of hook being added                              // "PreSerialize"                            //
+		  hookType // String corresponding to the type of hook being removed                            // "PreSerialize"                            //
 		registrant // String representing the source of the hook. Should be unique                      // "MyPlugin"                                //
 		      hook // Function to be invoked when the corresponding hookType is invoked                 // function() print("Hook!") end             //
 		 hookState // (Optional) Extra state to be passed as the last argument to the hook when invoked // { PartCol = Color3.fromHex("#FFFFFF") }   //

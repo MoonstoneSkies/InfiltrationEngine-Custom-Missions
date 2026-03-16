@@ -4,7 +4,9 @@ local InternalAPI = require(script.Parent.Parent.API.Internal)
 local Write = require(script.Parent.Write)
 local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local Read = require(script.Parent.Parent.Reading.Read)
+
 local ReadbackButton = require(script.Parent.ReadbackButton)
+local NotifMan = require(script.Parent.Parent.Util.Notifications.Manager)
 
 local Button = require(script.Parent.Parent.Util.Button)
 local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
@@ -116,6 +118,7 @@ module.Init = function(mouse: PluginMouse)
 		return codeChunks
 	end, CodeState)
 
+	local notifDisabled	= FeatureCheck("SerializerNotifsDisabled", false) == true
 	local apiDevEnabled = FeatureCheck("APIDev") == true
 	local gistEnabled = FeatureCheck("ReadDocs") == true
 	local readbackEnabled = FeatureCheck("Readback") == true
@@ -132,6 +135,7 @@ module.Init = function(mouse: PluginMouse)
 			Activated = function()
 				InitCustomMissionSettings(false)
 				local code = GetMissionCode()
+				if code == nil then return end
 
 				if not workspace:FindFirstChild("DebugMission") then
 					local model = Read.Mission(code, 1)
@@ -149,6 +153,7 @@ module.Init = function(mouse: PluginMouse)
 				Activated = function()
 					local customSettings = InitCustomMissionSettings(true)
 					local code = GetMissionCode()
+					if code == nil then return end
 
 					if not workspace:FindFirstChild("DebugMission") then
 						local model = Read.Mission(code, 1)
@@ -188,6 +193,9 @@ module.Init = function(mouse: PluginMouse)
 					preprocessed.Parent = workspace
 				end,
 			})
+			else nil,
+		if not notifDisabled
+			then NotifMan.Init()
 			else nil,
 		Create("ScrollingFrame", {
 			Size = UDim2.new(0, 200, 1, apiDevEnabled and -180 or -130),
@@ -258,8 +266,10 @@ module.Clean = function()
 	end
 	module.Active = false
 
-	module.UI:Destroy()
-	module.UI = nil
+	if module.UI then
+		module.UI:Destroy()
+		module.UI = nil
+	end
 end
 
 return module
