@@ -259,10 +259,6 @@ Read = {
 			local uncompressed = buffer.create(#str)
 			buffer.writestring(uncompressed, 0, str)
 
-			if type(EncodingService:GetDecompressedBufferSize(uncompressed)) ~= "number" then
-				error("Invalid compressed mission buffer")
-			end
-
 			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
 		end
 		
