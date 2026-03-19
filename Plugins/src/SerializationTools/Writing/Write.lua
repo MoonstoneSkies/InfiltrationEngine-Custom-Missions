@@ -2,6 +2,10 @@ local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local WriteInstance = require(script.Parent.WriteInstance)
 
+local EncodingService = game:GetService("EncodingService")
+
+local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
+
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
@@ -289,7 +293,46 @@ Write = {
 		local colorMapStr = Write.ColorMap(colorMapArr)
 		local stringMapStr = Write.StringMap(stringMapArr)
 
-		return colorMapStr .. stringMapStr .. str
+		local missionStr = colorMapStr .. stringMapStr .. str
+
+		if not VersionConfig.UseCompression then return missionStr end
+		
+		local compressLevel = FeatureCheck("SerializerCompressionLevel", false)
+		
+		if type(compressLevel) ~= "number" then
+			if type(compressLevel) ~= "nil" then
+				warn(`SerializerCompressionLevel : Expected int|nil, got {type(compressLevel)} {compressLevel}! Will use default of 4`)
+			end
+			compressLevel = 4
+		end
+
+		local inputCompressLevel = compressLevel
+		compressLevel = math.round(compressLevel)
+		if compressLevel ~= inputCompressLevel then
+			warn(`SerializerCompressionLevel : Expected integer from range -7 <-> 22 inclusive, got {inputCompressLevel}! Will use rounded value of {compressLevel}`)
+		end
+
+		inputCompressLevel = compressLevel
+		compressLevel = math.clamp(compressLevel, -7, 22)
+
+		if compressLevel ~= inputCompressLevel then
+			warn(`SerializerCompressionLevel : Expected integer from range -7 <-> 22 inclusive, got {inputCompressLevel}! Will use clamped value of {compressLevel}`)
+		end
+
+		local buf = buffer.create(#missionStr)
+		buffer.writestring(buf, 0, missionStr)
+		
+		local compressedBuf = EncodingService:Base64Encode( EncodingService:CompressBuffer(buf, Enum.CompressionAlgorithm.Zstd, compressLevel) )
+
+		local compressedStr = buffer.readstring( compressedBuf, 0, buffer.len(compressedBuf) )
+
+		if FeatureCheck("SerializerCompressionStats") == true then
+			print(`=== Compression Stats ===`)
+			print(`Before Compression: {#missionStr * 0.001}K`)
+			print(`After Compression: {#compressedStr * 0.001}K`)
+		end
+
+		return compressedStr
 	end,
 
 	Instance = function(object, colorMap, stringMap)
