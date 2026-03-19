@@ -2,6 +2,8 @@ local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local ReadInstance = require(script.Parent.ReadInstance)
 
+local EncodingService = game:GetService("EncodingService")
+
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
@@ -251,6 +253,17 @@ Read = {
 				error("Malformed opening comment")
 			end
 			str = code
+		end
+		
+		if VersionConfig.UseCompression then
+			local uncompressed = buffer.create(#str)
+			buffer.writestring(uncompressed, 0, str)
+
+			if type(EncodingService:GetDecompressedBufferSize(uncompressed)) ~= "number" then
+				error("Invalid compressed mission buffer")
+			end
+
+			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
 		end
 		
 		Root = nil
