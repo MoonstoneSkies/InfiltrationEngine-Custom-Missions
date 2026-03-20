@@ -149,13 +149,16 @@ function module:AddProp(basePart)
 		self:RecolorProp(basePart)
 		return
 	end
-
-	local modelName = basePart:GetAttribute("AltPropModel") or basePart.Name
+	
+	local leverageMoveProp = basePart.Name == `LeverageMove` and basePart:GetAttribute(`Prop`)
+	local modelName = basePart:GetAttribute("AltPropModel") or leverageMoveProp or basePart.Name
 	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(modelName)
 		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(modelName)
-
+	
+	local noPropModel = false
 	if not storedModel then
 		storedModel = NoModelPlaceholder
+		noPropModel = true
 	else
 		basePart.Transparency = 1
 	end
@@ -167,8 +170,8 @@ function module:AddProp(basePart)
 			p.Archivable = false
 		end
 	end
-
-	if basePart:GetAttribute("DoubleDoor") then
+	
+	if basePart:GetAttribute("DoubleDoor") and not noPropModel then
 		local baseInverse = model.Base.CFrame:Inverse()
 		local leftShift = model.Base.CFrame * CFrame.Angles(0, math.pi, 0) * CFrame.new(2.5, 0, 0) * baseInverse
 		local rightShift = model.Base.CFrame * CFrame.new(2.5, 0, 0) * baseInverse
@@ -247,8 +250,8 @@ function module:SetEnabled()
 	module.Folder = workspace:FindFirstChild(`PropPreviewModels`) or Instance.new(`Folder`)
 	module.Folder.Archivable = false
 	module.Folder.Parent = workspace
-	module.Folder.Name = `PropPreviewModels` -- Keep the main folder as a Folder to keep consistency in the exrplorer
-	module.World = module.Folder:FindFirstChild(`WorldModel`) or Instance.new(`WorldModel`) -- Use WorldModel as the parent of of all models to ignore dragging
+	module.Folder.Name = `PropPreviewModels`
+	module.World = module.Folder:FindFirstChild(`WorldModel`) or Instance.new(`WorldModel`)
 	module.World.Archivable = false
 	module.World.Parent = module.Folder
 
