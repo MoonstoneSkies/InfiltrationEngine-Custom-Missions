@@ -80,7 +80,6 @@ end
 
 -- Add/Remove
 
-local HiddenModels = {}
 local BaseByModel = {}
 function module:AddProp(basePart)
 	if not basePart:IsA("BasePart") then
@@ -131,8 +130,7 @@ function module:AddProp(basePart)
 					local newModel = generateModel()
 					Prop[basePart].Model = newModel
 					BaseByModel[newModel] = basePart
-					HiddenModels[basePart] = nil
-					newModel.Parent = self.Folder
+					newModel.Parent = self.World
 					self:RecolorProp(basePart)
 				end),
 				basePart.AttributeChanged:Connect(function(attribute)
@@ -140,25 +138,27 @@ function module:AddProp(basePart)
 					local newModel = generateModel()
 					Prop[basePart].Model = newModel
 					BaseByModel[newModel] = basePart
-					HiddenModels[basePart] = nil
-					newModel.Parent = self.Folder
+					newModel.Parent = self.World
 					self:RecolorProp(basePart)
 				end),
 			},
 		}
-		model.Parent = self.Folder
+		model.Parent = self.World
 		BaseByModel[model] = basePart
 		self:RepositionProp(basePart)
 		self:RecolorProp(basePart)
 		return
 	end
-
-	local modelName = basePart:GetAttribute("AltPropModel") or basePart.Name
+	
+	local leverageMoveProp = basePart.Name == `LeverageMove` and basePart:GetAttribute(`Prop`)
+	local modelName = basePart:GetAttribute("AltPropModel") or leverageMoveProp or basePart.Name
 	local storedModel = CustomPropsFolder._Value and CustomPropsFolder._Value:FindFirstChild(modelName)
 		or ModelFolder._Value and ModelFolder._Value:FindFirstChild(modelName)
-
+	
+	local noPropModel = false
 	if not storedModel then
 		storedModel = NoModelPlaceholder
+		noPropModel = true
 	else
 		basePart.Transparency = 1
 	end
@@ -170,8 +170,8 @@ function module:AddProp(basePart)
 			p.Archivable = false
 		end
 	end
-
-	if basePart:GetAttribute("DoubleDoor") then
+	
+	if basePart:GetAttribute("DoubleDoor") and not noPropModel then
 		local baseInverse = model.Base.CFrame:Inverse()
 		local leftShift = model.Base.CFrame * CFrame.Angles(0, math.pi, 0) * CFrame.new(2.5, 0, 0) * baseInverse
 		local rightShift = model.Base.CFrame * CFrame.new(2.5, 0, 0) * baseInverse
@@ -196,8 +196,7 @@ function module:AddProp(basePart)
 				self:RepositionProp(basePart)
 			end),
 			basePart.AttributeChanged:Connect(function(attribute)
-				HiddenModels[basePart] = nil
-				model.Parent = self.Folder
+				model.Parent = self.World
 				if attribute == "AltPropModel" or attribute == "DoubleDoor" then
 					self:RemoveProp(basePart)
 					self:AddProp(basePart)
@@ -206,14 +205,13 @@ function module:AddProp(basePart)
 				self:RecolorProp(basePart)
 			end),
 			basePart:GetPropertyChangedSignal("Name"):Connect(function()
-				HiddenModels[basePart] = nil
-				model.Parent = self.Folder
+				model.Parent = self.World
 				self:RemoveProp(basePart)
 				self:AddProp(basePart)
 			end),
 		},
 	}
-	model.Parent = self.Folder
+	model.Parent = self.World
 	BaseByModel[model] = basePart
 	self:RepositionProp(basePart)
 	self:RecolorProp(basePart)
@@ -249,10 +247,13 @@ function module:SetEnabled()
 		ColorMap = missionData.Colors or {}
 	end
 
-	module.Folder = workspace:FindFirstChild("PropPreviewModels") or Instance.new("Folder")
+	module.Folder = workspace:FindFirstChild(`PropPreviewModels`) or Instance.new(`Folder`)
 	module.Folder.Archivable = false
 	module.Folder.Parent = workspace
-	module.Folder.Name = "PropPreviewModels"
+	module.Folder.Name = `PropPreviewModels`
+	module.World = module.Folder:FindFirstChild(`WorldModel`) or Instance.new(`WorldModel`)
+	module.World.Archivable = false
+	module.World.Parent = module.Folder
 
 	for _, prop in pairs(workspace.DebugMission.Props:GetDescendants()) do
 		module:AddProp(prop)
@@ -264,40 +265,6 @@ function module:SetEnabled()
 		end),
 		workspace.DebugMission.Props.DescendantRemoving:Connect(function(p)
 			self:RemoveProp(p)
-		end),
-		game.Selection.SelectionChanged:Connect(function()
-			local selectedParts = {}
-			local didSubstitution = false
-			for _, part in game.Selection:Get() do
-				local sub = BaseByModel[part]
-				if sub then
-					didSubstitution = true
-					selectedParts[sub] = true
-				else
-					selectedParts[part] = true
-				end
-			end
-
-			if didSubstitution then
-				local newList = {}
-				for p in selectedParts do
-					table.insert(newList, p)
-					game.Selection:Set(newList)
-				end
-			else
-				for base, model in HiddenModels do
-					if not selectedParts[base] then
-						model.Parent = self.Folder
-						HiddenModels[base] = nil
-					end
-				end
-				for base in selectedParts do
-					if Prop[base] then
-						HiddenModels[base] = Prop[base].Model
-						HiddenModels[base].Parent = nil
-					end
-				end
-			end
 		end),
 	}
 end
