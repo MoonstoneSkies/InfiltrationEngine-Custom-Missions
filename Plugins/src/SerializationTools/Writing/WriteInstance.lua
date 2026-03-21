@@ -131,6 +131,12 @@ WriteInstance = {
 	Frame = CreateInstanceWriter(InstanceProperties.Frame),
 	Beam = CreateInstanceWriter(InstanceProperties.Beam),
 	Trail = CreateInstanceWriter(InstanceProperties.Trail),
+	CornerWedgePart = CreateInstanceWriter(InstanceProperties.CornerWedgePart),
+	CylinderMesh = CreateInstanceWriter(InstanceProperties.CylinderMesh),
+	Sound = CreateInstanceWriter(InstanceProperties.Sound),
+	EchoSoundEffect = CreateInstanceWriter(InstanceProperties.EchoSoundEffect),
+	PitchShiftSoundEffect = CreateInstanceWriter(InstanceProperties.PitchShiftSoundEffect),
+	TextLabel = CreateInstanceWriter(InstanceProperties.TextLabel),
 }
 
 return WriteInstance

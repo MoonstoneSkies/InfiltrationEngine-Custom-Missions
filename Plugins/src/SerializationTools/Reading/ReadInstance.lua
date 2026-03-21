@@ -229,6 +229,12 @@ ReadInstance = {
 	Frame = CreateInstanceReader("Frame", InstanceProperties.Frame),
 	Beam = CreateInstanceReader("Beam", InstanceProperties.Beam),
 	Trail = CreateInstanceReader("Trail", InstanceProperties.Trail),
+	CornerWedgePart = CreateInstanceReader("CornerWedgePart", InstanceProperties.CornerWedgePart),
+	CylinderMesh = CreateInstanceReader("CylinderMesh", InstanceProperties.CylinderMesh),
+	Sound = CreateInstanceReader("Sound", InstanceProperties.Sound),
+	EchoSoundEffect = CreateInstanceReader("EchoSoundEffect", InstanceProperties.EchoSoundEffect),
+	PitchShiftSoundEffect = CreateInstanceReader("PitchShiftSoundEffect", InstanceProperties.PitchShiftSoundEffect),
+	TextLabel = CreateInstanceReader("TextLabel", InstanceProperties.TextLabel),
 }
 
 return ReadInstance

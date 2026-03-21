@@ -27,6 +27,12 @@ local InstanceTypes = {
 	Frame = 26,
 	Beam = 27,
 	Trail = 28,
+	CornerWedgePart = 29,
+	CylinderMesh = 30,
+	Sound = 31,
+	EchoSoundEffect = 32,
+	PitchShiftSoundEffect = 33,
+	TextLabel = 34,
 }
 
 return InstanceTypes
