@@ -232,6 +232,7 @@ Read = {
 			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
 		end
 		
+		ReadBuild.rootNode = nil
 		local colorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		local stringMap

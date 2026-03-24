@@ -1,4 +1,6 @@
 local ReadBuild = {}
+ReadBuild.rootNode = nil
+
 local CollectionService = game:GetService("CollectionService")
 local InsertService = game:GetService("InsertService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -40,6 +42,7 @@ local function resolvePath(pathString)
 		current = current.Children[index]
 	end
 	
+	if not current.Instance then repeat task.wait() until current.Instance end
 	return current.Instance
 end
 
@@ -90,7 +93,9 @@ local function handleExpensive(node, newInstance)
 	local expensive = node.Expensive
 	if expensive then
 		for k,v in (expensive) do
-			newInstance[k] = resolvePath(v)
+			enqueueThread(function()
+				newInstance[k] = resolvePath(v)
+			end)
 		end
 	end
 end
@@ -165,7 +170,6 @@ build = function(node, parent)
 	return newInstance
 end
 
-ReadBuild.rootNode = nil
 ReadBuild.construct = function(node, parent)
 	local newInstance = Instance.new(node.Type)
 	
