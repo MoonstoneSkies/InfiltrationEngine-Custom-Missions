@@ -1,19 +1,19 @@
+local EncodingService = game:GetService("EncodingService")
+local HttpService = game:GetService("HttpService")
+local ScriptEditorService = game:GetService("ScriptEditorService")
+
 local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local ReadInstance = require(script.Parent.ReadInstance)
-
-local EncodingService = game:GetService("EncodingService")
-
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
-
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
+local ReadBuild = require(script.Parent.ReadBuild)
 
 local SIGNED_INT_BOUND = StringConversion.GetMaxNumber(3) / 2
 local INT_BOUND = StringConversion.GetMaxNumber(4)
 local BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(3)
 local SHORT_BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(2)
 
-local Root
 local Read
 
 local denormalize = function(value)
@@ -21,7 +21,7 @@ local denormalize = function(value)
 end
 
 local InstanceKeys = {}
-for i, v in pairs(InstanceTypes) do
+for i, v in (InstanceTypes) do
 	InstanceKeys[v] = i
 end
 
@@ -45,21 +45,6 @@ local function NewlineGSub(capture)
 		return utf8.char(9)
 	end
 	return "&"
-end
-
-local function ResolvePath(root, pathString)
-	local current = root
-
-	for index in string.gmatch(pathString, "%d+") do
-		index = tonumber(index)
-		current = current:GetChildren()[index]
-
-		if not current then
-			return nil
-		end
-	end
-
-	return current
 end
 
 Read = {
@@ -150,21 +135,6 @@ Read = {
 		rz = denormalize(rz)
 		return CFrame.new(X, Y, Z) * CFrame.fromEulerAnglesXYZ(rx, ry, rz), cursor
 	end,
-	
-	InstanceReference = function(str, cursor)
-		local value, cursor = Read.String(str, cursor)
-
-		return function()
-			if Root then
-				if not Root:GetAttribute(`Loaded`) then
-					Root:GetAttributeChangedSignal(`Loaded`):Wait()
-				end
-				
-				local object = ResolvePath(Root, value)
-				return object
-			end
-		end, cursor
-	end,
 
 	BoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 3 symbols.
 		return StringConversion.StringToNumber(str, cursor, 3) / BOUNDED_FLOAT_BOUND, cursor + 3
@@ -232,12 +202,12 @@ Read = {
 
 	MissionCodeHeader = function(str, cursor)
 		local codeVersion, mapId, currentCode, totalCodes
-		
+
 		codeVersion, cursor = Read.ShortestInt(str, cursor)
 		mapId, cursor = Read.ShortInt(str, cursor)
 		currentCode, cursor = Read.ShortInt(str, cursor)
 		totalCodes, cursor = Read.ShortInt(str, cursor)
-		
+
 		return {
 			CodeVersion = codeVersion,
 			CodeCurrent = currentCode,
@@ -254,7 +224,7 @@ Read = {
 			end
 			str = code
 		end
-		
+
 		if VersionConfig.UseCompression then
 			local uncompressed = buffer.create(#str)
 			buffer.writestring(uncompressed, 0, str)
@@ -262,18 +232,17 @@ Read = {
 			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
 		end
 		
-		Root = nil
 		local colorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		local stringMap
 		stringMap, cursor = Read.StringMap(str, cursor)
-		local mission = Read.Instance(str, cursor, colorMap, stringMap)
-
+		local node = Read.Instance(str, cursor, colorMap, stringMap)
+		local mission = ReadBuild.construct(node)
+		
 		-- Reading Color3s from TableMissionSetup
-		local ImportedMissionSetup = game:GetService("HttpService")
-			:JSONDecode(mission:FindFirstChild("TableMissionSetup").Value)
-
-		for i, v in pairs(ImportedMissionSetup["Colors"]) do
+		local missionSetup = mission:FindFirstChild(`TableMissionSetup`)
+		local ImportedMissionSetup = HttpService:JSONDecode(missionSetup and missionSetup.Value or `[]`)
+		for i, v in (ImportedMissionSetup["Colors"] or {}) do
 			ImportedMissionSetup["Colors"][i] = Color3.new(v[1], v[2], v[3])
 		end
 
@@ -282,9 +251,9 @@ Read = {
 			local MissionSetup = Instance.new("ModuleScript")
 			MissionSetup.Name = "MissionSetup"
 			MissionSetup.Parent = mission
-			MissionSetup.Source = StringMissionSetup.Value
+			MissionSetup.Source = StringMissionSetup and StringMissionSetup.Value or ``
 		end
-		
+
 		mission:SetAttribute(`Loaded`, true)
 		return mission
 	end,
@@ -294,20 +263,22 @@ Read = {
 		cursor += 1
 		if InstanceId ~= InstanceTypes.Nil then
 			local InstanceType = InstanceKeys[InstanceId]
-			local object, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap)
-			if not Root and object.Name == `DebugMission` then
-				Root = object
-				Root:SetAttribute(`Loaded`, false)
+			local node, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap)
+			if ReadBuild.rootNode == nil and node.Type == `Folder` and node.Properties.Name == `DebugMission` then
+				ReadBuild.rootNode = node
+				ReadBuild.rootNode.Root = true
+				ReadBuild.rootNode.Expensives = 0
+				ReadBuild.rootNode.Processed = 0
 			end
 			
 			while StringConversion.StringToNumber(str, cursor, 1) ~= 0 do
-				local child
-				child, cursor = Read.Instance(str, cursor, colorMap, stringMap)
-				if child ~= nil then
-					child.Parent = object
+				local subNode
+				subNode, cursor = Read.Instance(str, cursor, colorMap, stringMap)
+				if subNode ~= nil then
+					table.insert(node.Children, subNode)
 				end
 			end
-			return object, cursor + 1
+			return node, cursor + 1
 		else
 			return nil, cursor
 		end
@@ -328,7 +299,7 @@ Read = {
 
 	ResamplerMode = CreateEnumReader(Enum.ResamplerMode, EnumTypes.ResamplerMode),
 	SurfaceGuiSizingMode = CreateEnumReader(Enum.SurfaceGuiSizingMode, EnumTypes.SurfaceGuiSizingMode),
-	
+
 	TextureMode = CreateEnumReader(Enum.TextureMode, EnumTypes.TextureMode),
 }
 

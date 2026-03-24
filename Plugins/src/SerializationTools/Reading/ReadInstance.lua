@@ -7,63 +7,42 @@ local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties
 local DefaultProperties = require(script.Parent.Parent.Types.DefaultProperties)
 local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)
+local ReadBuild = require(script.Parent.ReadBuild)
 
 local AttributeKeys = {}
-for i, v in pairs(AttributeTypes) do
+for i, v in (AttributeTypes) do
 	AttributeKeys[v] = i
 end
 
-local WithAttributes = function(DefaultReader)
-	return function(str, cursor, Read, colorMap, stringMap)
-		local newInstance
-		newInstance, cursor = DefaultReader(str, cursor, Read, colorMap, stringMap)
-		local attributeId = StringConversion.StringToNumber(str, cursor, 1)
-		cursor += 1
-		while not (attributeId == 0) do
-			local typeName = AttributeKeys[attributeId]
-			local nameMapIndex
-			nameMapIndex, cursor = Read.ShortInt(str, cursor)
-			local name = stringMap[nameMapIndex]
-			local value
-			if typeName == "Color3" then
-				local colorMapIndex
-				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				value = colorMap[colorMapIndex]
-			elseif typeName == "String" then
-				local valueMapIndex
-				valueMapIndex, cursor = Read.ShortInt(str, cursor)
-				value = stringMap[valueMapIndex]
-			else
-				value, cursor = Read[typeName](str, cursor)
-			end
-			newInstance:SetAttribute(name, value)
-			attributeId = StringConversion.StringToNumber(str, cursor, 1)
-			cursor += 1
-		end
-		local attributes = newInstance:GetAttributes()
-		attributes = AttributeValidation.Validate(newInstance.ClassName, newInstance.Name, attributes, true)
-		for i, v in pairs(attributes) do
-			newInstance:SetAttribute(i, v)
-		end
-		return newInstance, cursor
-	end
-end
-
 local ReadInstance
+local DefaultFlags = {
+	Protected = false,
+	Attributes = false,
+}
+local rootNode
 
-local CreateInstanceReader = function(instanceType, properties)
+local CreateInstanceReader = function(instanceType, properties, flags)
+	if not flags then flags = DefaultFlags end
 	local defaults = DefaultProperties[instanceType]
 
 	local InstanceReader = function(str, cursor, Read, colorMap, stringMap)
-		local newInstance = Instance.new(instanceType)
+		local node = {
+			Type = instanceType,
+			Children = {},
+			Attributes = {},
+			Properties = {},
+			Protected = flags.Protected or nil,
+		}
+		
 		if defaults then
-			for k, v in defaults do
-				newInstance[k] = v
+			for k, v in (defaults) do
+				node.Properties[k] = v
 			end
 		end
-		for i, v in pairs(properties) do -- sets all Instance properties to their default values as defined in InstanceProperties.lua
-			newInstance[v[1]] = v[3]
+		for i, v in (properties) do
+			node.Properties[v[1]] = v[3]
 		end
+
 		local propertyId = StringConversion.StringToNumber(str, cursor, 1)
 		cursor += 1
 		while not (propertyId == 0) do
@@ -72,145 +51,67 @@ local CreateInstanceReader = function(instanceType, properties)
 			if valueType == "Color3" then
 				local colorMapIndex
 				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				newInstance[typeName] = colorMap[colorMapIndex]
+				node.Properties[typeName] = colorMap[colorMapIndex]
 			elseif valueType == "String" then
 				local stringMapIndex
 				stringMapIndex, cursor = Read.ShortInt(str, cursor)
-				newInstance[typeName] = stringMap[stringMapIndex]
+				node.Properties[typeName] = stringMap[stringMapIndex]
 			elseif valueType == "InstanceReference" then
-				local set, newCursor = Read[valueType](str, cursor)
+				local pathString, newCursor = Read.String(str, cursor)
 				cursor = newCursor
-				task.spawn(function()
-					newInstance[typeName] = set()
-				end)
+				if not node.Expensive then node.Expensive = {} end
+				node.Expensive[typeName] = pathString
+				ReadBuild.rootNode.Expensives += 1
 			else
-				newInstance[typeName], cursor = Read[valueType](str, cursor)
+				node.Properties[typeName], cursor = Read[valueType](str, cursor)
 			end
 			propertyId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
 		end
-		return newInstance, cursor
-	end
-	return InstanceReader
-end
-
-local CachedUserMeshFolder = game.ReplicatedStorage:FindFirstChild("Assets")
-if CachedUserMeshFolder then
-	CachedUserMeshFolder = CachedUserMeshFolder:FindFirstChild("LoadedMeshes")
-	if not CachedUserMeshFolder then
-		CachedUserMeshFolder = Instance.new("Folder")
-		CachedUserMeshFolder.Name = "LoadedMeshes"
-		CachedUserMeshFolder.Parent = game.ReplicatedStorage.Assets
-	end
-end
-
-local CreateProtectedInstanceReader = function(instanceType, properties)
-	local defaults = DefaultProperties[instanceType]
-
-	local InstanceReader = function(str, cursor, Read, colorMap, stringMap)
-		local newProperties = {}
-		if defaults then
-			for k, v in defaults do
-				newProperties[k] = v
-			end
-		end
-		for i, v in pairs(properties) do -- sets all Instance properties to their default values as defined in InstanceProperties.lua
-			newProperties[v[1]] = v[3]
-		end
-		local propertyId = StringConversion.StringToNumber(str, cursor, 1)
-		cursor += 1
-		while not (propertyId == 0) do
-			local typeName = properties[propertyId][1]
-			local valueType = properties[propertyId][2]
-			if valueType == "Color3" then
-				local colorMapIndex
-				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				newProperties[typeName] = colorMap[colorMapIndex]
-			elseif valueType == "String" then
-				local stringMapIndex
-				stringMapIndex, cursor = Read.ShortInt(str, cursor)
-				newProperties[typeName] = stringMap[stringMapIndex]
-			else
-				newProperties[typeName], cursor = Read[valueType](str, cursor)
-			end
-			propertyId = StringConversion.StringToNumber(str, cursor, 1)
+		
+		if flags.Attributes then
+			local attributeId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
-		end
-
-		local newInstance = Instance.new("Part")
-		local instanceInitialized = false
-		local meshId = newProperties.MeshId
-		local id = meshId and newProperties.MeshId:match("%d+")
-		if id and #id > 3 then
-			meshId = id
-		end
-		newProperties.MeshId = nil
-
-		local cachedMeshPart = meshId
-			and (
-				(
-					game.ReplicatedStorage:FindFirstChild("Assets")
-					and game.ReplicatedStorage.Assets:FindFirstChild("ImportParts")
-					and game.ReplicatedStorage.Assets.ImportParts:FindFirstChild(meshId)
-				) or (CachedUserMeshFolder and CachedUserMeshFolder:FindFirstChild(meshId))
-			)
-		if cachedMeshPart then
-			newInstance = cachedMeshPart:Clone()
-			newProperties.CollisionFidelity = nil
-			newProperties.RenderFidelity = nil
-			for k, v in newProperties do
-				newInstance[k] = v
-			end
-			instanceInitialized = true
-		elseif meshId and ENABLE_ARBITRARY_MESHES then
-			-- CreateMeshPartAsync is likely less reliable than cloning, so prefer using ImportParts when possible
-			local success, instOrReason = pcall(function()
-				local part = InsertService:CreateMeshPartAsync(
-					`rbxassetid://{meshId}`,
-					newProperties["CollisionFidelity"] or Enum.CollisionFidelity.Default,
-					newProperties["RenderFidelity"] or Enum.RenderFidelity.Automatic
-				)
-				if CachedUserMeshFolder then
-					local copy = part:Clone()
-					copy.Name = meshId
-					copy.Parent = CachedUserMeshFolder
+			while not (attributeId == 0) do
+				local typeName = AttributeKeys[attributeId]
+				local nameMapIndex
+				nameMapIndex, cursor = Read.ShortInt(str, cursor)
+				local name = stringMap[nameMapIndex]
+				local value
+				if typeName == "Color3" then
+					local colorMapIndex
+					colorMapIndex, cursor = Read.ShortInt(str, cursor)
+					value = colorMap[colorMapIndex]
+				elseif typeName == "String" then
+					local valueMapIndex
+					valueMapIndex, cursor = Read.ShortInt(str, cursor)
+					value = stringMap[valueMapIndex]
+				else
+					value, cursor = Read[typeName](str, cursor)
 				end
-				return part
-			end)
-			newProperties.CollisionFidelity = nil
-			newProperties.RenderFidelity = nil
-			if success then
-				newInstance = instOrReason
-				for k, v in newProperties do
-					newInstance[k] = v
-				end
-				instanceInitialized = true
+				node.Attributes[name] = value
+				attributeId = StringConversion.StringToNumber(str, cursor, 1)
+				cursor += 1
 			end
+			node.Attributes = AttributeValidation.Validate(node.Properties.ClassName, node.Properties.Name, node.Attributes, true)
 		end
-
-		if not instanceInitialized then
-			for k, v in newProperties do
-				pcall(function()
-					newInstance[k] = v
-				end)
-			end
-		end
-
-		return newInstance, cursor
+		
+		return node, cursor
 	end
+	
 	return InstanceReader
 end
 
 ReadInstance = {
-	Model = WithAttributes(CreateInstanceReader("Model", InstanceProperties.Model)),
-	Folder = WithAttributes(CreateInstanceReader("Folder", InstanceProperties.Folder)),
-	Part = WithAttributes(CreateInstanceReader("Part", InstanceProperties.Part)),
+	Model = CreateInstanceReader(`Model`, InstanceProperties.Model, {Attributes = true}),
+	Folder = CreateInstanceReader(`Folder`, InstanceProperties.Folder, {Attributes = true}),
+	Part = CreateInstanceReader(`Part`, InstanceProperties.Part, {Attributes = true}),
 	PartNoAttributes = CreateInstanceReader("Part", InstanceProperties.Part),
-	BoolValue = WithAttributes(CreateInstanceReader("BoolValue", InstanceProperties.BoolValue)),
+	BoolValue = CreateInstanceReader(`BoolValue`, InstanceProperties.BoolValue, {Attributes = true}),
 	WedgePart = CreateInstanceReader("WedgePart", InstanceProperties.WedgePart),
 	StringValue = CreateInstanceReader("StringValue", InstanceProperties.StringValue),
-	MeshPart = WithAttributes(CreateProtectedInstanceReader("MeshPart", InstanceProperties.MeshPart)),
-	UnionOperation = WithAttributes(CreateProtectedInstanceReader("UnionOperation", InstanceProperties.UnionOperation)),
+	MeshPart = CreateInstanceReader(`MeshPart`, InstanceProperties.MeshPart, {Attributes = true, Protected = true}),
+	UnionOperation = CreateInstanceReader(`UnionOperation`, InstanceProperties.UnionOperation, {Attributes = true, Protected = true}),
 	Texture = CreateInstanceReader("Texture", InstanceProperties.Texture),
 	BlockMesh = CreateInstanceReader("BlockMesh", InstanceProperties.BlockMesh),
 	PointLight = CreateInstanceReader("PointLight", InstanceProperties.PointLight),
