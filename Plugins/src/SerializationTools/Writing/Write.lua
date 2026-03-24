@@ -34,7 +34,7 @@ end
 local function GetIndex(object)
 	local parent = object.Parent
 	local children = parent:GetChildren()
-	
+
 	local index = 1
 	for _, child in children do
 		if child == object then
@@ -43,7 +43,7 @@ local function GetIndex(object)
 			index += 1
 		end
 	end
-	
+
 	return index
 end
 
@@ -193,11 +193,11 @@ Write = {
 		end
 		return Write.Int(#str) .. str
 	end,
-	
+
 	InstanceReference = function(object)
 		local path = {}
 		local current = object
-		
+
 		-- Get parent path
 		while current and current.Parent and (current.Name ~= `DebugMission` and current ~= workspace) do
 			local index = GetIndex(current)
@@ -206,12 +206,12 @@ Write = {
 			end
 			current = current.Parent
 		end
-		
+
 		-- Reverse order
 		for i = 1, math.floor(#path / 2) do
 			path[i], path[#path - i + 1] = path[#path - i + 1], path[i]
 		end
-		
+
 		-- Concat
 		path = table.concat(path, `.`)
 		return Write.String(path)
@@ -219,7 +219,7 @@ Write = {
 
 	ColorMap = function(colorMap)
 		local colorStr = ""
-		for i, v in pairs(colorMap) do
+		for i, v in (colorMap) do
 			colorStr = colorStr .. Write.Color3(v)
 		end
 		return Write.ShortInt(#colorMap) .. colorStr
@@ -227,7 +227,7 @@ Write = {
 
 	StringMap = function(stringMap)
 		local stringStr = ""
-		for i, v in pairs(stringMap) do
+		for i, v in (stringMap) do
 			stringStr = stringStr .. Write.String(v)
 		end
 		return Write.ShortInt(#stringMap) .. stringStr
@@ -254,7 +254,7 @@ Write = {
 		end
 
 		-- setting Color3s into tables for encoding
-		for i, v in pairs(MissionSetup["Colors"]) do
+		for i, v in (MissionSetup["Colors"]) do
 			MissionSetup["Colors"][i] = { v.R, v.G, v.B }
 		end
 
@@ -282,11 +282,11 @@ Write = {
 		local colorMapArr = {}
 		local stringMapArr = {}
 
-		for colHex, colidx in pairs(colorMap) do
+		for colHex, colidx in (colorMap) do
 			colorMapArr[colidx] = Color3.fromHex(colHex)
 		end
 
-		for str, stridx in pairs(stringMap) do
+		for str, stridx in (stringMap) do
 			stringMapArr[stridx] = str
 		end
 
@@ -296,9 +296,9 @@ Write = {
 		local missionStr = colorMapStr .. stringMapStr .. str
 
 		if not VersionConfig.UseCompression then return missionStr end
-		
+
 		local compressLevel = FeatureCheck("SerializerCompressionLevel", false)
-		
+
 		if type(compressLevel) ~= "number" then
 			if type(compressLevel) ~= "nil" then
 				warn(`SerializerCompressionLevel : Expected int|nil, got {type(compressLevel)} {compressLevel}! Will use default of 4`)
@@ -321,7 +321,7 @@ Write = {
 
 		local buf = buffer.create(#missionStr)
 		buffer.writestring(buf, 0, missionStr)
-		
+
 		local compressedBuf = EncodingService:Base64Encode( EncodingService:CompressBuffer(buf, Enum.CompressionAlgorithm.Zstd, compressLevel) )
 
 		local compressedStr = buffer.readstring( compressedBuf, 0, buffer.len(compressedBuf) )
@@ -343,10 +343,11 @@ Write = {
 			end
 			local instanceType = StringConversion.NumberToString(InstanceTypes[className], 1)
 			local objectProperties, colorMap, stringMap = WriteInstance[className](object, Write, colorMap, stringMap)
-			local childrenProperties = ""
-			for i, v in pairs(object:GetChildren()) do
-				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap)
+			local chunks = {}
+			for i, v in (object:GetChildren()) do
+				chunks[i] = (Write.Instance(v, colorMap, stringMap))
 			end
+			local childrenProperties = table.concat(chunks)
 			return instanceType .. objectProperties .. childrenProperties .. StringConversion.NumberToString(0, 1),
 			colorMap,
 			stringMap
