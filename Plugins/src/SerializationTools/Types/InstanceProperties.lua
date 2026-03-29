@@ -24,7 +24,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "Shape", "PartType", "Block" },
 		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
 		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
-		{ "Reflectance", "Int", 0},
+		{ "Reflectance", "Float", 0},
 	},
 	BoolValue = {
 		{ "Name", "String", "Value" },
@@ -42,7 +42,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "CastShadow", "Bool", false },
 		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
 		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
-		{ "Reflectance", "Int", 0},
+		{ "Reflectance", "Float", 0},
 	},
 	StringValue = {
 		{ "Name", "String", "StringValue" },
@@ -64,7 +64,8 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "CollisionFidelity", "CollisionFidelity", "Default" },
 		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
 		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
-		{ "Reflectance", "Int", 0},
+		{ "Reflectance", "Float", 0},
+		{ "DoubleSided", "Bool", false },
 	},
 	UnionOperation = {
 		{ "Name", "String", "Part" },
@@ -79,7 +80,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "MeshId", "String", "" },
 		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
 		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
-		{ "Reflectance", "Int", 0},
+		{ "Reflectance", "Float", 0},
 	},
 	Texture = {
 		{ "Name", "String", "Texture" },
@@ -306,7 +307,7 @@ InstanceProperties = { -- any changes to this table should be changed in Instanc
 		{ "CastShadow", "Bool", false },
 		{ "AssemblyLinearVelocity", "Vector3", Vector3.new()},
 		{ "AssemblyAngularVelocity", "Vector3", Vector3.new()},
-		{ "Reflectance", "Int", 0},
+		{ "Reflectance", "Float", 0},
 	},
 	CylinderMesh = {
 		{ "Scale", "Vector3", Vector3.new(1, 1, 1) },
