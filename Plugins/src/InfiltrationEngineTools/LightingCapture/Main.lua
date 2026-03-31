@@ -37,7 +37,6 @@ function module.Capture()
 		return
 	end
 
-	-- Clear any existing capture
 	local existing = missionSetup:FindFirstChild("CustomLighting")
 	if existing then
 		existing:Destroy()
@@ -47,7 +46,6 @@ function module.Capture()
 	customLighting.Name = "CustomLighting"
 	customLighting.Value = true
 
-	-- Capture top-level Lighting properties as Attributes
 	for _, prop in LIGHTING_PROPS do
 		local ok, val = pcall(function() return Lighting[prop] end)
 		if ok and val ~= nil then
@@ -55,7 +53,6 @@ function module.Capture()
 		end
 	end
 
-	-- Capture Lighting children (PostEffects, Atmosphere, Sky, Clouds)
 	for _, child in Lighting:GetChildren() do
 		if not (child:IsA("PostEffect") or child:IsA("Atmosphere") or child:IsA("Sky") or child:IsA("Clouds")) then
 			continue

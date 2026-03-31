@@ -15,7 +15,7 @@ local SectionVisibilityButton =
 local TerrainSerializationButton =
 	toolbar:CreateButton("Terrain Serialization", "Terrain Serialization", "rbxassetid://115396940325881")
 local LightingCaptureButton =
-	toolbar:CreateButton("Capture Lighting", "Capture custom lighting from game.Lighting", "rbxassetid://10652251260")
+	toolbar:CreateButton("Capture Lighting", "Capture custom lighting from game.Lighting", "")
 
 local MeadowMap = require(script.Parent.MeadowMap.Main)
 local DoorAccess = require(script.Parent.DoorAccess.Main)
