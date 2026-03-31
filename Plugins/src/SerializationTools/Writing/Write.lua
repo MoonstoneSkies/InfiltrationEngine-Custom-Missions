@@ -270,22 +270,25 @@ Write = {
 				end
 			end
 
-			local effectsArray = {}
+			local children = {}
 			for _, child in pairs(customLightingInst:GetChildren()) do
 				if child:IsA("BoolValue") and child.Value then
-					local childData = { Name = child.Name }
+					local className = child:GetAttribute("ClassName")
+					if not className then continue end
+					local childData = {}
 					for attr, val in pairs(child:GetAttributes()) do
+						if attr == "ClassName" then continue end
 						if typeof(val) == "Color3" then
 							childData[attr] = { val.R, val.G, val.B }
 						else
 							childData[attr] = val
 						end
 					end
-					table.insert(effectsArray, childData)
+					children[className] = childData
 				end
 			end
-			if #effectsArray > 0 then
-				customLightingData["Effects"] = effectsArray
+			if next(children) then
+				customLightingData["Children"] = children
 			end
 			MissionSetup["CustomLighting"] = customLightingData
 		end
