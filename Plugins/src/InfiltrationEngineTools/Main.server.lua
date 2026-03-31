@@ -14,6 +14,8 @@ local SectionVisibilityButton =
 	toolbar:CreateButton("Section Visibility", "Section Visibility", "rbxassetid://8753176416")
 local TerrainSerializationButton =
 	toolbar:CreateButton("Terrain Serialization", "Terrain Serialization", "rbxassetid://115396940325881")
+local LightingCaptureButton =
+	toolbar:CreateButton("Capture Lighting", "Capture custom lighting from game.Lighting", "rbxassetid://10652251260")
 
 local MeadowMap = require(script.Parent.MeadowMap.Main)
 local DoorAccess = require(script.Parent.DoorAccess.Main)
@@ -24,6 +26,7 @@ local ZoneMarker = require(script.Parent.ZoneMarker.Main)
 local AttributeSearch = require(script.Parent.AttributeSearch.Main)
 local SectionVisibility = require(script.Parent.SectionVisibility.Main)
 local TerrainSerialization = require(script.Parent.TerrainSerialization.Main)
+local LightingCapture = require(script.Parent.LightingCapture.Main)
 local CurrentPlugin = nil
 
 local VisibilityToggle = require(script.Parent.Util.VisibilityToggle)
@@ -55,6 +58,12 @@ ConnectPluginToButton(TerrainSerializationButton, TerrainSerialization)
 SectionVisibilityButton.Click:Connect(function()
 	plugin:Deactivate()
 	SectionVisibility.OpenMenu(plugin)
+	plugin:Deactivate()
+end)
+
+LightingCaptureButton.Click:Connect(function()
+	plugin:Deactivate()
+	LightingCapture.Capture()
 	plugin:Deactivate()
 end)
 

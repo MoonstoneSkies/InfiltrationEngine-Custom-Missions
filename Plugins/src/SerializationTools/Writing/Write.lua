@@ -258,6 +258,38 @@ Write = {
 			MissionSetup["Colors"][i] = { v.R, v.G, v.B }
 		end
 
+		local missionSetupInst = mission:FindFirstChild("MissionSetup")
+		local customLightingInst = missionSetupInst and missionSetupInst:FindFirstChild("CustomLighting")
+		if customLightingInst and customLightingInst:IsA("BoolValue") and customLightingInst.Value then
+			local customLightingData = {}
+			for attr, val in pairs(customLightingInst:GetAttributes()) do
+				if typeof(val) == "Color3" then
+					customLightingData[attr] = { val.R, val.G, val.B }
+				else
+					customLightingData[attr] = val
+				end
+			end
+
+			local effectsArray = {}
+			for _, child in pairs(customLightingInst:GetChildren()) do
+				if child:IsA("BoolValue") and child.Value then
+					local childData = { Name = child.Name }
+					for attr, val in pairs(child:GetAttributes()) do
+						if typeof(val) == "Color3" then
+							childData[attr] = { val.R, val.G, val.B }
+						else
+							childData[attr] = val
+						end
+					end
+					table.insert(effectsArray, childData)
+				end
+			end
+			if #effectsArray > 0 then
+				customLightingData["Effects"] = effectsArray
+			end
+			MissionSetup["CustomLighting"] = customLightingData
+		end
+
 		local json = game:GetService("HttpService"):JSONEncode(MissionSetup)
 
 		local TableMissionSetup = Instance.new("StringValue")
