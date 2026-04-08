@@ -4,6 +4,7 @@ local WriteInstance = require(script.Parent.WriteInstance)
 
 local EncodingService = game:GetService("EncodingService")
 
+local WriteStats = require(script.Parent.Stats)
 local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
@@ -233,6 +234,16 @@ Write = {
 		end
 		return Write.ShortInt(#stringMap) .. stringStr
 	end,
+	
+	VectorMap = function(vectorMap)
+		if not VersionConfig.UseVectorMap then
+			return ""
+		end
+		for i, v in ipairs(vectorMap) do
+			vectorMap[i] = Write.Vector3(v)
+		end
+		return Write.LongInt(#vectorMap) .. table.concat(vectorMap)
+	end,
 
 	MissionCodeHeader = function(mapId, current, total)
 		local header = Write.ShortestInt(VersionConfig.VersionNumber)
@@ -243,6 +254,8 @@ Write = {
 	end,
 
 	Mission = function(mission)
+		WriteStats.reset()
+
 		local str = ""
 
 		local MissionSetup = require(mission:FindFirstChild("MissionSetup"):Clone())
@@ -296,14 +309,17 @@ Write = {
 		-- Numeric index so as to not have the size collide with existing values
 		local colorMap = { [0] = 0 }
 		local stringMap = { [0] = 0 }
+		local vectorMap = { [0] = 0 }
 
-		str, colorMap, stringMap = Write.Instance(mission, colorMap, stringMap)
+		str, colorMap, stringMap, vectorMap = Write.Instance(mission, colorMap, stringMap, vectorMap)
 
 		colorMap[0] = nil
 		stringMap[0] = nil
+		vectorMap[0] = nil
 
 		local colorMapArr = {}
 		local stringMapArr = {}
+		local vectorMapArr = {}
 
 		for colHex, colidx in pairs(colorMap) do
 			colorMapArr[colidx] = Color3.fromHex(colHex)
@@ -312,11 +328,16 @@ Write = {
 		for str, stridx in pairs(stringMap) do
 			stringMapArr[stridx] = str
 		end
+		
+		for vec, vecidx in pairs(vectorMap) do
+			vectorMapArr[vecidx] = vec
+		end
 
 		local colorMapStr = Write.ColorMap(colorMapArr)
 		local stringMapStr = Write.StringMap(stringMapArr)
+		local vectorMapStr = Write.VectorMap(vectorMapArr)
 
-		local missionStr = colorMapStr .. stringMapStr .. str
+		local missionStr = colorMapStr .. stringMapStr .. vectorMapStr .. str
 
 		if not VersionConfig.UseCompression then
 			return missionStr
@@ -364,27 +385,32 @@ Write = {
 			print(`Before Compression: {#missionStr * 0.001}K`)
 			print(`After Compression: {#compressedStr * 0.001}K`)
 		end
+		
+		if FeatureCheck("SerializerDebug", false) == true then
+			WriteStats.output()
+		end
 
 		return compressedStr
 	end,
 
-	Instance = function(object, colorMap, stringMap)
+	Instance = function(object, colorMap, stringMap, vectorMap)
 		local className = object.ClassName
 		if InstanceTypes[object.ClassName] ~= nil then
 			if next(object:GetAttributes()) == nil and object.ClassName == "Part" then
 				className = className .. "NoAttributes"
 			end
 			local instanceType = StringConversion.NumberToString(InstanceTypes[className], 1)
-			local objectProperties, colorMap, stringMap = WriteInstance[className](object, Write, colorMap, stringMap)
+			local objectProperties, colorMap, stringMap, vectorMap = WriteInstance[className](object, Write, colorMap, stringMap, vectorMap)
 			local childrenProperties = ""
 			for i, v in pairs(object:GetChildren()) do
-				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap)
+				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap, vectorMap)
 			end
 			return instanceType .. objectProperties .. childrenProperties .. StringConversion.NumberToString(0, 1),
-				colorMap,
-				stringMap
+			colorMap,
+			stringMap,
+			vectorMap
 		else
-			return StringConversion.NumberToString(InstanceTypes.Nil, 1), colorMap, stringMap
+			return StringConversion.NumberToString(InstanceTypes.Nil, 1), colorMap, stringMap, vectorMap
 		end
 	end,
 

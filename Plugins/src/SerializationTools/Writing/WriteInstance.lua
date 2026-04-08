@@ -3,7 +3,15 @@ local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties
 local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)
 
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
+
+local WriteStats = require(script.Parent.Stats)
+
 local function lookupMapIndex(map, value)
+	-- Vectors are supported here without any special casing due to a quirk of roblox lua
+	-- Wherein the "Vector3" roblox datatype corresponds to the "vector" value type
+	-- This is done for optimisation of vector maths, to my understanding, but it also leads to our desired value semantics
+	-- I.e. tbl[Vector3.one] == tbl[Vector3.new(1, 1, 1)]
 	if value == nil then
 		return 0
 	end
@@ -12,16 +20,50 @@ local function lookupMapIndex(map, value)
 	end
 	local idx = map[value]
 	if idx == nil then
+		WriteStats:inc("LookupMap_Misses")
 		idx = (map[0] + 1) -- Size + 1
 		map[value] = idx
 		map[0] = idx -- Update size
+	else
+		WriteStats:inc("LookupMap_Hits")
 	end
 	return idx
 end
 
+local function lookupMapCFrame(map, cfr)
+	local i1, i2, i3
+	local xVec = cfr.XVector
+	local yVec = cfr.YVector
+	
+	i1 = lookupMapIndex(map, cfr.Position)
+	i2 = lookupMapIndex(map, xVec)
+	i3 = lookupMapIndex(map, yVec)
+	return i1, i2, i3
+end
+
+local function representValue(write, v, vType, colorMap, stringMap, vectorMap)
+	local valStr
+	if vType == "Color3" then
+		local index = lookupMapIndex(colorMap, v)
+		valStr = write.ShortInt(index)
+	elseif vType == "String" then
+		local index = lookupMapIndex(stringMap, v)
+		valStr = write.ShortInt(index)
+	elseif vType == "Vector3" and VersionConfig.UseVectorMap then
+		local index = lookupMapIndex(vectorMap, v)
+		valStr = write.LongInt(index)
+	elseif vType == "CFrame" and VersionConfig.UseVectorMap then
+		local i1, i2, i3 = lookupMapCFrame(vectorMap, v)
+		valStr = write.LongInt(i1) .. write.LongInt(i2) .. write.LongInt(i3)
+	else
+		valStr = write[vType](v)
+	end
+	return valStr
+end
+
 local WithAttributes = function(DefaultWriter)
-	return function(object, Write, colorMap, stringMap)
-		local str = DefaultWriter(object, Write, colorMap, stringMap)
+	return function(object, Write, colorMap, stringMap, vectorMap)
+		local str = DefaultWriter(object, Write, colorMap, stringMap, vectorMap)
 		local attributes = object:GetAttributes()
 		attributes = AttributeValidation.Validate(object.ClassName, object.Name, attributes, false)
 		local attString = ""
@@ -51,24 +93,16 @@ local WithAttributes = function(DefaultWriter)
 			attString = attString
 				.. StringConversion.NumberToString(AttributeTypes[attributeType], 1)
 				.. Write.ShortInt(index)
-
-			if attributeType == "Color3" then
-				local index = lookupMapIndex(colorMap, v)
-				attString = attString .. Write.ShortInt(index)
-			elseif attributeType == "String" then
-				local index = lookupMapIndex(stringMap, v)
-				attString = attString .. Write.ShortInt(index)
-			else
-				attString = attString .. Write[attributeType](v)
-			end
+				.. representValue(Write, v, attributeType, colorMap, stringMap, vectorMap)
+			
 		end
 		str = str .. attString .. StringConversion.NumberToString(0, 1)
-		return str, colorMap, stringMap
+		return str, colorMap, stringMap, vectorMap
 	end
 end
 
 local CreateInstanceWriter = function(properties)
-	local WriteInstance = function(object, Write, colorMap, stringMap)
+	local WriteInstance = function(object, Write, colorMap, stringMap, vectorMap)
 		local str = ""
 		for i, v in pairs(properties) do
 			local value
@@ -79,24 +113,14 @@ local CreateInstanceWriter = function(properties)
 			end
 			local valueType = v[2]
 			local defaultValue = v[3]
-			if (valueType == "Color3") and (value ~= defaultValue) then
-				local index = lookupMapIndex(colorMap, value)
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write.ShortInt(index)
-				continue
-			elseif (valueType == "String") and (value ~= defaultValue) then
-				local index = lookupMapIndex(stringMap, value)
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write.ShortInt(index)
-				continue
-			elseif value ~= defaultValue then
-				str = str .. StringConversion.NumberToString(i, 1)
-				str = str .. Write[valueType](value)
-			end
+			
+			if value == defaultValue then continue end
+			
+			str = str .. StringConversion.NumberToString(i, 1) .. representValue(Write, value, valueType, colorMap, stringMap, vectorMap)
 		end
 
 		str = str .. StringConversion.NumberToString(0, 1)
-		return str, colorMap, stringMap
+		return str, colorMap, stringMap, vectorMap
 	end
 	return WriteInstance
 end

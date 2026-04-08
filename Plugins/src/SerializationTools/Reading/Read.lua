@@ -124,6 +124,17 @@ Read = {
 		local Z, cursor = Read.Float(str, cursor)
 		return Vector3.new(X, Y, Z), cursor
 	end,
+	
+	VectorMap = function(str, cursor)
+		if not VersionConfig.UseVectorMap then return {}, cursor end
+		local vectorMap, vectorMapLength
+		vectorMapLength, cursor = Read.LongInt(str, cursor)
+		vectorMap = table.create(vectorMapLength, Vector3.zero)
+		for i=1, vectorMapLength do
+			vectorMap[i], cursor = Read.Vector3(str, cursor)
+		end
+		return vectorMap, cursor
+	end,
 
 	UDim = function(str, cursor)
 		local udimVec
@@ -249,6 +260,7 @@ Read = {
 	end,
 
 	Mission = function(str, cursor)
+		
 		if str:sub(1, 3) == "!!!" then
 			local code = str:match("!!!.-!!!(.+)")
 			if not code then
@@ -270,11 +282,11 @@ Read = {
 		end
 
 		Root = nil
-		local colorMap
+		local colorMap, stringMap, vectorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
-		local stringMap
 		stringMap, cursor = Read.StringMap(str, cursor)
-		local mission = Read.Instance(str, cursor, colorMap, stringMap)
+		vectorMap, cursor = Read.VectorMap(str, cursor)
+		local mission = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
 
 		-- Reading Color3s from TableMissionSetup
 		local ImportedMissionSetup = game:GetService("HttpService")
@@ -302,12 +314,12 @@ Read = {
 		return mission
 	end,
 
-	Instance = function(str, cursor, colorMap, stringMap)
+	Instance = function(str, cursor, colorMap, stringMap, vectorMap)
 		local InstanceId = StringConversion.StringToNumber(str, cursor, 1)
 		cursor += 1
 		if InstanceId ~= InstanceTypes.Nil then
 			local InstanceType = InstanceKeys[InstanceId]
-			local object, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap)
+			local object, cursor = ReadInstance[InstanceType](str, cursor, Read, colorMap, stringMap, vectorMap)
 			if not Root and object.Name == `DebugMission` then
 				Root = object
 				Root:SetAttribute(`Loaded`, false)
@@ -315,7 +327,7 @@ Read = {
 
 			while StringConversion.StringToNumber(str, cursor, 1) ~= 0 do
 				local child
-				child, cursor = Read.Instance(str, cursor, colorMap, stringMap)
+				child, cursor = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
 				if child ~= nil then
 					child.Parent = object
 				end
