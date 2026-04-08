@@ -8,15 +8,55 @@ local DefaultProperties = require(script.Parent.Parent.Types.DefaultProperties)
 local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)
 
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
+
 local AttributeKeys = {}
 for i, v in pairs(AttributeTypes) do
 	AttributeKeys[v] = i
 end
 
+local function readCFrame(str, cursor, read, vectorMap)
+	local pIdx, cursor = read.LongInt(str, cursor)
+	local xIdx, cursor = read.LongInt(str, cursor)
+	local yIdx, cursor = read.LongInt(str, cursor)
+	
+	local pos  = vectorMap[pIdx]
+	local xVec = vectorMap[xIdx]
+	local yVec = vectorMap[yIdx]
+	
+	return CFrame.fromMatrix(pos, xVec, yVec), cursor
+end
+
+local function readValue(str, cursor, read, vType, colorMap, stringMap, vectorMap, refHandler)
+	local value
+	if vType == "Color3" then
+		local colorMapIndex
+		colorMapIndex, cursor = read.ShortInt(str, cursor)
+		value = colorMap[colorMapIndex]
+	elseif vType == "String" then
+		local valueMapIndex
+		valueMapIndex, cursor = read.ShortInt(str, cursor)
+		value = stringMap[valueMapIndex]
+	elseif vType == "Vector3" and VersionConfig.UseVectorMap then
+		local vecMapIndex
+		vecMapIndex, cursor = read.LongInt(str, cursor)
+		value = vectorMap[vecMapIndex]
+	elseif vType == "CFrame" and VersionConfig.UseVectorMap then
+		value, cursor = readCFrame(str, cursor, read, vectorMap)
+	elseif vType == "InstanceReference" and refHandler ~= nil then
+		local set
+		set, cursor = read[vType](str, cursor)
+		task.spawn(refHandler, set)
+	else
+		value, cursor = read[vType](str, cursor)
+	end
+	return value, cursor
+end
+
 local WithAttributes = function(DefaultReader)
-	return function(str, cursor, Read, colorMap, stringMap)
+	return function(str, cursor, Read, colorMap, stringMap, vectorMap)
 		local newInstance
-		newInstance, cursor = DefaultReader(str, cursor, Read, colorMap, stringMap)
+		newInstance, cursor = DefaultReader(str, cursor, Read, colorMap, stringMap, vectorMap)
 		local attributeId = StringConversion.StringToNumber(str, cursor, 1)
 		cursor += 1
 		while not (attributeId == 0) do
@@ -25,17 +65,7 @@ local WithAttributes = function(DefaultReader)
 			nameMapIndex, cursor = Read.ShortInt(str, cursor)
 			local name = stringMap[nameMapIndex]
 			local value
-			if typeName == "Color3" then
-				local colorMapIndex
-				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				value = colorMap[colorMapIndex]
-			elseif typeName == "String" then
-				local valueMapIndex
-				valueMapIndex, cursor = Read.ShortInt(str, cursor)
-				value = stringMap[valueMapIndex]
-			else
-				value, cursor = Read[typeName](str, cursor)
-			end
+			value, cursor = readValue(str, cursor, Read, typeName, colorMap, stringMap, vectorMap)
 			newInstance:SetAttribute(name, value)
 			attributeId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
@@ -54,7 +84,7 @@ local ReadInstance
 local CreateInstanceReader = function(instanceType, properties)
 	local defaults = DefaultProperties[instanceType]
 
-	local InstanceReader = function(str, cursor, Read, colorMap, stringMap)
+	local InstanceReader = function(str, cursor, Read, colorMap, stringMap, vectorMap)
 		local newInstance = Instance.new(instanceType)
 		if defaults then
 			for k, v in defaults do
@@ -69,23 +99,11 @@ local CreateInstanceReader = function(instanceType, properties)
 		while not (propertyId == 0) do
 			local typeName = properties[propertyId][1]
 			local valueType = properties[propertyId][2]
-			if valueType == "Color3" then
-				local colorMapIndex
-				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				newInstance[typeName] = colorMap[colorMapIndex]
-			elseif valueType == "String" then
-				local stringMapIndex
-				stringMapIndex, cursor = Read.ShortInt(str, cursor)
-				newInstance[typeName] = stringMap[stringMapIndex]
-			elseif valueType == "InstanceReference" then
-				local set, newCursor = Read[valueType](str, cursor)
-				cursor = newCursor
-				task.spawn(function()
-					newInstance[typeName] = set()
-				end)
-			else
-				newInstance[typeName], cursor = Read[valueType](str, cursor)
-			end
+			local value
+			value, cursor = readValue(str, cursor, Read, valueType, colorMap, stringMap, vectorMap, function(setter)
+				newInstance[typeName] = setter()
+			end)
+			if value ~= nil then newInstance[typeName] = value end
 			propertyId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
 		end
@@ -107,7 +125,7 @@ end
 local CreateProtectedInstanceReader = function(instanceType, properties)
 	local defaults = DefaultProperties[instanceType]
 
-	local InstanceReader = function(str, cursor, Read, colorMap, stringMap)
+	local InstanceReader = function(str, cursor, Read, colorMap, stringMap, vectorMap)
 		local newProperties = {}
 		if defaults then
 			for k, v in defaults do
@@ -122,17 +140,7 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 		while not (propertyId == 0) do
 			local typeName = properties[propertyId][1]
 			local valueType = properties[propertyId][2]
-			if valueType == "Color3" then
-				local colorMapIndex
-				colorMapIndex, cursor = Read.ShortInt(str, cursor)
-				newProperties[typeName] = colorMap[colorMapIndex]
-			elseif valueType == "String" then
-				local stringMapIndex
-				stringMapIndex, cursor = Read.ShortInt(str, cursor)
-				newProperties[typeName] = stringMap[stringMapIndex]
-			else
-				newProperties[typeName], cursor = Read[valueType](str, cursor)
-			end
+			newProperties[typeName], cursor = readValue(str, cursor, Read, valueType, colorMap, stringMap, vectorMap)
 			propertyId = StringConversion.StringToNumber(str, cursor, 1)
 			cursor += 1
 		end

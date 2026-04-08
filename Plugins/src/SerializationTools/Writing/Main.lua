@@ -8,6 +8,7 @@ local ReadbackButton = require(script.Parent.ReadbackButton)
 
 local Button = require(script.Parent.Parent.Util.Button)
 local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
+local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
@@ -50,10 +51,16 @@ local function GetMissionSetting(missionRoot, settingName, settingType, defaultV
 	if not missionRoot.CustomMissionSettings:FindFirstChild(settingName) then
 		local setting = Instance.new(settingType)
 		setting.Name = settingName
-		setting.Value = defaultValue
+		if defaultValue ~= nil then
+			setting.Value = defaultValue
+		end
 		setting.Parent = missionRoot.CustomMissionSettings
 	end
 	return missionRoot.CustomMissionSettings[settingName]
+end
+
+local function SetMissionSetting(missionRoot, settingName, settingType, to)
+	GetMissionSetting(missionRoot, settingName, settingType, nil).Value = to
 end
 
 local function InitCustomMissionSettings(incrementVersionNumber)
@@ -63,7 +70,19 @@ local function InitCustomMissionSettings(incrementVersionNumber)
 	end
 
 	GetMissionSetting(mission, "EnforceCellLinks", "BoolValue", true)
-	local versionNumber = GetMissionSetting(mission, "ExportVersion", "StringValue", "0")
+	
+	local oldVersionValue = mission.CustomMissionSettings:FindFirstChild("ExportVersion")
+	if oldVersionValue ~= nil then
+		local newVersionValue = mission.CustomMissionSettings:FindFirstChild("MissionVersion")
+		if newVersionValue ~= nil then
+			oldVersionValue:Destroy()
+		else
+			warn("Renaming CustomMissionSettings.ExportVersion -> CustomMissionSettings.MissionVersion")
+			oldVersionValue.Name = "MissionVersion"
+		end
+	end
+	
+	local versionNumber = GetMissionSetting(mission, "MissionVersion", "StringValue", "0")
 	if incrementVersionNumber then
 		local front, minorVersion = versionNumber.Value:match("^(.-)(%d+)$")
 		if not (minorVersion and tonumber(minorVersion)) then
@@ -75,8 +94,49 @@ local function InitCustomMissionSettings(incrementVersionNumber)
 	GetMissionSetting(mission, "MissionName", "StringValue", "")
 	GetMissionSetting(mission, "MissionDesc", "StringValue", "")
 	GetMissionSetting(mission, "AuthorName", "StringValue", "")
+	local distro = GetMissionSetting(mission, "ExporterDistribution", "StringValue", VersionConfig.Distribution).Value
+	local version = tonumber(GetMissionSetting(mission, "ExporterVersion", "StringValue", tostring(VersionConfig.VersionNumber)).Value)
+	
+	if distro ~= VersionConfig.Distribution then
+		if VersionConfig.OfficialDistro then
+			warn("Exporter Distribution Mismatch!")
+			warn(`Current Exporter is "{VersionConfig.Distribution}", this mission was developed using "{distro}"`)
+			warn("Beware of the potential for undesirable behaviour!")
+		else
+			warn("Exporter Distribution Management")
+			warn("Detected you have began using an unofficial exporter version - updating CustomMissionSettings")
+			SetMissionSetting(mission, "ExporterDistribution", "StringValue", VersionConfig.Distribution)
+		end
+	end
+	
+	if version ~= VersionConfig.VersionNumber then
+		warn("Exporter Version Mismatch!")
+		warn(`Current Exporter is v{VersionConfig.VersionNumber}, this mission was developed on v{version}`)
+		warn("Double-check there's nothing unexpected")
+		warn(`If everything works fine, set the ExporterVersion in CustomMissionSettings to "{VersionConfig.VersionNumber}" to silence this warning`)
+	end
 
 	return mission.CustomMissionSettings
+end
+
+local function GetMissionComment(customSettings)
+	local linkWarn = customSettings.EnforceCellLinks.Value and "EnforceCellLinks is disabled on this map\nThis mission is ineligible to be featured in the community missions tab\n" or ""
+	
+	return table.concat({
+		"!!!\n",
+		linkWarn,
+		"How to play custom missions:\n",
+		`1) Join the game and find "Custom Mission" in the mission menu`,
+		`2) Start a custom mission lobby`,
+		`3) Go to the table and open the custom mission loader`,
+		`4) Copy the URL of this page into the box and hit enter. It will NOT work if you copy the contents of this page instead of the URL.\n`,
+		`Mission Name: {customSettings.MissionName.Value}`,
+		`Author(s): {customSettings.AuthorName.Value}`,
+		`Mission Version: {customSettings.MissionVersion.Value}`,
+		`Mission Briefing: {customSettings.MissionDesc.Value}`,
+		`ExporterID: {customSettings.ExporterDistribution.Value}_v{customSettings.ExporterVersion.Value}\n`,
+		"!!!"
+	}, '\n')
 end
 
 local function GetMissionCode()
@@ -157,7 +217,7 @@ module.Init = function(mouse: PluginMouse)
 
 					local output = Write.MissionCodeHeader(GenerateMapId(), 1, 1)
 					output = output .. code
-					output = `!!!{not customSettings.EnforceCellLinks.Value and "\n\nEnforceCellLinks is disabled on this map\nThis mission is ineligible to be featured in the community missions tab\n" or ""}\nHow to play custom missions:\n\n1) Join the game and find "Custom Mission" in the mission menu\n2) Start a custom mission lobby\n3) Go to the table and open the custom mission loader\n4) Copy the URL of this page into the box and hit enter. It will NOT work if you copy the contents of this page instead of the URL.\n\nMission Name: {customSettings.MissionName.Value}\nCreator: {customSettings.AuthorName.Value}\nVersion: {customSettings.ExportVersion.Value}\nBriefing: {customSettings.MissionDesc.Value}\n\n!!!`
+					output = GetMissionComment(customSettings)
 						.. output
 
 					if workspace:FindFirstChild("CustomMissionCode") then
