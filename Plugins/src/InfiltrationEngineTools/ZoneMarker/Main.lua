@@ -1,6 +1,7 @@
 local AxisAlign = require(script.Parent.Parent.Util.AxisAlign)
 local GetZone = require(script.Parent.GetZone)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -231,39 +232,41 @@ local function RecolorCells()
 end
 
 local function CreateCell(mousePos)
-	local cellModel = GetZone(mousePos)
-	local addFloor = true
+	HistoryService.Record("Create Cell", function()
+		local cellModel = GetZone(mousePos)
+		local addFloor = true
 
-	if cellModel then
-		addFloor = false
-		print("Add to:", cellModel:GetFullName())
-	else
-		local LevelBase = workspace:FindFirstChild("DebugMission") or workspace:FindFirstChild("Level")
-		print("Create new cell")
-		cellModel = Instance.new("Model")
-		cellModel.Name = "Default"
-		cellModel.Parent = LevelBase.Cells
-	end
+		if cellModel then
+			addFloor = false
+			print("Add to:", cellModel:GetFullName())
+		else
+			local LevelBase = workspace:FindFirstChild("DebugMission") or workspace:FindFirstChild("Level")
+			print("Create new cell")
+			cellModel = Instance.new("Model")
+			cellModel.Name = "Default"
+			cellModel.Parent = LevelBase.Cells
+		end
 
-	local roof = Ghost:Clone()
-	roof.Size = roof.Size + Vector3.new(SIZE_PADDING * 2, 0.8, SIZE_PADDING * 2)
-	roof.CFrame = GhostCfr * CFrame.new(0, GhostMax + POSITION_SINK, 0)
-	roof.Name = "Roof"
-	roof.Parent = cellModel
-	roof.Anchored = true
-	roof.Transparency = 0.5
-	roof.CastShadow = false
+		local roof = Ghost:Clone()
+		roof.Size = roof.Size + Vector3.new(SIZE_PADDING * 2, 0.8, SIZE_PADDING * 2)
+		roof.CFrame = GhostCfr * CFrame.new(0, GhostMax + POSITION_SINK, 0)
+		roof.Name = "Roof"
+		roof.Parent = cellModel
+		roof.Anchored = true
+		roof.Transparency = 0.5
+		roof.CastShadow = false
 
-	if addFloor then
-		local floor = roof:Clone()
-		floor.Name = "Floor"
-		floor.CFrame = GhostCfr * CFrame.new(0, -GhostMin - POSITION_SINK, 0)
-		floor.Parent = cellModel
-		floor.Anchored = true
-		floor.CastShadow = false
-	else
-		ReoptimizeCells()
-	end
+		if addFloor then
+			local floor = roof:Clone()
+			floor.Name = "Floor"
+			floor.CFrame = GhostCfr * CFrame.new(0, -GhostMin - POSITION_SINK, 0)
+			floor.Parent = cellModel
+			floor.Anchored = true
+			floor.CastShadow = false
+		else
+			ReoptimizeCells()
+		end
+	end)
 end
 
 return {
