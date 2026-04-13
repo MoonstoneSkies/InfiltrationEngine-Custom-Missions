@@ -1,10 +1,10 @@
-local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties)
 local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
+local WritePrimitive = require(script.Parent.WritePrimitive)
 local WriteStats = require(script.Parent.Stats)
 
 local function lookupMapIndex(map, value)
@@ -41,29 +41,33 @@ local function lookupMapCFrame(map, cfr)
 	return i1, i2, i3
 end
 
-local function representValue(write, v, vType, colorMap, stringMap, vectorMap)
+local function representValue(v, vType, colorMap, stringMap, vectorMap)
 	local valStr
 	if vType == "Color3" then
 		local index = lookupMapIndex(colorMap, v)
-		valStr = write.ShortInt(index)
+		valStr = WritePrimitive.ShortInt(index)
 	elseif vType == "String" then
 		local index = lookupMapIndex(stringMap, v)
-		valStr = write.ShortInt(index)
+		valStr = WritePrimitive.ShortInt(index)
 	elseif vType == "Vector3" and VersionConfig.UseVectorMap then
 		local index = lookupMapIndex(vectorMap, v)
-		valStr = write.LongInt(index)
+		valStr = WritePrimitive.LongInt(index)
 	elseif vType == "CFrame" and VersionConfig.UseVectorMap then
 		local i1, i2, i3 = lookupMapCFrame(vectorMap, v)
-		valStr = write.LongInt(i1) .. write.LongInt(i2) .. write.LongInt(i3)
+		valStr = table.concat{
+			WritePrimitive.LongInt(i1),
+			WritePrimitive.LongInt(i2),
+			WritePrimitive.LongInt(i3)
+		}
 	else
-		valStr = write[vType](v)
+		valStr = WritePrimitive[vType](v)
 	end
 	return valStr
 end
 
 local WithAttributes = function(DefaultWriter)
-	return function(object, Write, colorMap, stringMap, vectorMap)
-		local str = DefaultWriter(object, Write, colorMap, stringMap, vectorMap)
+	return function(object, colorMap, stringMap, vectorMap)
+		local str = DefaultWriter(object, colorMap, stringMap, vectorMap)
 		local attributes = object:GetAttributes()
 		attributes = AttributeValidation.Validate(object.ClassName, object.Name, attributes, false)
 		local attString = ""
@@ -91,18 +95,18 @@ local WithAttributes = function(DefaultWriter)
 
 			local index = lookupMapIndex(stringMap, k)
 			attString = attString
-				.. StringConversion.NumberToString(AttributeTypes[attributeType], 1)
-				.. Write.ShortInt(index)
-				.. representValue(Write, v, attributeType, colorMap, stringMap, vectorMap)
+				.. WritePrimitive.ShortestInt(AttributeTypes[attributeType])
+				.. WritePrimitive.ShortInt(index)
+				.. representValue(v, attributeType, colorMap, stringMap, vectorMap)
 			
 		end
-		str = str .. attString .. StringConversion.NumberToString(0, 1)
+		str = str .. attString .. WritePrimitive.ShortestInt(0)
 		return str, colorMap, stringMap, vectorMap
 	end
 end
 
 local CreateInstanceWriter = function(properties)
-	local WriteInstance = function(object, Write, colorMap, stringMap, vectorMap)
+	local WriteInstance = function(object, colorMap, stringMap, vectorMap)
 		local str = ""
 		for i, v in pairs(properties) do
 			local value
@@ -116,10 +120,10 @@ local CreateInstanceWriter = function(properties)
 			
 			if value == defaultValue then continue end
 			
-			str = str .. StringConversion.NumberToString(i, 1) .. representValue(Write, value, valueType, colorMap, stringMap, vectorMap)
+			str = str .. WritePrimitive.ShortestInt(i) .. representValue(value, valueType, colorMap, stringMap, vectorMap)
 		end
 
-		str = str .. StringConversion.NumberToString(0, 1)
+		str = str .. WritePrimitive.ShortestInt(0)
 		return str, colorMap, stringMap, vectorMap
 	end
 	return WriteInstance
@@ -128,33 +132,33 @@ end
 local WriteInstance
 
 WriteInstance = {
-	Model = WithAttributes(CreateInstanceWriter(InstanceProperties.Model)),
-	Folder = WithAttributes(CreateInstanceWriter(InstanceProperties.Folder)),
-	Part = WithAttributes(CreateInstanceWriter(InstanceProperties.Part)),
-	PartNoAttributes = CreateInstanceWriter(InstanceProperties.Part),
-	BoolValue = WithAttributes(CreateInstanceWriter(InstanceProperties.BoolValue)),
-	WedgePart = CreateInstanceWriter(InstanceProperties.WedgePart),
-	StringValue = CreateInstanceWriter(InstanceProperties.StringValue),
-	MeshPart = WithAttributes(CreateInstanceWriter(InstanceProperties.MeshPart)),
-	UnionOperation = WithAttributes(CreateInstanceWriter(InstanceProperties.UnionOperation)),
-	Texture = CreateInstanceWriter(InstanceProperties.Texture),
-	BlockMesh = CreateInstanceWriter(InstanceProperties.BlockMesh),
-	PointLight = CreateInstanceWriter(InstanceProperties.PointLight),
-	SpotLight = CreateInstanceWriter(InstanceProperties.SpotLight),
-	SurfaceLight = CreateInstanceWriter(InstanceProperties.SurfaceLight),
-	SpecialMesh = CreateInstanceWriter(InstanceProperties.SpecialMesh),
-	Decal = CreateInstanceWriter(InstanceProperties.Decal),
-	Fire = CreateInstanceWriter(InstanceProperties.Fire),
-	Smoke = CreateInstanceWriter(InstanceProperties.Smoke),
-	Attachment = CreateInstanceWriter(InstanceProperties.Attachment),
-	ParticleEmitter = CreateInstanceWriter(InstanceProperties.ParticleEmitter),
-	Sparkles = CreateInstanceWriter(InstanceProperties.Sparkles),
-	SurfaceGui = CreateInstanceWriter(InstanceProperties.SurfaceGui),
-	ImageLabel = CreateInstanceWriter(InstanceProperties.ImageLabel),
-	BillboardGui = CreateInstanceWriter(InstanceProperties.BillboardGui),
-	Frame = CreateInstanceWriter(InstanceProperties.Frame),
-	Beam = CreateInstanceWriter(InstanceProperties.Beam),
-	Trail = CreateInstanceWriter(InstanceProperties.Trail),
+	Model            = WithAttributes(CreateInstanceWriter(InstanceProperties.Model)),
+	Folder           = WithAttributes(CreateInstanceWriter(InstanceProperties.Folder)),
+	Part             = WithAttributes(CreateInstanceWriter(InstanceProperties.Part)),
+	PartNoAttributes =                CreateInstanceWriter(InstanceProperties.Part),
+	BoolValue        = WithAttributes(CreateInstanceWriter(InstanceProperties.BoolValue)),
+	WedgePart        =                CreateInstanceWriter(InstanceProperties.WedgePart),
+	StringValue      =                CreateInstanceWriter(InstanceProperties.StringValue),
+	MeshPart         = WithAttributes(CreateInstanceWriter(InstanceProperties.MeshPart)),
+	UnionOperation   = WithAttributes(CreateInstanceWriter(InstanceProperties.UnionOperation)),
+	Texture          =                CreateInstanceWriter(InstanceProperties.Texture),
+	BlockMesh        =                CreateInstanceWriter(InstanceProperties.BlockMesh),
+	PointLight       =                CreateInstanceWriter(InstanceProperties.PointLight),
+	SpotLight        =                CreateInstanceWriter(InstanceProperties.SpotLight),
+	SurfaceLight     =                CreateInstanceWriter(InstanceProperties.SurfaceLight),
+	SpecialMesh      =                CreateInstanceWriter(InstanceProperties.SpecialMesh),
+	Decal            =                CreateInstanceWriter(InstanceProperties.Decal),
+	Fire             =                CreateInstanceWriter(InstanceProperties.Fire),
+	Smoke            =                CreateInstanceWriter(InstanceProperties.Smoke),
+	Attachment       =                CreateInstanceWriter(InstanceProperties.Attachment),
+	ParticleEmitter  =                CreateInstanceWriter(InstanceProperties.ParticleEmitter),
+	Sparkles         =                CreateInstanceWriter(InstanceProperties.Sparkles),
+	SurfaceGui       =                CreateInstanceWriter(InstanceProperties.SurfaceGui),
+	ImageLabel       =                CreateInstanceWriter(InstanceProperties.ImageLabel),
+	BillboardGui     =                CreateInstanceWriter(InstanceProperties.BillboardGui),
+	Frame            =                CreateInstanceWriter(InstanceProperties.Frame),
+	Beam             =                CreateInstanceWriter(InstanceProperties.Beam),
+	Trail            =                CreateInstanceWriter(InstanceProperties.Trail),
 }
 
 return WriteInstance
