@@ -140,9 +140,35 @@ local function GetMissionComment(customSettings)
 end
 
 local function GetMissionCode()
+	local exportVersion = FeatureCheck("SerializerExportVersion", false)
+	local exportVersionSet = exportVersion ~= nil
+	
+	if exportVersion == nil then exportVersion = VersionConfig.LatestVersion end
+	
+	if type(exportVersion) ~= "number" then
+		warn("SerializerExportVersion must be an integer or nil!")
+	end
+	
+	if exportVersionSet then
+		warn("SerializerExportVersion is intended for debugging backwards compatibility, do not rely on it for real mission development!")
+	end
+	
+	local success, wmsg = VersionConfig:change_version(exportVersion)
+	if not success then
+		warn("SerializerExportVersion - " .. wmsg)
+		VersionConfig:change_version(VersionConfig.LatestVersion)
+	end
+	
 	local mission = GetMission()
 	local code = Write.Mission(mission)
 	mission:Destroy()
+	
+	if not workspace:FindFirstChild("DebugMission") then
+		local model = Read.Mission(code, 1)
+		model.Parent = workspace
+	end
+	
+	VersionConfig:change_version(VersionConfig.LatestVersion)
 	return code
 end
 
@@ -193,10 +219,6 @@ module.Init = function(mouse: PluginMouse)
 				InitCustomMissionSettings(false)
 				local code = GetMissionCode()
 
-				if not workspace:FindFirstChild("DebugMission") then
-					local model = Read.Mission(code, 1)
-					model.Parent = workspace
-				end
 				CodeState:set(code)
 			end,
 		}),
@@ -209,11 +231,6 @@ module.Init = function(mouse: PluginMouse)
 				Activated = function()
 					local customSettings = InitCustomMissionSettings(true)
 					local code = GetMissionCode()
-
-					if not workspace:FindFirstChild("DebugMission") then
-						local model = Read.Mission(code, 1)
-						model.Parent = workspace
-					end
 
 					local output = Write.MissionCodeHeader(GenerateMapId(), 1, 1)
 					output = output .. code
