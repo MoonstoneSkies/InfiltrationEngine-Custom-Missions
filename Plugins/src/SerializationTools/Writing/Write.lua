@@ -107,8 +107,14 @@ Write = {
 		local colorMap = { [0] = 0 }
 		local stringMap = { [0] = 0 }
 		local vectorMap = { [0] = 0 }
+		
+		local maps = {
+			Color = colorMap,
+			String = stringMap,
+			Vector = vectorMap
+		}
 
-		str, colorMap, stringMap, vectorMap = Write.Instance(mission, colorMap, stringMap, vectorMap)
+		str, maps = Write.Instance(mission, maps)
 
 		colorMap[0] = nil
 		stringMap[0] = nil
@@ -190,24 +196,21 @@ Write = {
 		return compressedStr
 	end,
 
-	Instance = function(object, colorMap, stringMap, vectorMap)
+	Instance = function(object, maps)
 		local className = object.ClassName
 		if InstanceTypes[object.ClassName] ~= nil then
 			if next(object:GetAttributes()) == nil and object.ClassName == "Part" then
 				className = className .. "NoAttributes"
 			end
 			local instanceType = Write.Primitive.ShortestInt(InstanceTypes[className])
-			local objectProperties, colorMap, stringMap, vectorMap = WriteInstance[className](object, colorMap, stringMap, vectorMap)
+			local objectProperties, maps = WriteInstance[className](object, maps)
 			local childrenProperties = ""
 			for i, v in pairs(object:GetChildren()) do
-				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap, vectorMap)
+				childrenProperties = childrenProperties .. Write.Instance(v, maps)
 			end
-			return instanceType .. objectProperties .. childrenProperties .. Write.Primitive.ShortestInt(0),
-			colorMap,
-			stringMap,
-			vectorMap
+			return instanceType .. objectProperties .. childrenProperties .. Write.Primitive.ShortestInt(0), maps
 		else
-			return Write.Primitive.ShortestInt(InstanceTypes.Nil), colorMap, stringMap, vectorMap
+			return Write.Primitive.ShortestInt(InstanceTypes.Nil), maps
 		end
 	end,
 	
