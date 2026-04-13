@@ -145,7 +145,8 @@ WritePrimitive = {
 	end,
 
 	CFrame = function(frame) -- 24 characters, 15 for position, 9 for rotation
-		-- TODO: This is dead code now, remove this
+		-- This may seem like dead code given the new VectorMap handling - I certainly thought it was at first
+		-- However, this needs to stay around for backwards compatibility, I've only just realised
 		local rx, ry, rz = frame:ToEulerAnglesXYZ()
 		return WritePrimitive.Float(frame.X)
 			.. WritePrimitive.Float(frame.Y)
