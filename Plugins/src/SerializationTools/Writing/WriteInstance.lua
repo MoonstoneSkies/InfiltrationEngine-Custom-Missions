@@ -41,19 +41,19 @@ local function lookupMapCFrame(map, cfr)
 	return i1, i2, i3
 end
 
-local function representValue(v, vType, colorMap, stringMap, vectorMap)
+local function representValue(v, vType, map)
 	local valStr
 	if vType == "Color3" then
-		local index = lookupMapIndex(colorMap, v)
+		local index = lookupMapIndex(map.Color, v)
 		valStr = WritePrimitive.ShortInt(index)
 	elseif vType == "String" then
-		local index = lookupMapIndex(stringMap, v)
+		local index = lookupMapIndex(map.String, v)
 		valStr = WritePrimitive.ShortInt(index)
 	elseif vType == "Vector3" and VersionConfig.UseVectorMap then
-		local index = lookupMapIndex(vectorMap, v)
+		local index = lookupMapIndex(map.Vector, v)
 		valStr = WritePrimitive.LongInt(index)
 	elseif vType == "CFrame" and VersionConfig.UseVectorMap then
-		local i1, i2, i3 = lookupMapCFrame(vectorMap, v)
+		local i1, i2, i3 = lookupMapCFrame(map.Vector, v)
 		valStr = table.concat{
 			WritePrimitive.LongInt(i1),
 			WritePrimitive.LongInt(i2),
@@ -66,8 +66,8 @@ local function representValue(v, vType, colorMap, stringMap, vectorMap)
 end
 
 local WithAttributes = function(DefaultWriter)
-	return function(object, colorMap, stringMap, vectorMap)
-		local str = DefaultWriter(object, colorMap, stringMap, vectorMap)
+	return function(object, maps)
+		local str = DefaultWriter(object, maps)
 		local attributes = object:GetAttributes()
 		attributes = AttributeValidation.Validate(object.ClassName, object.Name, attributes, false)
 		local attString = ""
@@ -93,20 +93,20 @@ local WithAttributes = function(DefaultWriter)
 				continue
 			end
 
-			local index = lookupMapIndex(stringMap, k)
+			local index = lookupMapIndex(maps.String, k)
 			attString = attString
 				.. WritePrimitive.ShortestInt(AttributeTypes[attributeType])
 				.. WritePrimitive.ShortInt(index)
-				.. representValue(v, attributeType, colorMap, stringMap, vectorMap)
+				.. representValue(v, attributeType, maps)
 			
 		end
 		str = str .. attString .. WritePrimitive.ShortestInt(0)
-		return str, colorMap, stringMap, vectorMap
+		return str, maps
 	end
 end
 
 local CreateInstanceWriter = function(properties)
-	local WriteInstance = function(object, colorMap, stringMap, vectorMap)
+	local WriteInstance = function(object, maps)
 		local str = ""
 		for i, v in pairs(properties) do
 			local value
@@ -120,11 +120,11 @@ local CreateInstanceWriter = function(properties)
 			
 			if value == defaultValue then continue end
 			
-			str = str .. WritePrimitive.ShortestInt(i) .. representValue(value, valueType, colorMap, stringMap, vectorMap)
+			str = str .. WritePrimitive.ShortestInt(i) .. representValue(value, valueType, maps)
 		end
 
 		str = str .. WritePrimitive.ShortestInt(0)
-		return str, colorMap, stringMap, vectorMap
+		return str, maps
 	end
 	return WriteInstance
 end

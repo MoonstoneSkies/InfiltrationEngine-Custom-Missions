@@ -28,22 +28,22 @@ local function readCFrame(str, cursor, vectorMap)
 	return CFrame.fromMatrix(pos, xVec, yVec), cursor
 end
 
-local function readValue(str, cursor, vType, colorMap, stringMap, vectorMap, refHandler)
+local function readValue(str, cursor, vType, maps, refHandler)
 	local value
 	if vType == "Color3" then
 		local colorMapIndex
 		colorMapIndex, cursor = ReadPrimitive.ShortInt(str, cursor)
-		value = colorMap[colorMapIndex]
+		value = maps.Color[colorMapIndex]
 	elseif vType == "String" then
 		local valueMapIndex
 		valueMapIndex, cursor = ReadPrimitive.ShortInt(str, cursor)
-		value = stringMap[valueMapIndex]
+		value = maps.String[valueMapIndex]
 	elseif vType == "Vector3" and VersionConfig.UseVectorMap then
 		local vecMapIndex
 		vecMapIndex, cursor = ReadPrimitive.LongInt(str, cursor)
-		value = vectorMap[vecMapIndex]
+		value = maps.Vector[vecMapIndex]
 	elseif vType == "CFrame" and VersionConfig.UseVectorMap then
-		value, cursor = readCFrame(str, cursor, vectorMap)
+		value, cursor = readCFrame(str, cursor, maps.Vector)
 	elseif vType == "InstanceReference" and refHandler ~= nil then
 		local set
 		set, cursor = ReadPrimitive[vType](str, cursor)
@@ -55,18 +55,18 @@ local function readValue(str, cursor, vType, colorMap, stringMap, vectorMap, ref
 end
 
 local WithAttributes = function(DefaultReader)
-	return function(str, cursor, colorMap, stringMap, vectorMap)
+	return function(str, cursor, maps)
 		local newInstance
-		newInstance, cursor = DefaultReader(str, cursor, colorMap, stringMap, vectorMap)
+		newInstance, cursor = DefaultReader(str, cursor, maps)
 		local attributeId = ReadPrimitive.ShortestInt(str, cursor)
 		cursor += 1
 		while not (attributeId == 0) do
 			local typeName = AttributeKeys[attributeId]
 			local nameMapIndex
 			nameMapIndex, cursor = ReadPrimitive.ShortInt(str, cursor)
-			local name = stringMap[nameMapIndex]
+			local name = maps.String[nameMapIndex]
 			local value
-			value, cursor = readValue(str, cursor, typeName, colorMap, stringMap, vectorMap)
+			value, cursor = readValue(str, cursor, typeName, maps)
 			newInstance:SetAttribute(name, value)
 			attributeId = ReadPrimitive.ShortestInt(str, cursor)
 			cursor += 1
@@ -85,7 +85,7 @@ local ReadInstance
 local CreateInstanceReader = function(instanceType, properties)
 	local defaults = DefaultProperties[instanceType]
 
-	local InstanceReader = function(str, cursor, colorMap, stringMap, vectorMap)
+	local InstanceReader = function(str, cursor, maps)
 		local newInstance = Instance.new(instanceType)
 		if defaults then
 			for k, v in defaults do
@@ -101,7 +101,7 @@ local CreateInstanceReader = function(instanceType, properties)
 			local typeName = properties[propertyId][1]
 			local valueType = properties[propertyId][2]
 			local value
-			value, cursor = readValue(str, cursor, valueType, colorMap, stringMap, vectorMap, function(setter)
+			value, cursor = readValue(str, cursor, valueType, maps, function(setter)
 				newInstance[typeName] = setter()
 			end)
 			if value ~= nil then newInstance[typeName] = value end
@@ -126,7 +126,7 @@ end
 local CreateProtectedInstanceReader = function(instanceType, properties)
 	local defaults = DefaultProperties[instanceType]
 
-	local InstanceReader = function(str, cursor, colorMap, stringMap, vectorMap)
+	local InstanceReader = function(str, cursor, maps)
 		local newProperties = {}
 		if defaults then
 			for k, v in defaults do
@@ -141,7 +141,7 @@ local CreateProtectedInstanceReader = function(instanceType, properties)
 		while not (propertyId == 0) do
 			local typeName = properties[propertyId][1]
 			local valueType = properties[propertyId][2]
-			newProperties[typeName], cursor = readValue(str, cursor, valueType, colorMap, stringMap, vectorMap)
+			newProperties[typeName], cursor = readValue(str, cursor, valueType, maps)
 			propertyId = ReadPrimitive.ShortestInt(str, cursor)
 			cursor += 1
 		end

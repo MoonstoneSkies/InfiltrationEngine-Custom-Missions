@@ -72,7 +72,14 @@ Read = {
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		stringMap, cursor = Read.StringMap(str, cursor)
 		vectorMap, cursor = Read.VectorMap(str, cursor)
-		local mission = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
+		
+		local maps = {
+			Color = colorMap,
+			String = stringMap,
+			Vector = vectorMap
+		}
+		
+		local mission = Read.Instance(str, cursor, maps)
 
 		-- Reading Color3s from TableMissionSetup
 		local ImportedMissionSetup = game:GetService("HttpService")
@@ -94,18 +101,18 @@ Read = {
 		return mission
 	end,
 
-	Instance = function(str, cursor, colorMap, stringMap, vectorMap)
+	Instance = function(str, cursor, maps)
 		local InstanceId = Read.Primitive.ShortestInt(str, cursor)
 		cursor += 1
 		if InstanceId ~= InstanceTypes.Nil then
 			local InstanceType = InstanceKeys[InstanceId]
-			local object, cursor = ReadInstance[InstanceType](str, cursor, colorMap, stringMap, vectorMap)
+			local object, cursor = ReadInstance[InstanceType](str, cursor, maps)
 			
 			ReadMissionRoot:TrySet(object)
 			
 			while Read.Primitive.ShortestInt(str, cursor) ~= 0 do
 				local child
-				child, cursor = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
+				child, cursor = Read.Instance(str, cursor, maps)
 				if child ~= nil then
 					child.Parent = object
 				end
