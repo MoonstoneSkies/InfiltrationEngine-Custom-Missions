@@ -136,11 +136,11 @@ WritePrimitive = {
 		}
 	end,
 
-	UDim = function(udim)
+	UDim = function(udim) -- Vector2 wrapper
 		return WritePrimitive.Vector2(Vector2.new(udim.Scale, udim.Offset))
 	end,
 
-	UDim2 = function(udim2)
+	UDim2 = function(udim2) -- 2x UDim == 2x Vector2 == 20 characters, 5 per float
 		return WritePrimitive.UDim(udim2.X) .. WritePrimitive.UDim(udim2.Y)
 	end,
 

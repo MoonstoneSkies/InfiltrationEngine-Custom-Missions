@@ -1,3 +1,11 @@
+--[[
+	=== File Guide ===
+		=== Purpose ===
+		ReadPrimitive is the reading counterpart to WritePrimitive
+		
+		=== See Also ===
+		WritePrimitive - this file's purpose is identical to that of WritePrimitive except for reading
+]]
 local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -90,13 +98,13 @@ ReadPrimitive = {
 		return NumberSequence.new(numberSequenceKeypoints), cursor
 	end,
 
-	Vector2 = function(str, cursor)
+	Vector2 = function(str, cursor) -- returns the read value as a Vector2. 10 symbols
 		local X, cursor = ReadPrimitive.Float(str, cursor)
 		local Y, cursor = ReadPrimitive.Float(str, cursor)
 		return Vector2.new(X, Y), cursor
 	end,
 
-	Vector3 = function(str, cursor) -- returns the value read as a Vector3. 24 symbols
+	Vector3 = function(str, cursor) -- returns the value read as a Vector3. 15 symbols
 		local X, cursor = ReadPrimitive.Float(str, cursor)
 		local Y, cursor = ReadPrimitive.Float(str, cursor)
 		local Z, cursor = ReadPrimitive.Float(str, cursor)
@@ -116,7 +124,7 @@ ReadPrimitive = {
 		return UDim2.new(xUdim, yUdim), cursor
 	end,
 
-	CFrame = function(str, cursor) -- returns the value read as a CFrame. 36 symbols
+	CFrame = function(str, cursor) -- returns the value read as a CFrame. 24 symbols
 		-- This may seem like dead code given the new VectorMap handling - I certainly thought it was at first
 		-- However, this needs to stay around for backwards compatibility, I've only just realised
 		local X, cursor = ReadPrimitive.Float(str, cursor)
