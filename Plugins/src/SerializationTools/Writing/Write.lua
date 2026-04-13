@@ -32,7 +32,7 @@ Write = {
 	StringMap = function(stringMap)
 		return WriteMap(stringMap, Write.Primitive.ShortInt, Write.Primitive.String)
 	end,
-	
+
 	VectorMap = function(vectorMap)
 		if not VersionConfig.UseVectorMap then
 			return ""
@@ -43,10 +43,10 @@ Write = {
 
 	MissionCodeHeader = function(mapId, current, total)
 		return table.concat{
-			Write.Primitive.ShortestInt(VersionConfig.VersionNumber),
-			Write.Primitive.ShortInt(mapId),
-			Write.Primitive.ShortInt(current),
-			Write.Primitive.ShortInt(total)
+			Write.Primitive.ShortestInt(VersionConfig.VersionNumber, true),
+			Write.Primitive.ShortInt(mapId, true),
+			Write.Primitive.ShortInt(current, true),
+			Write.Primitive.ShortInt(total, true)
 		}
 	end,
 
@@ -107,7 +107,7 @@ Write = {
 		local colorMap = { [0] = 0 }
 		local stringMap = { [0] = 0 }
 		local vectorMap = { [0] = 0 }
-		
+
 		local maps = {
 			Color = colorMap,
 			String = stringMap,
@@ -131,7 +131,7 @@ Write = {
 		for str, stridx in pairs(stringMap) do
 			stringMapArr[stridx] = str
 		end
-		
+
 		for vec, vecidx in pairs(vectorMap) do
 			vectorMapArr[vecidx] = vec
 		end
@@ -188,7 +188,7 @@ Write = {
 			print(`Before Compression: {#missionStr * 0.001}K`)
 			print(`After Compression: {#compressedStr * 0.001}K`)
 		end
-		
+
 		if FeatureCheck("SerializerDebug", false) == true then
 			WriteStats.output()
 		end
@@ -213,7 +213,7 @@ Write = {
 			return Write.Primitive.ShortestInt(InstanceTypes.Nil), maps
 		end
 	end,
-	
+
 	Primitive = require(script.Parent.WritePrimitive)
 }
 
@@ -223,13 +223,13 @@ setmetatable(
 	{
 		__index = function(self, k)
 			warn(`Serializer Dev Warn: Attempt to index write with key {k}`)
-			
+
 			local e = self.Primitive[k]
 			if e ~= nil then
 				warn(`\tIt's likely you meant Write.Primitive.{k}`)
 				return e
 			end
-			
+
 			error(`Serializer Dev Error: Attempt to index write for unsupported type {k}`)
 		end,
 	}

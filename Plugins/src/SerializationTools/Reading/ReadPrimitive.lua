@@ -11,10 +11,7 @@ local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
 local ReadMissionRoot = require(script.Parent.ReadMissionRoot)
 
-local SIGNED_INT_BOUND = StringConversion.GetMaxNumber(3) / 2
-local INT_BOUND = StringConversion.GetMaxNumber(4)
-local BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(3)
-local SHORT_BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(2)
+local Bounds = require(script.Parent.Parent.Util.PrimitiveBounds)
 
 local function NewlineGSub(capture)
 	if capture == "&n" then
@@ -53,12 +50,12 @@ ReadPrimitive = {
 		return string.sub(str, cursor, cursor) == "b", cursor + 1
 	end,
 
-	ShortestInt = function(str, cursor) -- returns the value read as a shortest int. 1 symbol
-		return StringConversion.StringToNumber(str, cursor, 1), cursor + 1
+	ShortestInt = function(str, cursor, static) -- returns the value read as a shortest int. 1 symbol
+		return StringConversion.StringToNumber(str, cursor, 1, static), cursor + 1
 	end,
 
-	ShortInt = function(str, cursor) -- returns the value read as a short integer. 2 symbols
-		return StringConversion.StringToNumber(str, cursor, 2), cursor + 2
+	ShortInt = function(str, cursor, static) -- returns the value read as a short integer. 2 symbols
+		return StringConversion.StringToNumber(str, cursor, 2, static), cursor + 2
 	end,
 
 	Int = function(str, cursor) -- returns the value read as an integer. 4 symbols
@@ -70,12 +67,12 @@ ReadPrimitive = {
 	end,
 
 	SignedInt = function(str, cursor) -- returns the value read as a signed integer. 3 symbols
-		return StringConversion.StringToNumber(str, cursor, 3) - math.floor(SIGNED_INT_BOUND), cursor + 3
+		return StringConversion.StringToNumber(str, cursor, 3) - Bounds.SignedInt(), cursor + 3
 	end,
 
 	Float = function(str, cursor) -- returns the value read as a float. 5 symbols
 		local beforeDecimal, cursor = ReadPrimitive.SignedInt(str, cursor)
-		local afterDecimal = StringConversion.StringToNumber(str, cursor, 2) / SHORT_BOUNDED_FLOAT_BOUND
+		local afterDecimal = StringConversion.StringToNumber(str, cursor, 2) / Bounds.ShortBoundedFloat()
 		return afterDecimal + beforeDecimal, cursor + 2
 	end,
 
@@ -110,7 +107,7 @@ ReadPrimitive = {
 		local Z, cursor = ReadPrimitive.Float(str, cursor)
 		return Vector3.new(X, Y, Z), cursor
 	end,
-	
+
 	UDim = function(str, cursor)
 		local udimVec
 		udimVec, cursor = ReadPrimitive.Vector2(str, cursor)
@@ -153,11 +150,11 @@ ReadPrimitive = {
 	end,
 
 	BoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 3 symbols.
-		return StringConversion.StringToNumber(str, cursor, 3) / BOUNDED_FLOAT_BOUND, cursor + 3
+		return StringConversion.StringToNumber(str, cursor, 3) / Bounds.BoundedFloat(), cursor + 3
 	end,
 
 	ShortBoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 4 symbols.
-		return StringConversion.StringToNumber(str, cursor, 2) / SHORT_BOUNDED_FLOAT_BOUND, cursor + 2
+		return StringConversion.StringToNumber(str, cursor, 2) / Bounds.ShortBoundedFloat(), cursor + 2
 	end,
 
 	Color3 = function(str, cursor)
@@ -184,7 +181,7 @@ ReadPrimitive = {
 		end
 		return ColorSequence.new(colorSequenceKeypoints), cursor
 	end,
-	
+
 	String = function(str, cursor)
 		local length, cursor = ReadPrimitive.Int(str, cursor)
 		local value = str:sub(cursor, cursor + length - 1)
