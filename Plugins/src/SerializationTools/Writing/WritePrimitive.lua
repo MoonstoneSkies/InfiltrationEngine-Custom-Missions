@@ -14,13 +14,7 @@ local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
-local SHORTEST_INT_BOUND = StringConversion.GetMaxNumber(1)
-local SHORT_INT_BOUND = StringConversion.GetMaxNumber(2)
-local INT_BOUND = StringConversion.GetMaxNumber(4)
-local LONG_INT_BOUND = StringConversion.GetMaxNumber(6)
-local SIGNED_INT_BOUND = math.floor(StringConversion.GetMaxNumber(3) / 2)
-local BOUNDED_FLOAT_BOUND = StringConversion.GetMaxNumber(3)
-local SHORT_BOUNDED_FLOAT_BOUND = math.floor(StringConversion.GetMaxNumber(2))
+local Bounds = require(script.Parent.Parent.Util.PrimitiveBounds)
 
 local normalize = function(value) -- normalizes an angle in radians (from -pi to pi) to 0-1
 	return (value + math.pi) / (math.pi * 2)
@@ -49,60 +43,37 @@ WritePrimitive = {
 		return if bool then "b" else "c"
 	end,
 
-	ShortestInt = function(num) -- 1 character
-		num = math.clamp(num, 0, SHORTEST_INT_BOUND)
-		return StringConversion.NumberToString(num, 1)
+	ShortestInt = function(num, static) -- 1 character
+		num = math.clamp(num, 0, Bounds.ShortestInt(static))
+		return StringConversion.NumberToString(num, 1, static)
 	end,
 
-	ShortInt = function(num) -- 2 characters
-		if num > SHORT_INT_BOUND then
-			return StringConversion.NumberToString(SHORT_INT_BOUND, 2)
-		elseif num < 0 then
-			return StringConversion.NumberToString(0, 2)
-		else
-			return StringConversion.NumberToString(num, 2)
-		end
+	ShortInt = function(num, static) -- 2 characters
+		num = math.clamp(num, 0, Bounds.ShortInt(static))
+		return StringConversion.NumberToString(num, 2, static)
 	end,
 
 	Int = function(num) -- 4 characters
-		if num > INT_BOUND then
-			warn("Int out of bounds range:", num)
-			return StringConversion.NumberToString(INT_BOUND, 4)
-		elseif num < 0 then
-			warn("Int out of bounds range:", num)
-			return StringConversion.NumberToString(0, 4)
-		else
-			return StringConversion.NumberToString(num, 4)
-		end
+		num = math.clamp(num, 0, Bounds.Int())
+		return StringConversion.NumberToString(num, 4)
 	end,
 
 	LongInt = function(num) -- 6 characters
-		if num > LONG_INT_BOUND then
-			warn("Int out of bounds range:", num)
-			return StringConversion.NumberToString(LONG_INT_BOUND, 6)
-		elseif num < 0 then
-			warn("Int out of bounds range:", num)
-			return StringConversion.NumberToString(0, 6)
-		else
-			return StringConversion.NumberToString(num, 6)
-		end
+		num = math.clamp(num, 0, Bounds.LongInt())
+		return StringConversion.NumberToString(num, 6)
 	end,
 
 	SignedInt = function(num) -- 3 characters
-		if num > SIGNED_INT_BOUND then
-			return StringConversion.NumberToString(SIGNED_INT_BOUND * 2, 3)
-		elseif num < SIGNED_INT_BOUND * -1 then
-			return StringConversion.NumberToString(0, 3)
-		else
-			return StringConversion.NumberToString(num + SIGNED_INT_BOUND, 3)
-		end
+		local b = Bounds.SignedInt()
+		num = math.clamp(num, -b, b)
+		return StringConversion.NumberToString(num + b, 3)
 	end,
 
 	Float = function(num) -- 5 characters, 3 before decimal, 2 after
 		local beforeDecimalStr = WritePrimitive.SignedInt(math.floor(num))
 		local afterDecimalStr = StringConversion.NumberToString(
 			math.round(
-				(num - math.floor(num)) * SHORT_INT_BOUND
+				(num - math.floor(num)) * Bounds.ShortBoundedFloat()
 			), 
 			2
 		)
@@ -163,7 +134,7 @@ WritePrimitive = {
 		if num < 0 then
 			num = 0
 		end
-		return StringConversion.NumberToString(math.round(num * BOUNDED_FLOAT_BOUND), 3)
+		return StringConversion.NumberToString(math.round(num * Bounds.BoundedFloat()), 3)
 	end,
 
 	ShortBoundedFloat = function(num) -- 2 characters
@@ -173,7 +144,7 @@ WritePrimitive = {
 		if num < 0 then
 			num = 0
 		end
-		return StringConversion.NumberToString(math.round(num * SHORT_BOUNDED_FLOAT_BOUND), 2)
+		return StringConversion.NumberToString(math.round(num * Bounds.ShortBoundedFloat()), 2)
 	end,
 
 	Color3 = function(color) -- 6 characters
@@ -200,7 +171,7 @@ WritePrimitive = {
 		end
 		return WritePrimitive.Int(#str) .. str
 	end,
-	
+
 	InstanceReference = function(object)
 		local path = {}
 		local current = object

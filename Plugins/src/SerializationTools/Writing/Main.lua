@@ -173,7 +173,7 @@ local function GetMissionCode()
 end
 
 local function GenerateMapId()
-	return math.random(0, StringConversion.GetMaxNumber(2))
+	return math.random(0, StringConversion.GetMaxNumber(2, true))
 end
 
 module.Init = function(mouse: PluginMouse)
