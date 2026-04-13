@@ -117,6 +117,8 @@ ReadPrimitive = {
 	end,
 
 	CFrame = function(str, cursor) -- returns the value read as a CFrame. 36 symbols
+		-- This may seem like dead code given the new VectorMap handling - I certainly thought it was at first
+		-- However, this needs to stay around for backwards compatibility, I've only just realised
 		local X, cursor = ReadPrimitive.Float(str, cursor)
 		local Y, cursor = ReadPrimitive.Float(str, cursor)
 		local Z, cursor = ReadPrimitive.Float(str, cursor)

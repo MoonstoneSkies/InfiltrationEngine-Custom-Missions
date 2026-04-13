@@ -60,15 +60,6 @@ Read = {
 
 	Mission = function(str, cursor)
 		
-		-- TODO: Remove in DCE
-		if str:sub(1, 3) == "!!!" then
-			local code = str:match("!!!.-!!!(.+)")
-			if not code then
-				error("Malformed opening comment")
-			end
-			str = code
-		end
-
 		if VersionConfig.UseCompression then
 			local uncompressed = buffer.create(#str)
 			buffer.writestring(uncompressed, 0, str)
