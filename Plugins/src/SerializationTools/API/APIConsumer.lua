@@ -15,6 +15,9 @@ export type Hook = (...any) -> nil
 export type HookType = "APIExtensionLoaded"|"APIExtensionUnloaded"|"PreSerialize"|"PreSerializeMissionSetup"|"SerializerUnloaded"
 export type APIExtension = { [string] : (...any) -> ...any }
 
+export type APINotifSev  = "MIN"|"INFO"|"WARN"|"ERR"|"ERR_SEVERE"|"MAX"|number
+export type APINotifData = { Title: string, Description: string, Severity: APINotifSev, Rich: boolean? }
+
 export type APIReference = {
 	-- Generic
 	GetAPIVersion 			: () -> number,
@@ -22,7 +25,8 @@ export type APIReference = {
 	GetAttributesMap 		: () -> { [string] : { [number] : any } },
 	GetAttributeTypes 		: () -> { [string] : number },
 	IsAPIThread				: (thread) -> boolean,
-	GetRegistrantFactory	: (author: string, plugin: string) -> ((hookName: string) -> string), 
+	GetRegistrantFactory	: (author: string, plugin: string) -> ((hookName: string) -> string),
+	PushNotification		: (notif_data: APINotifData) -> boolean?,
 
 	-- HookTypes
 	GetHookTypes 			: () -> { [number] : string },

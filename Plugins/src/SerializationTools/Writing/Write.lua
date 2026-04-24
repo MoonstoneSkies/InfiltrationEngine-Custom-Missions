@@ -8,6 +8,8 @@ local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
 
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
 
+local NotifMan = require(script.Parent.Parent.Util.Notifications.Manager)
+
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
 local Write
@@ -253,9 +255,22 @@ Write = {
 			mission:FindFirstChild("TableMissionSetup"):Destroy()
 		end
 
+		if MissionSetup.Colors == nil then
+			NotifMan.Push{
+				Title = "MissionSetup Error",
+				Description = [[
+								No Colors table was found in your MissionSetup!
+
+								An empty one will be used as placeholder.
+							]],
+				Severity = "WARN"
+			}
+			MissionSetup.Colors = {}
+		end
+
 		-- setting Color3s into tables for encoding
-		for i, v in pairs(MissionSetup["Colors"]) do
-			MissionSetup["Colors"][i] = { v.R, v.G, v.B }
+		for i, v in pairs(MissionSetup.Colors) do
+			MissionSetup.Colors[i] = { v.R, v.G, v.B }
 		end
 
 		local json = game:GetService("HttpService"):JSONEncode(MissionSetup)
