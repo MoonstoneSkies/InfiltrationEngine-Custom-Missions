@@ -4,6 +4,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Button = require(script.Parent.Parent.Util.Button)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local DEFAULT_COLOR = Color3.fromRGB(163, 162, 165)
 local OFF_COLOR = Color3.fromRGB(30, 30, 30)
@@ -26,10 +27,13 @@ module.ProcessInput = function(self, io)
 	if io.UserInputState == Enum.UserInputState.Begin then
 		if io.UserInputType == Enum.UserInputType.MouseButton1 then
 			local part = self.Mouse.Target
-			if part and part.Parent.Name == "Props" then
+			local parent = part and part.Parent
+			if part and parent and parent.Name == "Props" then
 				local newValue = if part:GetAttribute(ATTRIBUTE_NAME) then nil else true
-				part:SetAttribute(ATTRIBUTE_NAME, newValue)
-				part.Color = newValue and ON_COLOR or OFF_COLOR
+				HistoryService.Record("Toggle Prop Barrier", function()
+					part:SetAttribute(ATTRIBUTE_NAME, newValue)
+					part.Color = newValue and ON_COLOR or OFF_COLOR
+				end)
 			end
 		end
 	end
