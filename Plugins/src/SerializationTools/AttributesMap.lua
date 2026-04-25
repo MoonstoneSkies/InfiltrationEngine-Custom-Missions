@@ -3,7 +3,7 @@ AttributeType = require(script.Parent.PropAttributeTypes)
 return {
 	AccessPoint = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		NetworkLink = {AttributeType.NETWORK_ID_STRING, ""},
 		TriggerInvestigation = {AttributeType.EXPRESSION, true},
 	},
@@ -11,7 +11,7 @@ return {
 	},
 	BadgeReader = {
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		CustomBadges = {AttributeType.STRING, ""},
 		UseITBadge = {AttributeType.BOOL, false},
 		UseLeadSecurityBadge = {AttributeType.BOOL, false},
@@ -25,12 +25,17 @@ return {
 	},
 	BoxStack2 = {
 	},
+	CameraBox = {
+		CamerasWatched = {AttributeType.EXPRESSION, ""},
+		CameraBoxId = {AttributeType.STRING, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
+	},
 	CandlePlate = {
 	},
 	CardboardBox = {
 	},
 	CardReader = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		ValidCards = {AttributeType.STRING, ""},
 		MinimumCard = {AttributeType.STRING, ""},
@@ -40,7 +45,7 @@ return {
 	},
 	CeilingAccessPoint = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		NetworkLink = {AttributeType.NETWORK_ID_STRING, ""},
 		TriggerInvestigation = {AttributeType.EXPRESSION, true},
 	},
@@ -48,6 +53,7 @@ return {
 		ClientExaminedVariable = {AttributeType.STATE_VALUE, ""},
 		ExaminedVariable = {AttributeType.STATE_VALUE, ""},
 		RewiredVariable = {AttributeType.STATE_VALUE, ""},
+		ClientRewiredVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	ClientExplosionEffect = {
 		Active = {AttributeType.EXPRESSION, ""},
@@ -63,7 +69,7 @@ return {
 		SocialEngineeringLevel = {AttributeType.EXPRESSION, 0},
 	},
 	CodeCardReader = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		ValidCards = {AttributeType.STRING, ""},
 		CodeVariable = {AttributeType.STATE_VALUE, ""},
@@ -77,7 +83,7 @@ return {
 		AltPromptSwitchTime = {AttributeType.NUMBER, 1},
 	},
 	CodeKeypad = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		CodeRevealedVariable = {AttributeType.STATE_VALUE, ""},
 		PromptText = {AttributeType.STRING, ""},
@@ -92,6 +98,9 @@ return {
 		CodeSeed = {AttributeType.INT, 1},
 		InteractionAlertLevel = {AttributeType.EXPRESSION, ""},
 		PowerCutVariable = {AttributeType.STATE_VALUE, ""},
+		CodeInputVariable = {AttributeType.STATE_VALUE, ""},
+		NoRewire = {AttributeType.BOOL, false},
+		PanelOpenCondition = {AttributeType.EXPRESSION, ""},
 	},
 	CombatCuttableFence = {
 	},
@@ -182,11 +191,13 @@ return {
 		AngleDown = {AttributeType.NUMBER, 0},
 		Wireless = {AttributeType.BOOL, true},
 		CamNumber = {AttributeType.INT, 0},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		DetectionSpeed = {AttributeType.NUMBER, 1},
 		LocationKey = {AttributeType.STRING, ""},
 		MapFloorOffset = {AttributeType.INT, 0},
 		WarpPoint = {AttributeType.STRING, nil},
+		CameraBoxId = {AttributeType.STRING, ""},
+		StatusVariable = {AttributeType.STATE_VALUE, nil},
 	},
 	DoorArmored = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -217,6 +228,7 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorArmoredElectronic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -247,6 +259,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorCombatSpawn = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -272,6 +286,40 @@ return {
 		BotRelockCondition = {AttributeType.EXPRESSION, ""},
 		KeepClosed = {AttributeType.INT, 0},
 		KnockResponder = {AttributeType.STRING, ""},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
+	},
+	DoorFenceGate = {
+		LockBack = {AttributeType.EXPRESSION, false},
+		LockFront = {AttributeType.EXPRESSION, false},
+		DoubleDoor = {AttributeType.EXPRESSION, false},
+		RemoteUnlock = {AttributeType.EXPRESSION, ""},
+		PathIgnoreUnlocked = {AttributeType.INT, 0},
+		PathIgnoreOpen = {AttributeType.INT, 0},
+		PathIgnoreBroken = {AttributeType.INT, 0},
+		PathRecover = {AttributeType.INT, 0},
+		BotCloseCondition = {AttributeType.EXPRESSION, ""},
+		Blocked = {AttributeType.EXPRESSION, ""},
+		BlockedFromDirection = {AttributeType.EXPRESSION, nil},
+		NoKick = {AttributeType.EXPRESSION, false},
+		AutoLock = {AttributeType.EXPRESSION, false},
+		PathReq1 = {AttributeType.STRING, ""},
+		PathReq2 = {AttributeType.STRING, ""},
+		Access = {AttributeType.STRING, ""},
+		FailsafeUnlock = {AttributeType.EXPRESSION, ""},
+		DifficultLock = {AttributeType.EXPRESSION, false},
+		AlarmVariable = {AttributeType.STATE_VALUE, ""},
+		AlarmDisabled = {AttributeType.EXPRESSION, ""},
+		BotRelockCondition = {AttributeType.EXPRESSION, ""},
+		KeepClosed = {AttributeType.INT, 0},
+		KnockResponder = {AttributeType.STRING, nil},
+		KnockChatResponse = {AttributeType.STRING, nil},
+		HoldDirection = {AttributeType.EXPRESSION, ""},
+		OpenVariable = {AttributeType.STATE_VALUE, ""},
+		AlarmDelayed = {AttributeType.BOOL, nil},
+		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorGlass = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -302,6 +350,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorGlassFramed = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -332,6 +382,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorGlassRustic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -362,6 +414,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorMetal = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -395,6 +449,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorMetalElectronic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -424,8 +480,11 @@ return {
 		KnockChatResponse = {AttributeType.STRING, nil},
 		HoldDirection = {AttributeType.EXPRESSION, ""},
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorPushLeft = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -456,6 +515,8 @@ return {
 		HoldDirection = {AttributeType.EXPRESSION, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorWood = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -486,6 +547,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoorWoodElectronic = {
 		LockBack = {AttributeType.EXPRESSION, false},
@@ -516,6 +579,8 @@ return {
 		OpenVariable = {AttributeType.STATE_VALUE, ""},
 		AlarmDelayed = {AttributeType.BOOL, nil},
 		OpenWhileAlarmedVariable = {AttributeType.STATE_VALUE, nil},
+		LockedVariable = {AttributeType.STATE_VALUE, nil},
+		LockOnClose = {AttributeType.EXPRESSION, nil},
 	},
 	DoubleVaultDoor = {
 		OpenCondition = {AttributeType.EXPRESSION, ""},
@@ -526,11 +591,11 @@ return {
 		CallVariable = {AttributeType.STATE_VALUE, ""},
 		DisabledInCombat = {AttributeType.BOOL, false},
 		Active = {AttributeType.EXPRESSION, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 	},
 	ElevatorCardReader = {
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		DisabledInCombat = {AttributeType.BOOL, false},
 		RewiredVariable = {AttributeType.STATE_VALUE, ""},
 	},
@@ -544,12 +609,27 @@ return {
 		CanShoot = {AttributeType.BOOL, false},
 		LoweredVariable = {AttributeType.STATE_VALUE, ""},
 	},
+	FilingCabinetLockable = {
+		SearchTime = {AttributeType.NUMBER, nil},
+		SearchVariable = {AttributeType.STATE_VALUE, ""},
+		KeyInLock = {AttributeType.EXPRESSION, false},
+		TriggerTag = {AttributeType.STRING, nil},
+		Locked = {AttributeType.EXPRESSION, false},
+		HideRightContents = {AttributeType.EXPRESSION, ""},
+		HideLeftContents = {AttributeType.EXPRESSION, ""},
+	},
 	Flare = {
 		PlacedVariable = {AttributeType.STATE_VALUE, FlarePlaced},
 	},
 	FloorAccessCover = {
 		CanOpen = {AttributeType.EXPRESSION, ""},
 		OpenedVariable = {AttributeType.STATE_VALUE, ""},
+	},
+	FloorGrate = {
+		ThermiteUsedVariable = {AttributeType.STATE_VALUE, ""},
+		OpenedVariable = {AttributeType.STATE_VALUE, ""},
+		Reinforced = {AttributeType.EXPRESSION, nil},
+		OpeningVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	Flowerpot = {
 		Seed = {AttributeType.INT, 0},
@@ -569,6 +649,7 @@ return {
 		Item = {AttributeType.STRING, ""},
 		ItemTagString = {AttributeType.STRING, ""},
 		KeyItem = {AttributeType.BOOL, false},
+		C4Item = {AttributeType.STRING, nil},
 	},
 	GarageDoor = {
 		Height = {AttributeType.EXPRESSION, "0"},
@@ -578,7 +659,7 @@ return {
 	HackableComputer = {
 		MonitorOffset = {AttributeType.VECTOR3, Vector3.new(0, 0, 0)},
 		MonitorAngle = {AttributeType.NUMBER, 0},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		ScreenText = {AttributeType.EXPRESSION, ""},
 		DesktopTransparency = {AttributeType.NUMBER, 0},
 		NetworkId = {AttributeType.NETWORK_ID, 0},
@@ -605,6 +686,12 @@ return {
 		PoliceShutdownVariable = {AttributeType.STATE_VALUE, ""},
 		QuadBlade = {AttributeType.BOOL, false},
 	},
+	HelicopterGunship = {
+		ShotDownVariable = {AttributeType.STATE_VALUE, ""},
+		HealthPerPlayer = {AttributeType.NUMBER, 2000},
+		SpawnVariance = {AttributeType.NUMBER, 0},
+		PathId = {AttributeType.STRING, ""},
+	},
 	HiddenWallSafe = {
 		PromptVisible = {AttributeType.EXPRESSION, ""},
 		Item = {AttributeType.STRING, ""},
@@ -629,7 +716,7 @@ return {
 		ReinforcedColor1 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
 	},
 	HighSecurityCardReader = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		ValidCards = {AttributeType.STRING, ""},
 		MinimumCard = {AttributeType.STRING, ""},
@@ -642,6 +729,18 @@ return {
 		BoxSeed = {AttributeType.INT, 0},
 		BoxDensity = {AttributeType.NUMBER, 0},
 		BoxColor = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(0, 0, 0)},
+	},
+	InsertCardReader = {
+		CorrectCard = {AttributeType.STRING, ""},
+		PossibleCards = {AttributeType.STRING, ""},
+		TriggerVariable = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
+		UsedIncorrectCardVariable = {AttributeType.STATE_VALUE, ""},
+		TamperingAlarmRaiseWarning = {AttributeType.EXPRESSION, nil},
+		TamperingAlarmRaisePossibleWarning = {AttributeType.EXPRESSION, nil},
+		IncorrectCardAlarmRaiseWarning = {AttributeType.EXPRESSION, nil},
+		IncorrectCardAlarmRaisePossibleWarning = {AttributeType.EXPRESSION, nil},
+		TamperingVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	InteractionBlocker = {
 		ServerActive = {AttributeType.EXPRESSION, "1"},
@@ -682,6 +781,8 @@ return {
 		ManualPasswordVariable = {AttributeType.STATE_VALUE, ""},
 		ManualPasswordList = {AttributeType.STRING, ""},
 		ManualPasswordRevealed = {AttributeType.EXPRESSION, ""},
+		MultiHackTitle = {AttributeType.STRING, nil},
+		HideUnavailablePrimaryHacks = {AttributeType.BOOL, nil},
 	},
 	LaptopOld = {
 		DesktopBackground = {AttributeType.STRING, ""},
@@ -696,6 +797,14 @@ return {
 		ManualPasswordVariable = {AttributeType.STATE_VALUE, ""},
 		ManualPasswordList = {AttributeType.STRING, ""},
 		ManualPasswordRevealed = {AttributeType.EXPRESSION, ""},
+	},
+	LargeButton = {
+		TriggerVariable = {AttributeType.STATE_VALUE, ""},
+		Active = {AttributeType.EXPRESSION, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
+		SubtitleKey = {AttributeType.STRING, ""},
+		TitleKey = {AttributeType.STRING, ""},
+		BlockReason = {AttributeType.EXPRESSION, ""},
 	},
 	LaundryBasket = {
 		Active = {AttributeType.EXPRESSION, ""},
@@ -737,14 +846,14 @@ return {
 	MinimapBlock = {
 	},
 	Monitor = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		ScreenText = {AttributeType.EXPRESSION, ""},
 		DesktopTransparency = {AttributeType.NUMBER, 0},
 		DesktopBackground = {AttributeType.STRING, ""},
 	},
 	NetworkSwitch = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		NetworkLink = {AttributeType.NETWORK_ID_STRING, ""},
 		TriggerInvestigation = {AttributeType.EXPRESSION, true},
 	},
@@ -752,7 +861,7 @@ return {
 		BlockPickups = {AttributeType.BOOL, false},
 	},
 	OldMonitor = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		ScreenText = {AttributeType.EXPRESSION, ""},
 		DesktopTransparency = {AttributeType.NUMBER, 0},
 		DesktopBackground = {AttributeType.STRING, ""},
@@ -764,13 +873,20 @@ return {
 		SetMetaTagsOnWarp = {AttributeType.STRING, nil},
 		ConfrontationDialogue = {AttributeType.STRING, nil},
 	},
+	PhotoPoint = {
+		PhotoZone = {AttributeType.STRING, ""},
+		Visible = {AttributeType.EXPRESSION, ""},
+		IncrementVariable = {AttributeType.STATE_VALUE, ""},
+		MaxRange = {AttributeType.NUMBER, ""},
+		ClientVariable = {AttributeType.STATE_VALUE, ""},
+	},
 	PortableMetalDetector = {
 		PowerLevel = {AttributeType.EXPRESSION, ""},
 	},
 	PowerBoxLarge = {
 		TagWhileActive = {AttributeType.BOOL, false},
 		AllowDisabling = {AttributeType.EXPRESSION, "1"},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
@@ -780,7 +896,7 @@ return {
 	PowerBoxPortable = {
 		TagWhileActive = {AttributeType.BOOL, false},
 		AllowDisabling = {AttributeType.EXPRESSION, "1"},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
@@ -793,7 +909,7 @@ return {
 	PowerBoxSmall = {
 		TagWhileActive = {AttributeType.BOOL, false},
 		AllowDisabling = {AttributeType.EXPRESSION, "1"},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
@@ -815,6 +931,8 @@ return {
 		DistractionSubtitle = {AttributeType.STRING, ""},
 		DistractionSuspicious = {AttributeType.EXPRESSION, ""},
 		Enabled = {AttributeType.EXPRESSION, "1"},
+	},
+	RadioStationV2 = {
 	},
 	ScalablePlanter = {
 		PlantHeight = {AttributeType.NUMBER, 3},
@@ -841,15 +959,16 @@ return {
 		AngleDown = {AttributeType.NUMBER, 0},
 		Wireless = {AttributeType.BOOL, true},
 		CamNumber = {AttributeType.INT, 0},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		DetectionSpeed = {AttributeType.NUMBER, 1},
 		LocationKey = {AttributeType.STRING, ""},
 		MapFloorOffset = {AttributeType.INT, 0},
 		CycleTime = {AttributeType.NUMBER, 0},
 		WarpPoint = {AttributeType.STRING, nil},
+		CameraBoxId = {AttributeType.STRING, ""},
 	},
 	ServerRack = {
-		CanPickup = {AttributeType.BOOL, false},
+		CanPickup = {AttributeType.EXPRESSION, false},
 		ItemTagString = {AttributeType.STRING, ""},
 		PickupVariable = {AttributeType.STATE_VALUE, ""},
 		PowerArea = {AttributeType.STRING, ""},
@@ -857,7 +976,7 @@ return {
 	ServerRackWideTerminal = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
 		NetworkLink = {AttributeType.NETWORK_ID_STRING, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		Disconnected = {AttributeType.EXPRESSION, ""},
 		DesktopTransparency = {AttributeType.NUMBER, 0},
 		DesktopBackground = {AttributeType.STRING, ""},
@@ -873,12 +992,18 @@ return {
 		SecurityKeyNeeded = {AttributeType.EXPRESSION, ""},
 		SecurityKeyInsertedVariable = {AttributeType.STATE_VALUE, ""},
 	},
+	SlidingBlastDoor = {
+		OpenDist = {AttributeType.NUMBER, 4.5},
+		IsOpen = {AttributeType.EXPRESSION, ""},
+	},
+	Speedboat = {
+	},
 	StaticAmmoBox = {
 	},
 	SurfaceText = {
 		TextKey = {AttributeType.STRING, ""},
 		Font = {AttributeType.STRING, ""},
-		HorizontalAlignment = {AttributeType.INT, 2},
+		HorizontalAlignment = {AttributeType.NUMBER, 2},
 		TextColor3 = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(1, 1, 1)},
 	},
 	TableGlass = {
@@ -900,7 +1025,7 @@ return {
 		TimelockEnabled = {AttributeType.EXPRESSION, ""},
 		SetState = {AttributeType.STATE_VALUE, ""},
 		CountTime = {AttributeType.NUMBER, 60},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		SetValue = {AttributeType.EXPRESSION, ""},
 	},
 	TrespassZoneDisplay = {
@@ -930,6 +1055,8 @@ return {
 		Disguise = {AttributeType.STRING, nil},
 		SetMetaTags = {AttributeType.STRING, nil},
 		PlayersOutsideZoneVariable = {AttributeType.STATE_VALUE, ""},
+		PhotoZone = {AttributeType.STRING, nil},
+		AllPlayersInZoneVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	TutorialText = {
 		HorizontalOffset = {AttributeType.NUMBER, 0.5},
@@ -973,9 +1100,12 @@ return {
 		StateValue = {AttributeType.STATE_VALUE, nil},
 		StateVariable = {AttributeType.STATE_VALUE, ""},
 		GlassColor = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(0, 0, 0)},
+		GlassTransparency = {AttributeType.NUMBER, nil},
+		GlassMaterial = {AttributeType.STRING, nil},
 		NoFrame = {AttributeType.BOOL, false},
 		SlideOpen = {AttributeType.EXPRESSION, ""},
 		SlideDist = {AttributeType.NUMBER, 0},
+		CutOpen = {AttributeType.EXPRESSION, nil},
 	},
 	WindowClimb = {
 		Blocked = {AttributeType.EXPRESSION, ""},
@@ -990,7 +1120,23 @@ return {
 	},
 	WoodTargetWithSensor = {
 	},
+	BookcaseOnRails = {
+		ClientVisible = {AttributeType.EXPRESSION, ""},
+		BookPlaced = {AttributeType.EXPRESSION, ""},
+	},
+	BotBarrier = {
+	},
+	ClientPropsList = {
+	},
 	LandscapePhotoIds = {
+	},
+	MilitaryFootlocker = {
+		Contents = {AttributeType.STRING, ""},
+		SearchedVariable = {AttributeType.STATE_VALUE, ""},
+		HiddenContentsRevealedNotification = {AttributeType.STRING, ""},
+		HiddenContents = {AttributeType.STRING, ""},
+		HiddenContentsRevealedOnSearch = {AttributeType.EXPRESSION, ""},
+		HiddenContentsRevealedVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	AccessRequestNode = {
 		ServerCondition = {AttributeType.EXPRESSION, ""},
@@ -1033,10 +1179,15 @@ return {
 		ColorHex = {AttributeType.STRING, "FFFFFF"},
 	},
 	BiometricLock = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
 		BotServerTag = {AttributeType.STRING, ""},
 		RewireEnabled = {AttributeType.EXPRESSION, ""},
+	},
+	BlinkingLight = {
+		PowerArea = {AttributeType.EXPRESSION, ""},
+		BlinkTime = {AttributeType.NUMBER, 0.5},
+		Active = {AttributeType.EXPRESSION, ""},
 	},
 	BotConversationPoint = {
 		BotTag0 = {AttributeType.STRING, ""},
@@ -1077,6 +1228,8 @@ return {
 	Cabinet = {
 		BodyHiddenVariable = {AttributeType.STATE_VALUE, ""},
 	},
+	CombatRetreatPoint = {
+	},
 	ConditionalHighJumpRequired = {
 		Climber3Condition = {AttributeType.EXPRESSION, 1},
 		Color = {AttributeType.OPTIONAL_MISSION_COLOR, Color3.new(0, 0, 0)},
@@ -1096,9 +1249,21 @@ return {
 		MaxAlert = {AttributeType.INT, 3},
 		NotificationMessage = {AttributeType.STRING, ""},
 		ReportDialogue = {AttributeType.STRING, ""},
+		ReportedVariable = {AttributeType.STATE_VALUE, ""},
 	},
 	DebugSpawnLocation = {
 		Active = {AttributeType.BOOL, false},
+	},
+	DeployableShieldCover = {
+		AllowSpawning = {AttributeType.EXPRESSION, false},
+		Enabled = {AttributeType.EXPRESSION, true},
+		SpawnsIgnoreProximity = {AttributeType.BOOL, false},
+		UseFromAdjacentRoom = {AttributeType.BOOL, false},
+		HoldDoor = {AttributeType.BOOL, false},
+		ReverseDoor = {AttributeType.BOOL, false},
+		CoverTag = {AttributeType.STRING, ""},
+		HoldPriority = {AttributeType.EXPRESSION, 0},
+		OnlyAssignFromSpawner = {AttributeType.BOOL, false},
 	},
 	DynamicNode = {
 		Id = {AttributeType.STRING, ""},
@@ -1107,6 +1272,8 @@ return {
 		CaptureBot = {AttributeType.EXPRESSION, nil},
 		ApproachPace = {AttributeType.INT, nil},
 		CustomBehavior = {AttributeType.STRING, nil},
+		CapturePriority = {AttributeType.INT, 0},
+		CapturePolling = {AttributeType.BOOL, false},
 	},
 	ElevatorFunctional = {
 		OpenCondition = {AttributeType.EXPRESSION, ""},
@@ -1121,6 +1288,10 @@ return {
 	},
 	EscapeZone = {
 		Active = {AttributeType.EXPRESSION, ""},
+	},
+	ExplosiveBreachCharge = {
+	},
+	ExplosiveBreachPoint = {
 	},
 	FlowStart = {
 	},
@@ -1151,12 +1322,18 @@ return {
 	GuardCombatNode = {
 		BotTag = {AttributeType.STRING, nil},
 	},
+	HelicopterCrashPoint = {
+		PathId = {AttributeType.STRING, ""},
+	},
+	HelicopterPathPoint = {
+		PathId = {AttributeType.STRING, ""},
+	},
 	init = {
 	},
 	IntercomCode = {
 		SocialEngineeringDialogue = {AttributeType.STRING, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		HostageUse = {AttributeType.STATE_VALUE, ""},
 		PickupNode = {AttributeType.STRING, ""},
 		PickupVariable = {AttributeType.STATE_VALUE, ""},
@@ -1169,7 +1346,7 @@ return {
 	},
 	IntercomPanel = {
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		Subtitle = {AttributeType.STRING, ""},
 		Title = {AttributeType.STRING, ""},
 	},
@@ -1198,6 +1375,10 @@ return {
 		MissingToolTitle = {AttributeType.STRING, ""},
 		Item = {AttributeType.STRING, ""},
 		SetMetaTags = {AttributeType.STRING, nil},
+	},
+	ItemDropPoint = {
+		DepositedVariable = {AttributeType.STATE_VALUE, ""},
+		ItemTag = {AttributeType.STRING, ""},
 	},
 	ItemSpawn = {
 		Item = {AttributeType.STRING, ""},
@@ -1259,6 +1440,8 @@ return {
 	},
 	MissionExit = {
 	},
+	ObjectInvestigationTrigger = {
+	},
 	PathfindingBlocker = {
 		BotCollisions = {AttributeType.BOOL, nil},
 	},
@@ -1285,14 +1468,24 @@ return {
 		Active = {AttributeType.EXPRESSION, true},
 	},
 	RewireablePanel = {
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		RewireEnabled = {AttributeType.EXPRESSION, "1"},
 		ObjectName = {AttributeType.STRING, ""},
 		DifficultRewire = {AttributeType.BOOL, false},
 	},
+	RFIDWriter = {
+		ValidItems = {AttributeType.STRING, ""},
+		NetworkId = {AttributeType.NETWORK_ID, ""},
+	},
+	SatelliteDish = {
+		PowerArea = {AttributeType.STRING, ""},
+		DamagedVariable = {AttributeType.STATE_VALUE, ""},
+		Health = {AttributeType.INT, 0},
+	},
 	SawCutPoint = {
 		UsedVariable = {AttributeType.STATE_VALUE, ""},
+		NoAutoBreak = {AttributeType.BOOL, false},
 	},
 	ScriptedEMP = {
 		BlastRadius = {AttributeType.NUMBER, 20},
@@ -1376,7 +1569,7 @@ return {
 	SwitchPanel = {
 		TriggerVariable = {AttributeType.STATE_VALUE, ""},
 		Active = {AttributeType.EXPRESSION, ""},
-		PowerArea = {AttributeType.STATE_VALUE, ""},
+		PowerArea = {AttributeType.EXPRESSION, ""},
 		SubtitleKey = {AttributeType.STRING, ""},
 		TitleKey = {AttributeType.STRING, ""},
 	},
@@ -1400,6 +1593,7 @@ return {
 		SawSubtitle = {AttributeType.STRING, ""},
 		SawTime = {AttributeType.NUMBER, 8},
 		SawXOffset = {AttributeType.NUMBER, 0},
+		SawGround = {AttributeType.BOOL, false},
 		ScrewdriverEnabled = {AttributeType.BOOL, false},
 		ScrewdriverSubtitle = {AttributeType.STRING, ""},
 		ScrewdriverTitle = {AttributeType.STRING, ""},
@@ -1415,6 +1609,7 @@ return {
 		Active = {AttributeType.EXPRESSION, ""},
 		PlayersInRoomVariable = {AttributeType.STATE_VALUE, ""},
 		ClientInRoomVariable = {AttributeType.STATE_VALUE, ""},
+		MaxRange = {AttributeType.NUMBER, nil},
 	},
 	TriggerRoomBot = {
 		BotServerTag = {AttributeType.STRING, ""},
@@ -1438,6 +1633,7 @@ return {
 		Active = {AttributeType.EXPRESSION, ""},
 	},
 	VisionBlocker = {
+		Active = {AttributeType.EXPRESSION, true},
 	},
 	WarpPoint = {
 		WarpPointId = {AttributeType.STRING, ""},
@@ -1450,6 +1646,10 @@ return {
 	AlarmedBehaviorOverride = {
 		BotServerTag = {AttributeType.STRING, ""},
 		CustomBehavior = {AttributeType.STRING, ""},
+	},
+	AlertLowerCondition = {
+		AlertLevel = {AttributeType.EXPRESSION, ""},
+		Condition = {AttributeType.EXPRESSION, ""},
 	},
 	AlertRaiseCondition = {
 		Amount = {AttributeType.INT, 1},
@@ -1515,6 +1715,9 @@ return {
 		Active = {AttributeType.EXPRESSION, ""},
 		SpawnCap = {AttributeType.EXPRESSION, 6},
 		CustomCombatData = {AttributeType.STRING, ""},
+		CustomShirtId = {AttributeType.STRING, nil},
+		CustomPantsId = {AttributeType.STRING, nil},
+		FallbackCondition = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave1 = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave2 = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave3 = {AttributeType.EXPRESSION, nil},
@@ -1527,6 +1730,11 @@ return {
 		CurrentWave = {AttributeType.EXPRESSION, nil},
 	},
 	CombatWaveSpawner = {
+	},
+	ConditionalBotTag = {
+		ApplyTag = {AttributeType.STRING, ""},
+		ReferenceTag = {AttributeType.STRING, ""},
+		Condition = {AttributeType.EXPRESSION, ""},
 	},
 	ConditionalStateUpdate = {
 		Watch = {AttributeType.EXPRESSION, ""},
@@ -1551,6 +1759,13 @@ return {
 		Disguise = {AttributeType.STRING, ""},
 		HostageOnly = {AttributeType.BOOL, false},
 		Label = {AttributeType.STRING, ""},
+		DialogueTree = {AttributeType.STRING, nil},
+		NextDialogueTree = {AttributeType.STRING, nil},
+		IncrementClientVariable = {AttributeType.STATE_VALUE, ""},
+		AdvancedProtocolLevel = {AttributeType.EXPRESSION, nil},
+		AwarenessLevel = {AttributeType.EXPRESSION, nil},
+		Priority = {AttributeType.EXPRESSION, nil},
+		DisableReason = {AttributeType.EXPRESSION, ""},
 	},
 	ConversationResponseCustomBehavior = {
 		BotServerTag = {AttributeType.STATE_VALUE, ""},
@@ -1573,6 +1788,10 @@ return {
 		EnemyWeapons = {AttributeType.STRING, "F57|S97|480 MCS"},
 		ServerTag = {AttributeType.STRING, nil},
 		CustomCombatData = {AttributeType.STRING, ""},
+		CustomShirtId = {AttributeType.STRING, nil},
+		CustomPantsId = {AttributeType.STRING, nil},
+		ShuffleCover = {AttributeType.BOOL, false},
+		FocusPoint = {AttributeType.VECTOR3, nil},
 		EnemyWeaponsWave1 = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave2 = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave3 = {AttributeType.EXPRESSION, nil},
@@ -1583,6 +1802,10 @@ return {
 		EnemyWeaponsWave8 = {AttributeType.EXPRESSION, nil},
 		EnemyWeaponsWave9 = {AttributeType.EXPRESSION, nil},
 		CurrentWave = {AttributeType.EXPRESSION, nil},
+	},
+	CredentialUnlock = {
+		Condition = {AttributeType.EXPRESSION, ""},
+		Credential = {AttributeType.STRING, ""},
 	},
 	CustomBehaviorCondition = {
 		Priority = {AttributeType.STRING, "Custom1"},
@@ -1595,7 +1818,7 @@ return {
 	},
 	CustomHack = {
 		DeployCost = {AttributeType.INT, 20},
-		DeployTime = {AttributeType.INT, 10},
+		DeployTime = {AttributeType.EXPRESSION, 10},
 		NodeId = {AttributeType.NETWORK_ID, 1},
 		NameKey = {AttributeType.STRING, ""},
 		SubtitleKey = {AttributeType.STRING, ""},
@@ -1664,7 +1887,7 @@ return {
 	},
 	IntelPrimaryText = {
 		Text = {AttributeType.STRING, ""},
-		BackgroundColor = {AttributeType.STRING, ""},
+		BackgroundColor = {AttributeType.OPTIONAL_MISSION_COLOR, ""},
 		Visible = {AttributeType.EXPRESSION, ""},
 		IntelNodeId = {AttributeType.STRING, ""},
 	},
@@ -1696,6 +1919,15 @@ return {
 		Delta = {AttributeType.EXPRESSION, 0.5},
 		AlwaysUpdate = {AttributeType.EXPRESSION, false},
 		UpdateClock = {AttributeType.EXPRESSION, "0"},
+	},
+	LocalChat = {
+		DelayStart = {AttributeType.NUMBER, 0},
+		Active = {AttributeType.EXPRESSION, ""},
+		Dialogue = {AttributeType.STRING, ""},
+		TriggerOnce = {AttributeType.BOOL, false},
+		StealthOnly = {AttributeType.BOOL, false},
+		CombatOnly = {AttributeType.BOOL, false},
+		Replicate = {AttributeType.BOOL, false},
 	},
 	MissionCompletionTrigger = {
 		Condition = {AttributeType.EXPRESSION, ""},
@@ -1758,6 +1990,8 @@ return {
 	SearchPatternCondition = {
 		Condition = {AttributeType.EXPRESSION, ""},
 		BotServerTag = {AttributeType.STRING, ""},
+		Pace = {AttributeType.NUMBER, nil},
+		UseWeapon = {AttributeType.BOOL, nil},
 	},
 	ServerChat = {
 		Active = {AttributeType.EXPRESSION, ""},
@@ -1771,6 +2005,16 @@ return {
 		Nodes = {AttributeType.STRING, ""},
 		InitialSpawns = {AttributeType.EXPRESSION, 0},
 		RespawnRate = {AttributeType.EXPRESSION, 20},
+	},
+	StandardRadioAlertReduction = {
+		AlertReductionDisabled = {AttributeType.EXPRESSION, ""},
+		AlertReductionDifficulty = {AttributeType.EXPRESSION, ""},
+		AlertResetDifficulty = {AttributeType.EXPRESSION, ""},
+	},
+	StateLock = {
+		Watch = {AttributeType.EXPRESSION, ""},
+		SetVariable = {AttributeType.STATE_VALUE, ""},
+		SetInternal = {AttributeType.STATE_VALUE, ""},
 	},
 	StateScript = {
 	},
@@ -1831,14 +2075,6 @@ return {
 		IncludeTraversal = {AttributeType.BOOL, false},
 		NodeId = {AttributeType.NETWORK_ID, 0},
 		ObjectiveType = {AttributeType.INT, 1},
-	},
-	LocalChat = {
-		DelayStart = {AttributeType.NUMBER, 0},
-		Active = {AttributeType.EXPRESSION, ""},
-		Dialogue = {AttributeType.STRING, ""},
-		TriggerOnce = {AttributeType.BOOL, false},
-		StealthOnly = {AttributeType.BOOL, false},
-		CombatOnly = {AttributeType.BOOL, false},
 	},
 	LocalStateComponents = {
 	},

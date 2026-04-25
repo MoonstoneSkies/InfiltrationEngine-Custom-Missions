@@ -437,6 +437,9 @@ module.Init = function(mouse: PluginMouse)
 							local prop = base:Clone()
 							prop.Name = value
 							prop.Transparency = 0.5
+							prop.Anchored = true
+							prop.Color3 = Color3.fromRGB(163, 162, 165)
+							prop.Material = Enum.Material.Plastic
 							prop.Parent = workspace.DebugMission.Props
 							prop.CFrame = CFrame.new((workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -5)).Position)
 						end
