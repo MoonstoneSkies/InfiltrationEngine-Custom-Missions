@@ -265,6 +265,7 @@ module.Clean = function()
 		return
 	end
 	module.Active = false
+	NotifMan.Clean()
 
 	if module.UI then
 		module.UI:Destroy()
