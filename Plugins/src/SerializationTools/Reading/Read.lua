@@ -150,7 +150,7 @@ Read = {
 		rz = denormalize(rz)
 		return CFrame.new(X, Y, Z) * CFrame.fromEulerAnglesXYZ(rx, ry, rz), cursor
 	end,
-	
+
 	InstanceReference = function(str, cursor)
 		local value, cursor = Read.String(str, cursor)
 
@@ -159,11 +159,12 @@ Read = {
 				if not Root:GetAttribute(`Loaded`) then
 					Root:GetAttributeChangedSignal(`Loaded`):Wait()
 				end
-				
+
 				local object = ResolvePath(Root, value)
 				return object
 			end
-		end, cursor
+		end,
+			cursor
 	end,
 
 	BoundedFloat = function(str, cursor) -- returns the value read as a bounded float between 0-1. 3 symbols.
@@ -232,18 +233,19 @@ Read = {
 
 	MissionCodeHeader = function(str, cursor)
 		local codeVersion, mapId, currentCode, totalCodes
-		
+
 		codeVersion, cursor = Read.ShortestInt(str, cursor)
 		mapId, cursor = Read.ShortInt(str, cursor)
 		currentCode, cursor = Read.ShortInt(str, cursor)
 		totalCodes, cursor = Read.ShortInt(str, cursor)
-		
+
 		return {
 			CodeVersion = codeVersion,
 			CodeCurrent = currentCode,
 			CodeTotal = totalCodes,
 			MapId = mapId,
-		}, cursor
+		},
+			cursor
 	end,
 
 	Mission = function(str, cursor)
@@ -254,14 +256,19 @@ Read = {
 			end
 			str = code
 		end
-		
+
 		if VersionConfig.UseCompression then
 			local uncompressed = buffer.create(#str)
 			buffer.writestring(uncompressed, 0, str)
 
-			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
+			str = buffer.tostring(
+				EncodingService:DecompressBuffer(
+					EncodingService:Base64Decode(uncompressed),
+					Enum.CompressionAlgorithm.Zstd
+				)
+			)
 		end
-		
+
 		Root = nil
 		local colorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
@@ -283,8 +290,14 @@ Read = {
 			MissionSetup.Name = "MissionSetup"
 			MissionSetup.Parent = mission
 			MissionSetup.Source = StringMissionSetup.Value
+			for _, subModule in StringMissionSetup:GetChildren() do
+				local module = Instance.new("ModuleScript")
+				module.Name = subModule.Name
+				module.Parent = MissionSetup
+				module.Source = subModule.Value
+			end
 		end
-		
+
 		mission:SetAttribute(`Loaded`, true)
 		return mission
 	end,
@@ -299,7 +312,7 @@ Read = {
 				Root = object
 				Root:SetAttribute(`Loaded`, false)
 			end
-			
+
 			while StringConversion.StringToNumber(str, cursor, 1) ~= 0 do
 				local child
 				child, cursor = Read.Instance(str, cursor, colorMap, stringMap)
@@ -328,7 +341,7 @@ Read = {
 
 	ResamplerMode = CreateEnumReader(Enum.ResamplerMode, EnumTypes.ResamplerMode),
 	SurfaceGuiSizingMode = CreateEnumReader(Enum.SurfaceGuiSizingMode, EnumTypes.SurfaceGuiSizingMode),
-	
+
 	TextureMode = CreateEnumReader(Enum.TextureMode, EnumTypes.TextureMode),
 }
 

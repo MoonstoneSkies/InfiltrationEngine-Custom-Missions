@@ -805,6 +805,7 @@ return {
 		SubtitleKey = {AttributeType.STRING, ""},
 		TitleKey = {AttributeType.STRING, ""},
 		BlockReason = {AttributeType.EXPRESSION, ""},
+		AlarmRaise = {AttributeType.EXPRESSION, ""},
 	},
 	LaundryBasket = {
 		Active = {AttributeType.EXPRESSION, ""},
@@ -913,7 +914,7 @@ return {
 		CombatDisableTarget = {AttributeType.EXPRESSION, ""},
 		NoPropDamage = {AttributeType.EXPRESSION, ""},
 		AllowRestoring = {AttributeType.EXPRESSION, "1"},
-		Locked = {AttributeType.BOOL, false},
+		Locked = {AttributeType.EXPRESSION, false},
 		ObjectName = {AttributeType.STRING, ""},
 		PowerAreaParent = {AttributeType.STATE_VALUE, ""},
 		ManualInvestigationBot = {AttributeType.EXPRESSION, ""},
@@ -972,6 +973,7 @@ return {
 		ItemTagString = {AttributeType.STRING, ""},
 		PickupVariable = {AttributeType.STATE_VALUE, ""},
 		PowerArea = {AttributeType.STRING, ""},
+		UseLargeServer = {AttributeType.EXPRESSION, false},
 	},
 	ServerRackWideTerminal = {
 		NetworkId = {AttributeType.NETWORK_ID, 1},
