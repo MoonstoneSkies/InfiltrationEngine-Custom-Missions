@@ -4,6 +4,7 @@ local settings = {
 	ReplaceNewlines = false,
 	UseCompression  = false,
 	UseVectorMap    = false,
+	UseBase72       = true
 }
 local function vdef(tbl)
 	for k, _ in pairs(tbl) do
@@ -11,12 +12,14 @@ local function vdef(tbl)
 			warn(`Unrecognised version setting {k} - fix before submitting`)
 		end
 	end
-	
+
 	for k, default in pairs(settings) do
 		if tbl[k] == nil then
 			tbl[k] = default
 		end
 	end
+
+	return tbl
 end
 
 local CODE_VERSION_LOOKUP = {
@@ -31,7 +34,8 @@ local CODE_VERSION_LOOKUP = {
 	[3] = vdef{
 		ReplaceNewlines = true,
 		UseCompression  = true,
-		UseVectorMap    = true
+		UseVectorMap    = true,
+		UseBase72       = false
 	}
 }
 
@@ -46,10 +50,11 @@ local versionConfig = {
 
 	VersionNumber = VERSION_LATEST,
 	VersionNumber_API = 1,
-	
+
 	ReplaceNewlines = true,
 	UseCompression  = true,
-	UseVectorMap    = true
+	UseVectorMap    = true,
+	UseBase72       = false
 }
 
 function versionConfig.change_version(self, to)

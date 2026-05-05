@@ -30,7 +30,7 @@ Write = {
 	StringMap = function(stringMap)
 		return WriteMap(stringMap, Write.Primitive.ShortInt, Write.Primitive.String)
 	end,
-	
+
 	VectorMap = function(vectorMap)
 		if not VersionConfig.UseVectorMap then
 			return ""
@@ -41,10 +41,10 @@ Write = {
 
 	MissionCodeHeader = function(mapId, current, total)
 		return table.concat{
-			Write.Primitive.ShortestInt(VersionConfig.VersionNumber),
-			Write.Primitive.ShortInt(mapId),
-			Write.Primitive.ShortInt(current),
-			Write.Primitive.ShortInt(total)
+			Write.Primitive.ShortestInt(VersionConfig.VersionNumber, true),
+			Write.Primitive.ShortInt(mapId, true),
+			Write.Primitive.ShortInt(current, true),
+			Write.Primitive.ShortInt(total, true)
 		}
 	end,
 
@@ -84,7 +84,13 @@ Write = {
 		local stringMap = { [0] = 0 }
 		local vectorMap = { [0] = 0 }
 
-		str, colorMap, stringMap, vectorMap = Write.Instance(mission, colorMap, stringMap, vectorMap)
+		local maps = {
+			Color = colorMap,
+			String = stringMap,
+			Vector = vectorMap
+		}
+
+		str, maps = Write.Instance(mission, maps)
 
 		colorMap[0] = nil
 		stringMap[0] = nil
@@ -101,7 +107,7 @@ Write = {
 		for str, stridx in pairs(stringMap) do
 			stringMapArr[stridx] = str
 		end
-		
+
 		for vec, vecidx in pairs(vectorMap) do
 			vectorMapArr[vecidx] = vec
 		end
@@ -113,9 +119,9 @@ Write = {
 		local missionStr = colorMapStr .. stringMapStr .. vectorMapStr .. str
 
 		if not VersionConfig.UseCompression then return missionStr end
-		
+
 		local compressLevel = FeatureCheck("SerializerCompressionLevel", false)
-		
+
 		if type(compressLevel) ~= "number" then
 			if type(compressLevel) ~= "nil" then
 				warn(`SerializerCompressionLevel : Expected int|nil, got {type(compressLevel)} {compressLevel}! Will use default of 4`)
@@ -138,7 +144,7 @@ Write = {
 
 		local buf = buffer.create(#missionStr)
 		buffer.writestring(buf, 0, missionStr)
-		
+
 		local compressedBuf = EncodingService:Base64Encode( EncodingService:CompressBuffer(buf, Enum.CompressionAlgorithm.Zstd, compressLevel) )
 
 		local compressedStr = buffer.readstring( compressedBuf, 0, buffer.len(compressedBuf) )
@@ -148,7 +154,7 @@ Write = {
 			print(`Before Compression: {#missionStr * 0.001}K`)
 			print(`After Compression: {#compressedStr * 0.001}K`)
 		end
-		
+
 		if FeatureCheck("SerializerDebug", false) == true then
 			WriteStats.output()
 		end
@@ -156,27 +162,24 @@ Write = {
 		return compressedStr
 	end,
 
-	Instance = function(object, colorMap, stringMap, vectorMap)
+	Instance = function(object, maps)
 		local className = object.ClassName
 		if InstanceTypes[object.ClassName] ~= nil then
 			if next(object:GetAttributes()) == nil and object.ClassName == "Part" then
 				className = className .. "NoAttributes"
 			end
 			local instanceType = Write.Primitive.ShortestInt(InstanceTypes[className])
-			local objectProperties, colorMap, stringMap, vectorMap = WriteInstance[className](object, colorMap, stringMap, vectorMap)
+			local objectProperties, maps = WriteInstance[className](object, maps)
 			local childrenProperties = ""
 			for i, v in pairs(object:GetChildren()) do
-				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap, vectorMap)
+				childrenProperties = childrenProperties .. Write.Instance(v, maps)
 			end
-			return instanceType .. objectProperties .. childrenProperties .. Write.Primitive.ShortestInt(0),
-			colorMap,
-			stringMap,
-			vectorMap
+			return instanceType .. objectProperties .. childrenProperties .. Write.Primitive.ShortestInt(0), maps
 		else
-			return Write.Primitive.ShortestInt(InstanceTypes.Nil), colorMap, stringMap, vectorMap
+			return Write.Primitive.ShortestInt(InstanceTypes.Nil), maps
 		end
 	end,
-	
+
 	Primitive = require(script.Parent.WritePrimitive)
 }
 
@@ -186,13 +189,13 @@ setmetatable(
 	{
 		__index = function(self, k)
 			warn(`Serializer Dev Warn: Attempt to index write with key {k}`)
-			
+
 			local e = self.Primitive[k]
 			if e ~= nil then
 				warn(`\tIt's likely you meant Write.Primitive.{k}`)
 				return e
 			end
-			
+
 			error(`Serializer Dev Error: Attempt to index write for unsupported type {k}`)
 		end,
 	}

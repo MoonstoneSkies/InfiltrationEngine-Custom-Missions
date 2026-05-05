@@ -11,14 +11,14 @@ local Read
 local function ReadMap(str, cursor, sizeFunc, primFunc)
 	local n, v
 	n, cursor = sizeFunc(str, cursor)
-	
+
 	local map = table.create(n)
-	
+
 	for i=1, n do
 		v, cursor = primFunc(str, cursor)
 		map[#map+1] = v
 	end
-	
+
 	return map, cursor
 end
 
@@ -43,12 +43,12 @@ Read = {
 
 	MissionCodeHeader = function(str, cursor)
 		local codeVersion, mapId, currentCode, totalCodes
-		
-		codeVersion, cursor = Read.ShortestInt(str, cursor)
-		mapId, cursor = Read.ShortInt(str, cursor)
-		currentCode, cursor = Read.ShortInt(str, cursor)
-		totalCodes, cursor = Read.ShortInt(str, cursor)
-		
+
+		codeVersion, cursor = Read.Primitive.ShortestInt(str, cursor, true)
+		mapId, cursor = Read.Primitive.ShortInt(str, cursor, true)
+		currentCode, cursor = Read.Primitive.ShortInt(str, cursor, true)
+		totalCodes, cursor = Read.Primitive.ShortInt(str, cursor, true)
+
 		return {
 			CodeVersion = codeVersion,
 			CodeCurrent = currentCode,
@@ -58,21 +58,28 @@ Read = {
 	end,
 
 	Mission = function(str, cursor)
-		
+
 		if VersionConfig.UseCompression then
 			local uncompressed = buffer.create(#str)
 			buffer.writestring(uncompressed, 0, str)
 
 			str = buffer.tostring( EncodingService:DecompressBuffer( EncodingService:Base64Decode(uncompressed), Enum.CompressionAlgorithm.Zstd ) )
 		end
-		
+
 		ReadMissionRoot:Set(nil)
-		
+
 		local colorMap, stringMap, vectorMap
 		colorMap, cursor = Read.ColorMap(str, cursor)
 		stringMap, cursor = Read.StringMap(str, cursor)
 		vectorMap, cursor = Read.VectorMap(str, cursor)
-		local mission = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
+
+		local maps = {
+			Color = colorMap,
+			String = stringMap,
+			Vector = vectorMap
+		}
+
+		local mission = Read.Instance(str, cursor, maps)
 
 		-- Reading Color3s from TableMissionSetup
 		local ImportedMissionSetup = game:GetService("HttpService")
@@ -89,23 +96,23 @@ Read = {
 			MissionSetup.Parent = mission
 			MissionSetup.Source = StringMissionSetup.Value
 		end
-		
+
 		ReadMissionRoot:Finalize()
 		return mission
 	end,
 
-	Instance = function(str, cursor, colorMap, stringMap, vectorMap)
+	Instance = function(str, cursor, maps)
 		local InstanceId = Read.Primitive.ShortestInt(str, cursor)
 		cursor += 1
 		if InstanceId ~= InstanceTypes.Nil then
 			local InstanceType = InstanceKeys[InstanceId]
-			local object, cursor = ReadInstance[InstanceType](str, cursor, colorMap, stringMap, vectorMap)
-			
+			local object, cursor = ReadInstance[InstanceType](str, cursor, maps)
+
 			ReadMissionRoot:TrySet(object)
-			
+
 			while Read.Primitive.ShortestInt(str, cursor) ~= 0 do
 				local child
-				child, cursor = Read.Instance(str, cursor, colorMap, stringMap, vectorMap)
+				child, cursor = Read.Instance(str, cursor, maps)
 				if child ~= nil then
 					child.Parent = object
 				end
