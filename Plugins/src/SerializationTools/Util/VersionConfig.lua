@@ -1,8 +1,9 @@
-local VERSION_LATEST = 1
+local VERSION_LATEST = 2
 
 local CODE_VERSION_LOOKUP = {
-	[0] = { ReplaceNewlines = false },
-	[1] = { ReplaceNewlines = true  }
+	[0] = { ReplaceNewlines = false, UseCompression = false },
+	[1] = { ReplaceNewlines = true, UseCompression = false },
+	[2] = { ReplaceNewlines = true, UseCompression = true }
 }
 
 -- This works, Lua counts table lengths starting from 1
@@ -17,6 +18,7 @@ local versionConfig = {
 	VersionNumber_API = 1,
 	
 	ReplaceNewlines = true,
+	UseCompression  = true
 }
 
 function versionConfig.change_version(self, to)
@@ -30,5 +32,7 @@ function versionConfig.change_version(self, to)
 	self.VersionNumber = to
 	return true, nil
 end
+
+versionConfig:change_version(VERSION_LATEST)
 
 return versionConfig

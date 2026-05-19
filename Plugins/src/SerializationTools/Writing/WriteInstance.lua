@@ -1,4 +1,4 @@
-local StringConversion = require(script.Parent.Parent.StringConversion)
+local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceProperties = require(script.Parent.Parent.Types.InstanceProperties)
 local AttributeTypes = require(script.Parent.Parent.Types.AttributeTypes)
 local AttributeValidation = require(script.Parent.Parent.AttributeValidation)

@@ -3,6 +3,8 @@ local HttpService = game:GetService("HttpService")
 
 local Read = require(script.Parent.Parent.Reading.Read)
 
+local NotifMan = require(script.Parent.Parent.Util.Notifications.Manager)
+
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
 local State = Actor.State
@@ -19,6 +21,15 @@ local GIST_NONRAW_INFO_PAT   = `{GIST_NONRAW_BASE}/({URL_ELEM})/({URL_ELEM})`
 local GIST_URL_BASE          = HTTPS_BASE .. "gist%.githubusercontent%.com"
 local GIST_INFO_PAT_NO_NAME  = `{GIST_URL_BASE}/({URL_ELEM})/{URL_ELEM}/raw`
 local GIST_INFO_PAT_FILENAME = `{GIST_URL_BASE}/({URL_ELEM})/{URL_ELEM}/raw/{URL_ELEM}/({URL_ELEM})`
+
+local function readbackError(desc)
+	NotifMan.Push{
+		Title = "Readback Failure",
+		Description = desc,
+		Severity = "ERR",
+		Rich = true
+	}
+end
 
 local textboxDefaults = {
 	Font = Enum.Font.SciFi,
@@ -105,6 +116,9 @@ local function createReadbackBox(enabledState)
 			local success, missionCode = gistLinkToMissionCode(inputText)
 			if not success then
 				readErrState:set(missionCode)
+				readbackError [[
+					Invalid gist link.
+				]]
 				return
 			end
 			inputText = missionCode
@@ -115,11 +129,25 @@ local function createReadbackBox(enabledState)
 			inputNoComment = inputText:match("!!!.-!!!(.+)")
 			if inputNoComment == nil then
 				readErrState:set("Invalid Opening Comment")
+				readbackError [[
+								Mission code's Opening Comment was invalid!
+
+								Check you have the right link and try again.
+				]]
 				return
 			end
 		end
 
-		local inputHeader, cursor = Read.MissionCodeHeader(inputNoComment, 1)
+		local success, inputHeader, cursor = pcall(Read.MissionCodeHeader, inputNoComment, 1)
+		if not success then
+			readErrState:set("Invalid Code Header")
+			readbackError [[
+				The header of the inputted code is not valid!
+
+				<font transparency="0.5" size="11">Please stop entering random text into that box</font>
+			]]
+		end
+
 		local inputContent = string.sub(inputNoComment, cursor)
 
 		local existingMapInfo = readbackState.MapInfo
@@ -132,12 +160,27 @@ local function createReadbackBox(enabledState)
 		codeInput.Text = ""
 		if existingMapInfo.CodeVersion ~= inputHeader.CodeVersion then
 			readErrState:set("Code Version Mismatch")
+			readbackError [[
+				The Code Version of the most recently entered code didn't match that of the previous code!
+
+				Check that the code parts you are entering belong to the same mission.
+			]]
 			return
 		elseif existingMapInfo.MapId ~= inputHeader.MapId then
 			readErrState:set("Map ID Mismatch")
+			readbackError [[
+				The Map ID of the most recently entered code didn't match that of the previous code!
+
+				Check that the code parts you are entering belong to the same mission.
+			]]
 			return
 		elseif existingMapInfo.CodeTotal ~= inputHeader.CodeTotal then
 			readErrState:set("Code Count Mismatch")
+			readbackError [[
+				The total mission code count of the most recently entered code didn't match that of the previous code!
+
+				Check that the code parts you are entering belong to the same mission.
+			]]
 			return
 		end
 
@@ -163,6 +206,17 @@ local function createReadbackBox(enabledState)
 		local success, errReason = VersionConfig:change_version(readbackState.MapInfo.CodeVersion)
 		if not success then
 			readErrState:set(errReason)
+			NotifMan.Push{
+				Title = "Internal Error",
+				Description = [[
+					Failed to change internal version compatibility settings!
+					The error reason has been printed to the Script Output.
+					Restart your studio to avoid potential issues with bad version settings.
+					Report this issue <b>ASAP</b>.
+				]],
+				Severity = "ERR_SEVERE",
+			}
+			warn(errReason)
 			VersionConfig:change_version(VersionConfig.LatestVersion)
 			return
 		end

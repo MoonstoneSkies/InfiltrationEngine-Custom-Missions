@@ -10,12 +10,35 @@ local module = {}
 
 local ROW_HEIGHT = 20
 
+local SEARCH_TERM_MATCH_PATTERN = "[%w%.]+"
+
 local SearchText = State("")
+local SearchSubStrings = Derived(function(text)
+	local substrings = {}
+	for s in text:gmatch(SEARCH_TERM_MATCH_PATTERN) do
+		substrings[s] = true
+	end
+	table.sort(substrings)
+	return substrings
+end, SearchText)
 local SearchResults = Derived(function(text)
 	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
 		return {}
 	end
 	local results = {}
+
+	local substrings = {}
+	for s in text:lower():gmatch(SEARCH_TERM_MATCH_PATTERN) do
+		substrings[s] = true
+	end
+	local function hasSubstringMatch(target)
+		for substring in substrings do
+			if target:match(substring) then
+				return true
+			end
+		end
+		return false
+	end
 
 	local missionModule = require(workspace.DebugMission.MissionSetup:Clone())
 	local match = {}
@@ -26,7 +49,10 @@ local SearchResults = Derived(function(text)
 				continue
 			end
 			if typeof(value) == "string" then
-				if (typeof(field) == "string" and field:lower():match(text)) or value:lower():match(text) then
+				if
+					(typeof(field) == "string" and hasSubstringMatch(field:lower()))
+					or hasSubstringMatch(value:lower())
+				then
 					local entry = if prefix then `{prefix}.{field}` else field
 					match[entry] = value
 				end
@@ -50,7 +76,7 @@ local SearchResults = Derived(function(text)
 		end
 
 		for k, v in attributes do
-			if v ~= "" and k:lower() == text or typeof(v) == "string" and v:lower():match(text) then
+			if v ~= "" and hasSubstringMatch(k:lower()) or typeof(v) == "string" and hasSubstringMatch(v:lower()) then
 				match[k] = tostring(v)
 			end
 		end
@@ -204,6 +230,7 @@ end
 
 local lastTextChange = 0
 function module.Init(mouse: PluginMouse)
+	module.PluginOpen = true
 	if module.Active then
 		return
 	end
@@ -226,12 +253,30 @@ function module.Init(mouse: PluginMouse)
 			local clock = lastTextChange
 			task.delay(1, function()
 				if clock == lastTextChange then
-					SearchText:set(searchBox.Text:lower())
+					SearchText:set(searchBox.Text)
 				end
 			end)
 		end,
 		FocusLost = function()
 			SearchText:set(searchBox.Text)
+		end,
+	})
+
+	local pinButton
+	pinButton = Create("TextButton", {
+		Text = "Pin",
+		Size = UDim2.new(0, 100, 0, ROW_HEIGHT),
+		BackgroundTransparency = 0,
+		Position = UDim2.new(0, 320, 0, 0),
+		BorderSizePixel = 0,
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		TextColor3 = Color3.new(0, 0, 0),
+		Activated = function()
+			module.KeepPinned = not module.KeepPinned
+			pinButton.Text = module.KeepPinned and "Unpin" or "Pin"
+			if not module.KeepPinned and not module.PluginOpen then
+				module.Clean()
+			end
 		end,
 	})
 
@@ -246,6 +291,19 @@ function module.Init(mouse: PluginMouse)
 			BackgroundTransparency = 1,
 		}, {
 			searchBox,
+			Create("TextButton", {
+				Text = "Clear",
+				Size = UDim2.new(0, 100, 0, ROW_HEIGHT),
+				BackgroundTransparency = 0,
+				Position = UDim2.new(0, 210, 0, 0),
+				BorderSizePixel = 0,
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				TextColor3 = Color3.new(0, 0, 0),
+				Activated = function()
+					SearchText:set("")
+				end,
+			}),
+			pinButton,
 			Create("ScrollingFrame", {
 				Size = UDim2.new(1, 0, 1, -ROW_HEIGHT * 1.5),
 				Position = UDim2.new(0, 0, 1, 0),
@@ -260,11 +318,76 @@ function module.Init(mouse: PluginMouse)
 				}),
 				DerivedTable(ListEntry, SearchResults),
 			}),
+
+			Create("Frame", {
+				AnchorPoint = Vector2.new(1, 1),
+				Position = UDim2.new(1, -ROW_HEIGHT, 1, ROW_HEIGHT * -2),
+				Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
+				BackgroundTransparency = 1,
+			}, {
+				Create("UIListLayout", {
+					VerticalAlignment = Enum.VerticalAlignment.Bottom,
+					Padding = UDim.new(0, 8),
+				}),
+				DerivedTable(function(k, v)
+					return Create("TextButton", {
+						Size = UDim2.new(1, 0, 1, 0),
+						BackgroundTransparency = 0,
+						BackgroundColor3 = Color3.new(0, 0, 0),
+						TextColor3 = Color3.new(1, 1, 1),
+						Text = k,
+						Activated = function()
+							SearchText:set(k)
+						end,
+					})
+				end, SearchSubStrings),
+			}),
+
+			Create("TextButton", {
+				AnchorPoint = Vector2.new(1, 1),
+				Position = UDim2.new(1, -ROW_HEIGHT, 1, 0),
+				Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				TextColor3 = Color3.new(0, 0, 0),
+				Text = "Find Links",
+				Activated = function()
+					local added = {}
+					local variableList = {}
+					local instances = game.Selection:Get()
+					for _, p in instances do
+						local attributes = p:GetAttributes()
+						for k, v in attributes do
+							if k == "PowerArea" then
+								continue
+							end
+							if typeof(v) ~= "string" then
+								continue
+							end
+							if v == "" or v == "1" or v == "0" then
+								continue
+							end
+							for sub in v:gmatch(SEARCH_TERM_MATCH_PATTERN) do
+								if added[sub] or #sub < 3 then
+									continue
+								end
+								table.insert(variableList, sub)
+								added[sub] = true
+							end
+						end
+					end
+					table.sort(variableList)
+					SearchText:set(table.concat(variableList, " || "))
+				end,
+			}),
 		}),
 	})
 end
 
 function module.Clean()
+	module.PluginOpen = false
+	if module.KeepPinned then
+		return
+	end
 	module.Active = false
 	ClearPropMarkers()
 	if module.UI then

@@ -34,6 +34,9 @@ local GlobalPropAttributes = {
 	TagButton = { PropAttributeTypes.EXPRESSION, nil },
 	MultiGlass = { PropAttributeTypes.BOOL, nil },
 	BreakAlarm = { PropAttributeTypes.STRING, nil },
+	BlockEMP = { PropAttributeTypes.EXPRESSION, nil },
+	EMPHitVariable = { PropAttributeTypes.STATE_VALUE, nil },
+	PowerCutVariable = { PropAttributeTypes.STATE_VALUE, nil },
 }
 
 local testAttributeCompatibility = function(attributeType, value, objectName, attributeName)
@@ -146,7 +149,9 @@ local testAttributeCompatibility = function(attributeType, value, objectName, at
 			return true
 		end
 		local num = tonumber(value)
-		if num == math.round(num) and num >= 1 and num <= 999 then
+		if not num then -- Expressions are valid
+			return true
+		elseif num and num == math.round(num) and num >= 1 and num <= 999 then
 			return true
 		else
 			warn(

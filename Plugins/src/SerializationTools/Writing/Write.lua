@@ -1,8 +1,14 @@
-local StringConversion = require(script.Parent.Parent.StringConversion)
+local StringConversion = require(script.Parent.Parent.Util.StringConversion)
 local InstanceTypes = require(script.Parent.Parent.Types.InstanceTypes)
 local WriteInstance = require(script.Parent.WriteInstance)
 
+local EncodingService = game:GetService("EncodingService")
+
+local FeatureCheck = require(script.Parent.Parent.Util.FeatureCheck)
+
 local EnumTypes = require(script.Parent.Parent.Types.Enums.Main)
+
+local NotifMan = require(script.Parent.Parent.Util.Notifications.Manager)
 
 local VersionConfig = require(script.Parent.Parent.Util.VersionConfig)
 
@@ -30,7 +36,7 @@ end
 local function GetIndex(object)
 	local parent = object.Parent
 	local children = parent:GetChildren()
-	
+
 	local index = 1
 	for _, child in children do
 		if child == object then
@@ -39,7 +45,7 @@ local function GetIndex(object)
 			index += 1
 		end
 	end
-	
+
 	return index
 end
 
@@ -111,11 +117,14 @@ Write = {
 		return Write.Vector2(Vector2.new(numberRange.Min, numberRange.Max))
 	end,
 
-	FloatSequence = function (numberSequence) -- 2 + 7 * keypoints characters
+	FloatSequence = function(numberSequence) -- 2 + 7 * keypoints characters
 		local keypoints = numberSequence.Keypoints
 		local numberSequenceStr = Write.ShortInt(#keypoints)
 		for i, v in pairs(keypoints) do
-			numberSequenceStr = numberSequenceStr .. Write.ShortBoundedFloat(v.Time) .. Write.Float(v.Value) .. Write.Float(v.Envelope)
+			numberSequenceStr = numberSequenceStr
+				.. Write.ShortBoundedFloat(v.Time)
+				.. Write.Float(v.Value)
+				.. Write.Float(v.Envelope)
 		end
 		return numberSequenceStr
 	end,
@@ -170,7 +179,7 @@ Write = {
 		return Write.ShortBoundedFloat(color.R) .. Write.ShortBoundedFloat(color.G) .. Write.ShortBoundedFloat(color.B)
 	end,
 
-	ColorSequence = function (colorSequence) -- 2 + 8 * keypoints characters
+	ColorSequence = function(colorSequence) -- 2 + 8 * keypoints characters
 		local keypoints = colorSequence.Keypoints
 		local colorSequenceStr = Write.ShortInt(#keypoints)
 		for i, v in pairs(keypoints) do
@@ -185,11 +194,11 @@ Write = {
 		end
 		return Write.Int(#str) .. str
 	end,
-	
+
 	InstanceReference = function(object)
 		local path = {}
 		local current = object
-		
+
 		-- Get parent path
 		while current and current.Parent and (current.Name ~= `DebugMission` and current ~= workspace) do
 			local index = GetIndex(current)
@@ -198,15 +207,15 @@ Write = {
 			end
 			current = current.Parent
 		end
-		
+
 		-- Reverse order
 		for i = 1, math.floor(#path / 2) do
 			path[i], path[#path - i + 1] = path[#path - i + 1], path[i]
 		end
-		
+
 		-- Concat
 		path = table.concat(path, `.`)
-		return Write.Int(#path) .. path
+		return Write.String(path)
 	end,
 
 	ColorMap = function(colorMap)
@@ -245,9 +254,22 @@ Write = {
 			mission:FindFirstChild("TableMissionSetup"):Destroy()
 		end
 
+		if MissionSetup.Colors == nil then
+			NotifMan.Push({
+				Title = "MissionSetup Error",
+				Description = [[
+								No Colors table was found in your MissionSetup!
+
+								An empty one will be used as placeholder.
+							]],
+				Severity = "WARN",
+			})
+			MissionSetup.Colors = {}
+		end
+
 		-- setting Color3s into tables for encoding
-		for i, v in pairs(MissionSetup["Colors"]) do
-			MissionSetup["Colors"][i] = { v.R, v.G, v.B }
+		for i, v in pairs(MissionSetup.Colors) do
+			MissionSetup.Colors[i] = { v.R, v.G, v.B }
 		end
 
 		local json = game:GetService("HttpService"):JSONEncode(MissionSetup)
@@ -261,6 +283,15 @@ Write = {
 		StringMissionSetup.Name = "StringMissionSetup"
 		StringMissionSetup.Value = mission:FindFirstChild("MissionSetup").Source
 		StringMissionSetup.Parent = mission
+
+		for _, subModule in mission.MissionSetup:GetChildren() do
+			if subModule:IsA("ModuleScript") then
+				local ExtraModuleSource = Instance.new("StringValue")
+				ExtraModuleSource.Name = subModule.Name
+				ExtraModuleSource.Value = subModule.Source
+				ExtraModuleSource.Parent = StringMissionSetup
+			end
+		end
 
 		-- Numeric index so as to not have the size collide with existing values
 		local colorMap = { [0] = 0 }
@@ -285,7 +316,56 @@ Write = {
 		local colorMapStr = Write.ColorMap(colorMapArr)
 		local stringMapStr = Write.StringMap(stringMapArr)
 
-		return colorMapStr .. stringMapStr .. str
+		local missionStr = colorMapStr .. stringMapStr .. str
+
+		if not VersionConfig.UseCompression then
+			return missionStr
+		end
+
+		local compressLevel = FeatureCheck("SerializerCompressionLevel", false)
+
+		if type(compressLevel) ~= "number" then
+			if type(compressLevel) ~= "nil" then
+				warn(
+					`SerializerCompressionLevel : Expected int|nil, got {type(compressLevel)} {compressLevel}! Will use default of 4`
+				)
+			end
+			compressLevel = 4
+		end
+
+		local inputCompressLevel = compressLevel
+		compressLevel = math.round(compressLevel)
+		if compressLevel ~= inputCompressLevel then
+			warn(
+				`SerializerCompressionLevel : Expected integer from range -7 <-> 22 inclusive, got {inputCompressLevel}! Will use rounded value of {compressLevel}`
+			)
+		end
+
+		inputCompressLevel = compressLevel
+		compressLevel = math.clamp(compressLevel, -7, 22)
+
+		if compressLevel ~= inputCompressLevel then
+			warn(
+				`SerializerCompressionLevel : Expected integer from range -7 <-> 22 inclusive, got {inputCompressLevel}! Will use clamped value of {compressLevel}`
+			)
+		end
+
+		local buf = buffer.create(#missionStr)
+		buffer.writestring(buf, 0, missionStr)
+
+		local compressedBuf = EncodingService:Base64Encode(
+			EncodingService:CompressBuffer(buf, Enum.CompressionAlgorithm.Zstd, compressLevel)
+		)
+
+		local compressedStr = buffer.readstring(compressedBuf, 0, buffer.len(compressedBuf))
+
+		if FeatureCheck("SerializerCompressionStats") == true then
+			print(`=== Compression Stats ===`)
+			print(`Before Compression: {#missionStr * 0.001}K`)
+			print(`After Compression: {#compressedStr * 0.001}K`)
+		end
+
+		return compressedStr
 	end,
 
 	Instance = function(object, colorMap, stringMap)
@@ -301,8 +381,8 @@ Write = {
 				childrenProperties = childrenProperties .. Write.Instance(v, colorMap, stringMap)
 			end
 			return instanceType .. objectProperties .. childrenProperties .. StringConversion.NumberToString(0, 1),
-			colorMap,
-			stringMap
+				colorMap,
+				stringMap
 		else
 			return StringConversion.NumberToString(InstanceTypes.Nil, 1), colorMap, stringMap
 		end

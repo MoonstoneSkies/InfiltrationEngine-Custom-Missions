@@ -73,7 +73,9 @@ local function parseSerializerFeatures()
 	return featureDict
 end
 
-return function(featureName)
+return function(featureName, allFeaturesWorks)
+	allFeaturesWorks = if allFeaturesWorks == nil then true else allFeaturesWorks
+
 	local featureValue = workspace:GetAttribute(featureName)
 	if featureValue ~= nil then
 		return featureValue
@@ -84,7 +86,7 @@ return function(featureName)
 		return featCfg[featureName]
 	end
 	
-	if workspace:GetAttribute("SerializerEnableAllFeatures") == true then
+	if workspace:GetAttribute("SerializerEnableAllFeatures") == true and allFeaturesWorks then
 		return true
 	end
 end
