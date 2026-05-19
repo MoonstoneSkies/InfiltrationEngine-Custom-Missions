@@ -3,6 +3,7 @@
 local UserInputService = game:GetService("UserInputService")
 
 local Button = require(script.Parent.Parent.Util.Button)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
@@ -47,6 +48,21 @@ local DEFAULT_DOOR_STATE: DoorData = {
 	IgnoreWhenBroken = false,
 }
 
+-- listen so undo/redo and external edits resync floating displays.
+local DOOR_WATCH_ATTRIBUTES = {
+	"PathReq1",
+	"PathReq2",
+	"LockFront",
+	"LockBack",
+	"PathRecover",
+	"PathIgnoreOpen",
+	"PathIgnoreUnlocked",
+	"PathIgnoreBroken",
+}
+
+local doorAttributeConnections: { [Part]: { RBXScriptConnection } } = {}
+local isWritingDoorAccess = false
+
 module.UIState = State(DEFAULT_DOOR_STATE)
 function module:UpdateSelectedState(key: string, value: any)
 	local newData = {}
@@ -89,6 +105,58 @@ function module:ReadData(part: Part, side: number)
 	return data
 end
 
+function module:RefreshDoorDisplays(door: Part)
+	if not door.Parent then
+		return
+	end
+	local state = self.DoorState[door]
+	if not state then
+		return
+	end
+	for side = 1, 2 do
+		local newData = self:ReadData(door, side)
+		newData.Display = state[side].Display
+		state[side] = newData
+		self:UpdateDisplayedData(newData)
+	end
+end
+
+local function disconnectDoorAttributeListeners()
+	for door, conns in pairs(doorAttributeConnections) do
+		for _, conn in conns do
+			conn:Disconnect()
+		end
+	end
+	doorAttributeConnections = {}
+end
+
+local function connectDoorAttributeListeners(self, door: Part)
+	if doorAttributeConnections[door] then
+		return
+	end
+	local conns: { RBXScriptConnection } = {}
+	for _, attrName in DOOR_WATCH_ATTRIBUTES do
+		table.insert(
+			conns,
+			door:GetAttributeChangedSignal(attrName):Connect(function()
+				if isWritingDoorAccess then
+					return
+				end
+				task.defer(function()
+					if isWritingDoorAccess then
+						return
+					end
+					if not door.Parent or not self.DoorState[door] then
+						return
+					end
+					self:RefreshDoorDisplays(door)
+				end)
+			end)
+		)
+	end
+	doorAttributeConnections[door] = conns
+end
+
 local function setBitMaskValue(mask: number, bit: number, enabled: boolean)
 	local n = if mask % (bit + bit) >= bit then mask - bit else mask
 	if enabled then
@@ -97,29 +165,30 @@ local function setBitMaskValue(mask: number, bit: number, enabled: boolean)
 	return n
 end
 
-function module:WriteData(part: Part, side: number, data: DoorData)
-	local atr = part:GetAttributes()
-	local req = table.concat(data.Restrictions, " ")
-	part:SetAttribute("PathReq" .. side, if req ~= "" then req else nil)
+function module:WriteData(part, side, data)
+	isWritingDoorAccess = true
+	HistoryService.Record("Set Door Access", function()
+		local atr = part:GetAttributes()
+		local req = table.concat(data.Restrictions, " ")
+		part:SetAttribute("PathReq" .. side, if req ~= "" then req else nil)
 
-	part:SetAttribute(side == 1 and "LockFront" or "LockBack", data.Locked)
+		part:SetAttribute(side == 1 and "LockFront" or "LockBack", data.Locked)
 
-	local recover = setBitMaskValue(atr.PathRecover or 0, side, data.Recover)
-	part:SetAttribute("PathRecover", if recover ~= 0 then recover else nil)
+		local recover = setBitMaskValue(atr.PathRecover or 0, side, data.Recover)
+		part:SetAttribute("PathRecover", if recover ~= 0 then recover else nil)
 
-	local ignoreOpen = setBitMaskValue(atr.PathIgnoreOpen or 0, side, data.IgnoreWhenOpen)
-	part:SetAttribute("PathIgnoreOpen", if ignoreOpen ~= 0 then ignoreOpen else nil)
+		local ignoreOpen = setBitMaskValue(atr.PathIgnoreOpen or 0, side, data.IgnoreWhenOpen)
+		part:SetAttribute("PathIgnoreOpen", if ignoreOpen ~= 0 then ignoreOpen else nil)
 
-	local ignoreUnlocked = setBitMaskValue(atr.PathIgnoreUnlocked or 0, side, data.IgnoreWhenUnlocked)
-	part:SetAttribute("PathIgnoreUnlocked", if ignoreUnlocked ~= 0 then ignoreUnlocked else nil)
+		local ignoreUnlocked = setBitMaskValue(atr.PathIgnoreUnlocked or 0, side, data.IgnoreWhenUnlocked)
+		part:SetAttribute("PathIgnoreUnlocked", if ignoreUnlocked ~= 0 then ignoreUnlocked else nil)
 
-	local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
-	part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
+		local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
+		part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
+	end)
+	isWritingDoorAccess = false
 
-	local newData = self:ReadData(part, side)
-	newData.Display = self.DoorState[part][side].Display
-	self.DoorState[part][side] = newData
-	self:UpdateDisplayedData(newData)
+	self:RefreshDoorDisplays(part)
 end
 
 -- Display
@@ -360,6 +429,7 @@ module.Init = function(mouse: PluginMouse)
 		}
 		self:UpdateDisplayedData(self.DoorState[door][1])
 		self:UpdateDisplayedData(self.DoorState[door][2])
+		connectDoorAttributeListeners(self, door)
 	end
 
 	self:InitUI()
@@ -377,6 +447,8 @@ module.Clean = function()
 
 	self.InputEvent:Disconnect()
 	self.InputEvent = nil
+
+	disconnectDoorAttributeListeners()
 
 	for _, list in pairs(self.DoorState) do
 		for _, data in pairs(list) do

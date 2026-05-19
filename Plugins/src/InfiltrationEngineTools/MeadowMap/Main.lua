@@ -3,6 +3,7 @@ local HttpService = game:GetService("HttpService")
 local AxisAlign = require(script.Parent.Parent.Util.AxisAlign)
 local ZoneUtil = require(script.Parent.Parent.Util.ZoneUtil)
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local UserInputService = game:GetService("UserInputService")
 local UserInputConnection
@@ -13,8 +14,41 @@ local CurrentZone = nil
 local CurrentMap = {}
 local CurrentModel = nil
 local LinkWith = nil
+local PathChangedConnection = nil
+local IsSaving = false
+
+local OpenZoneWithoutRegenerating = nil -- Undo listener needs declaration
+
+local function WatchPathAttributeForUndo()
+	if PathChangedConnection then
+		PathChangedConnection:Disconnect()
+	end
+	local theZone = CurrentZone
+	PathChangedConnection = theZone:GetAttributeChangedSignal("Path"):Connect(function()
+		if IsSaving then
+			return
+		end
+		local zoneRef = theZone
+		task.defer(function()
+			if IsSaving then
+				return
+			end
+			if not zoneRef or not zoneRef.Parent then
+				return
+			end
+			if CurrentZone ~= zoneRef then
+				return
+			end
+			OpenZoneWithoutRegenerating(zoneRef)
+		end)
+	end)
+end
 
 local function CloseZone()
+	if PathChangedConnection then
+		PathChangedConnection:Disconnect()
+		PathChangedConnection = nil
+	end
 	if CurrentModel then
 		CurrentModel:Destroy()
 		CurrentModel = nil
@@ -129,6 +163,8 @@ local function OpenZone(newZone)
 	CurrentMap = {}
 	CurrentZone = newZone
 
+	WatchPathAttributeForUndo()
+
 	for _, pos in pairs(DoorNodes) do
 		CreateNode(pos, false, true)
 	end
@@ -143,7 +179,11 @@ local function OpenZone(newZone)
 	end]]
 end
 
-local function OpenZoneWithoutRegenerating(newZone)
+function OpenZoneWithoutRegenerating(newZone)
+	if not newZone or not newZone.Parent then
+		return
+	end
+
 	if CurrentZone then
 		CloseZone()
 	end
@@ -153,6 +193,8 @@ local function OpenZoneWithoutRegenerating(newZone)
 	CurrentMap = {}
 	CurrentZone = newZone
 
+	WatchPathAttributeForUndo()
+
 	game.Selection:Set({ newZone })
 
 	if not CurrentZone:GetAttribute("Path") then
@@ -160,7 +202,13 @@ local function OpenZoneWithoutRegenerating(newZone)
 		return OpenZone(newZone)
 	end
 
-	local data = HttpService:JSONDecode(CurrentZone:GetAttribute("Path"))
+	local rawPath = CurrentZone:GetAttribute("Path")
+	local ok, data = pcall(HttpService.JSONDecode, HttpService, rawPath)
+	if not ok or typeof(data) ~= "table" then
+		warn("MeadowMap: invalid Path attribute, skipping rebuild:", data)
+		return
+	end
+
 	local PlacedNodes = {}
 	if data.Placed then
 		for _, placed in pairs(data.Placed) do
@@ -170,15 +218,27 @@ local function OpenZoneWithoutRegenerating(newZone)
 	end
 
 	local NodeParts = {}
-	for _, node in pairs(data.Node) do
-		local pos = Vector3.new(unpack(node))
-		local nodePart = CreateNode(pos, PlacedNodes[pos], false)
-		table.insert(NodeParts, nodePart)
+	if data.Node then
+		for _, node in ipairs(data.Node) do
+			local pos = Vector3.new(unpack(node))
+			local nodePart = CreateNode(pos, PlacedNodes[pos], false)
+			table.insert(NodeParts, nodePart)
+		end
 	end
 
-	for startIndex, list in data.Link do
-		for _, endIndex in list do
-			AddOneWayLink(NodeParts[startIndex], NodeParts[endIndex])
+	if data.Link then
+		for startKey, list in pairs(data.Link) do
+			local startIndex = tonumber(startKey) or startKey
+			local fromPart = NodeParts[startIndex]
+			if fromPart and typeof(list) == "table" then
+				for _, endKey in ipairs(list) do
+					local endIndex = tonumber(endKey) or endKey
+					local toPart = NodeParts[endIndex]
+					if toPart then
+						AddOneWayLink(fromPart, toPart)
+					end
+				end
+			end
 		end
 	end
 end
@@ -244,8 +304,21 @@ local function Serialize()
 	})
 end
 
+local function PersistPath()
+	IsSaving = true
+	local ok, err = pcall(function()
+		CurrentZone:SetAttribute("Path", Serialize())
+	end)
+	IsSaving = false
+	if not ok then
+		error(err)
+	end
+end
+
 local function Save()
-	CurrentZone:SetAttribute("Path", Serialize())
+	HistoryService.Record("Save Meadow Map", function()
+		PersistPath()
+	end)
 end
 
 local LastCTap = 0
@@ -301,9 +374,12 @@ return {
 					Save()
 				end
 			elseif io.KeyCode == Enum.KeyCode.R then
-				if mouse.Target then
-					RemovePart(mouse.Target)
-					Save()
+				if mouse.Target and CurrentZone then
+					local target = mouse.Target
+					HistoryService.Record("Meadow Map: remove", function()
+						RemovePart(target)
+						PersistPath()
+					end)
 				end
 			elseif io.UserInputType == Enum.UserInputType.MouseButton1 then
 				if LinkWith then

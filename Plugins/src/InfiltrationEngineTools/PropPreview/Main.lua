@@ -1,4 +1,5 @@
 local Button = require(script.Parent.Parent.Util.Button)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
@@ -437,11 +438,13 @@ module.Init = function(mouse: PluginMouse)
 							local prop = base:Clone()
 							prop.Name = value
 							prop.Transparency = 0.5
-							prop.Anchored = true
-							prop.Color = Color3.fromRGB(163, 162, 165)
-							prop.Material = Enum.Material.Plastic
-							prop.Parent = workspace.DebugMission.Props
-							prop.CFrame = CFrame.new((workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -5)).Position)
+							HistoryService.Record("Insert Prop", function()
+								prop.Anchored = true
+                prop.Color = Color3.fromRGB(163, 162, 165)
+                prop.Material = Enum.Material.Plastic
+                prop.Parent = workspace.DebugMission.Props
+                prop.CFrame = CFrame.new((workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -5)).Position)
+							end)
 						end
 					end,
 					Size = UDim2.new(1, 0, 0, 30),
