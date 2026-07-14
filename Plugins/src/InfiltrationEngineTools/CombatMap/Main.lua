@@ -2,6 +2,7 @@ local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
 
 local VisibilityToggle = require(script.Parent.Parent.Util.VisibilityToggle)
+local HistoryService = require(script.Parent.Parent.Util.HistoryService)
 
 local module = {}
 
@@ -44,7 +45,7 @@ local function GetNodeId(node)
 	return node.Name
 end
 
-local function ToggleNodeLink(node1, node2)
+local function applyToggleNodeLink(node1, node2)
 	local node1Links = HttpService:JSONDecode(node1:GetAttribute("LinkedIds") or "[]")
 	local node2Links = HttpService:JSONDecode(node2:GetAttribute("LinkedIds") or "[]")
 
@@ -54,11 +55,20 @@ local function ToggleNodeLink(node1, node2)
 		table.insert(node2Links, GetNodeId(node1))
 	else
 		table.remove(node1Links, idx)
-		table.remove(node2Links, table.find(node2Links, GetNodeId(node1)))
+		local idx2 = table.find(node2Links, GetNodeId(node1))
+		if idx2 ~= nil then
+			table.remove(node2Links, idx2)
+		end
 	end
 
 	node1:SetAttribute("LinkedIds", HttpService:JSONEncode(node1Links))
 	node2:SetAttribute("LinkedIds", HttpService:JSONEncode(node2Links))
+end
+
+local function ToggleNodeLink(node1, node2)
+	HistoryService.Record("Toggle Flow Node Link", function()
+		applyToggleNodeLink(node1, node2)
+	end)
 end
 
 local function InputNodeName(box)
@@ -126,7 +136,13 @@ function module.Init(mouse: PluginMouse)
 		DrawnModel = Instance.new("Model")
 		DrawnModel.Parent = workspace
 
-		local part = CurrentMap[id]
+		local part = CurrentMap and CurrentMap:FindFirstChild(id)
+		if not part then
+			warn(`RedrawMap: missing flow node for id {tostring(id)}`)
+			DrawnModel:Destroy()
+			DrawnModel = nil
+			return
+		end
 		local used = {}
 		local blocked = part:GetAttribute("BlockedLinks") or "{}"
 		blocked = game:GetService("HttpService"):JSONDecode(blocked)
@@ -176,11 +192,18 @@ function module.Init(mouse: PluginMouse)
 			end
 
 			-- Remove links to now-deleted nodes
-			for _, dead in pairs(deadLinks) do
-				warn(`Found dead link to "{dead}" on node {checkId}, removing...`)
-				table.remove(linkTo, table.find(linkTo, dead))
+			if #deadLinks > 0 then
+				HistoryService.Record("Prune Dead Links", function()
+					for _, dead in pairs(deadLinks) do
+						warn(`Found dead link to "{dead}" on node {checkId}, removing...`)
+						local rm = table.find(linkTo, dead)
+						if rm ~= nil then
+							table.remove(linkTo, rm)
+						end
+					end
+					part:SetAttribute("LinkedIds", HttpService:JSONEncode(linkTo))
+				end)
 			end
-			part:SetAttribute("LinkedIds", HttpService:JSONEncode(linkTo))
 		end
 
 		part:SetAttribute("FilteredLinks", HttpService:JSONEncode(FilteredLinks))
@@ -229,20 +252,10 @@ function module.Init(mouse: PluginMouse)
 			local flowMap = if flowElem:IsA("Model") then flowElem else flowElem.Parent
 			CurrentMap = flowMap
 
-			local newNode = Instance.new("Part")
-			newNode.Parent = flowMap
-			newNode.Size = Vector3.new(5,5,5)
-			newNode.Anchored = true
-			newNode.Color = Color3.new(0,0,0)
-			newNode.CastShadow = false
-			newNode.Transparency = 0.5
-			newNode.TopSurface = Enum.SurfaceType.Smooth
-			newNode.BottomSurface = Enum.SurfaceType.Smooth
-
-			-- Offset from surface by 5 studs to avoid being half clipped into walls/floors
 			castParams.FilterDescendantsInstances = { mouse.Target.Parent }
-			local surfaceNormal = workspace:Raycast(mouse.UnitRay.Origin, mouse.UnitRay.Direction*1000, castParams).Normal or Vector3.FromNormalId(mouse.TargetSurface)
-			newNode.Position = mouse.Hit.Position + (surfaceNormal*5)
+			local rayResult = workspace:Raycast(mouse.UnitRay.Origin, mouse.UnitRay.Direction * 1000, castParams)
+			local surfaceNormal = (rayResult and rayResult.Normal) or Vector3.FromNormalId(mouse.TargetSurface)
+			local placePosition = mouse.Hit.Position + (surfaceNormal * 5)
 
 			local manualName = input:IsModifierKeyDown(Enum.ModifierKey.Ctrl)
 			local newNodeName = if manualName then InputNodeName(nodeNameBox) else HttpService:GenerateGUID(false)
@@ -255,22 +268,35 @@ function module.Init(mouse: PluginMouse)
 			end
 
 			if #newNodeName < 1 then
-				newNode:Destroy() -- Destroy preview
 				return
 			end
 
-			newNode.Transparency = 0
-			newNode.Name = newNodeName
-			newNode:SetAttribute("Id", newNode.Name)
+			local createdNode = nil
+			HistoryService.Record("Add Flow Node", function()
+				local newNode = Instance.new("Part")
+				newNode.Parent = flowMap
+				newNode.Size = Vector3.new(5, 5, 5)
+				newNode.Anchored = true
+				newNode.Color = Color3.new(0, 0, 0)
+				newNode.CastShadow = false
+				newNode.Transparency = 0
+				newNode.TopSurface = Enum.SurfaceType.Smooth
+				newNode.BottomSurface = Enum.SurfaceType.Smooth
+				newNode.Position = placePosition
+				newNode.Name = newNodeName
+				newNode:SetAttribute("Id", newNode.Name)
 
-			if flowElem:IsA("Part") then
-				-- If flow node was selected before adding, connect to it
-				ToggleNodeLink(newNode, flowElem)
+				if flowElem:IsA("Part") then
+					applyToggleNodeLink(newNode, flowElem)
+				end
+
+				createdNode = newNode
+			end)
+
+			if createdNode then
+				game.Selection:Set({ createdNode })
+				RedrawMap(GetNodeId(createdNode))
 			end
-
-			game.Selection:Set({ newNode })
-
-			RedrawMap(GetNodeId(newNode))
 
 			return
 		end
@@ -292,6 +318,9 @@ function module.Init(mouse: PluginMouse)
 			RedrawMap(id)
 		elseif partIsFlowNode and wasCtrlPressed then
 			local firstNode = game.Selection:Get()[1]
+			if not firstNode then
+				return
+			end
 
 			-- Current selection isn't flow node, do nothing
 			if not firstNode:IsDescendantOf(workspace.DebugMission.CombatFlowMap) then return end
@@ -304,18 +333,22 @@ function module.Init(mouse: PluginMouse)
 			RedrawMap(firstNode:GetAttribute("Id")) -- Sets FilteredLinks
 		elseif part.Name:match("|") and #part.Name >= 3 then
 			local node = game.Selection:Get()[1]
+			if not node then
+				return
+			end
+
 			local blocked = node:GetAttribute("BlockedLinks") or "{}"
 			blocked = game:GetService("HttpService"):JSONDecode(blocked)
 
 			local beingBlocked = not blocked[part.Name]
 			blocked[part.Name] = if beingBlocked then true else nil
 
-			node:SetAttribute("BlockedLinks", HttpService:JSONEncode(blocked))
+			HistoryService.Record("Toggle Blocked Link", function()
+				node:SetAttribute("BlockedLinks", HttpService:JSONEncode(blocked))
+			end)
 
 			RedrawMap(node.Name)
 		else
-			local id0, id1 = part.Name:match("|")
-
 			if DrawnModel then
 				DrawnModel:Destroy()
 				DrawnModel = nil
