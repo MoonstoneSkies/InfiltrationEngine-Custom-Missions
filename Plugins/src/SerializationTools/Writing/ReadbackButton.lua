@@ -64,6 +64,14 @@ end
 local function gistLinkToMissionCode(link)
 	link = trimWhitespace(link)
 	link = gistLinkToRaw(link)
+
+	if string.sub(link, 1, 64) == "https://raw.githubusercontent.com/FSC-Showcased-Custom-Missions/" then
+		local creator, map = string.match(link, "^https://raw%.githubusercontent%.com/FSC%-Showcased%-Custom%-Missions/([^/%.]+)%.([^/%.]+)")
+		print(`Reading back map "{link}"...`)
+		print(`Map author: {creator}`)
+		print(`Map title: {map}`)
+		return true, pcall(HttpService.GetAsync, HttpService, link)
+	end
 	
 	local creator, fileName = string.match(link, GIST_INFO_PAT_FILENAME)
 	if creator == nil then
