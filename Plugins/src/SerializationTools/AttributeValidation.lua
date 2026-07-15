@@ -248,7 +248,7 @@ return {
 			return attributes
 		end
 
-		if attributes.IKnowWhatImDoingDoNotValidate == true then
+		if attributes.IKnowWhatImDoingDoNotValidate == true or attributes.IgnoreValidation == true then
 			warn(`Instance {instanceName} of Class {className} is intentionally opting out of attribute validation`)
 			return attributes
 		elseif attributes.Type == "StateScript" or instanceName == "StateScriptPart" then
