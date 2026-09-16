@@ -37,6 +37,7 @@ local GlobalPropAttributes = {
 	BlockEMP = { PropAttributeTypes.EXPRESSION, nil },
 	EMPHitVariable = { PropAttributeTypes.STATE_VALUE, nil },
 	PowerCutVariable = { PropAttributeTypes.STATE_VALUE, nil },
+	LinkComp = { PropAttributeTypes.STRING, nil },
 }
 
 local testAttributeCompatibility = function(attributeType, value, objectName, attributeName)
@@ -248,7 +249,7 @@ return {
 			return attributes
 		end
 
-		if attributes.IKnowWhatImDoingDoNotValidate == true then
+		if attributes.IKnowWhatImDoingDoNotValidate == true or attributes.NoValidation then
 			warn(`Instance {instanceName} of Class {className} is intentionally opting out of attribute validation`)
 			return attributes
 		elseif attributes.Type == "StateScript" or instanceName == "StateScriptPart" then

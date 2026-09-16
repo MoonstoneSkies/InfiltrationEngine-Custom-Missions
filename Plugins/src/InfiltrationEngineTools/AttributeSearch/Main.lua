@@ -1,3 +1,4 @@
+local UserInputService = game:GetService("UserInputService")
 local Actor = require(script.Parent.Parent.Util.Actor)
 local Create = Actor.Create
 local State = Actor.State
@@ -21,7 +22,8 @@ local SearchSubStrings = Derived(function(text)
 	table.sort(substrings)
 	return substrings
 end, SearchText)
-local SearchResults = Derived(function(text)
+local SearchSelectionLimit = State({})
+local PreFilterSearchResults = Derived(function(text)
 	if #text < 3 or not workspace:FindFirstChild("DebugMission") then
 		return {}
 	end
@@ -108,6 +110,19 @@ local SearchResults = Derived(function(text)
 	return results
 end, SearchText)
 
+local SearchResults = Derived(function(list, filtered)
+	if not next(filtered) then
+		return list
+	end
+	local trimmed = {}
+	for instance, fields in list do
+		if filtered[instance] then
+			trimmed[instance] = fields
+		end
+	end
+	return trimmed
+end, PreFilterSearchResults, SearchSelectionLimit)
+
 local function StringToColor(name)
 	if name == "Default" then
 		return Color3.new(0, 0, 0)
@@ -158,9 +173,50 @@ local function UpdatePropMarkers(list)
 end
 Watch(UpdatePropMarkers, SearchResults)
 
+local SelectionMap = State({})
+local SelectionDragMode = nil
+local SelectionMapEvent0 = nil
+local SelectionMapEvent1 = nil
+local SetupSelectionMap = function()
+	if SelectionMapEvent0 then
+		return
+	end
+	SelectionMapEvent0 = game.Selection.SelectionChanged:Connect(function()
+		local map = {}
+		for _, p in game.Selection:Get() do
+			map[p] = true
+		end
+		SelectionMap:set(map)
+	end)
+	SelectionMapEvent1 = UserInputService.InputEnded:Connect(function(io)
+		if io.UserInputType == Enum.UserInputType.MouseButton1 then
+			SelectionDragMode = nil
+		end
+	end)
+end
+
+local CleanupSelectionMap = function()
+	if SelectionMapEvent0 then
+		SelectionMapEvent0:Disconnect()
+		SelectionMapEvent0 = nil
+	end
+	if SelectionMapEvent1 then
+		SelectionMapEvent1:Disconnect()
+		SelectionMapEvent1 = nil
+	end
+end
+
 local function ListEntry(instance, fields)
 	local fieldCount = 0
 	local contents = {
+		Create("Frame", {
+			Size = UDim2.new(0, 5, 0, ROW_HEIGHT * 0.75),
+			BackgroundColor3 = Color3.new(1, 1, 1),
+			BorderSizePixel = 0,
+			Visible = Derived(function(map)
+				return map[instance]
+			end, SelectionMap),
+		}),
 		Create("TextLabel", {
 			Size = UDim2.new(0, 200, 0, ROW_HEIGHT),
 			Position = UDim2.new(0, 0, 0, 0),
@@ -222,8 +278,81 @@ local function ListEntry(instance, fields)
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BorderSizePixel = 0,
 		LayoutOrder = layoutOrder,
-		Activated = function()
-			game.Selection:Set({ instance })
+		MouseButton1Down = function()
+			local ctrlDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl)
+				or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)
+			local shiftDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
+				or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+			local altDown = UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
+				or UserInputService:IsKeyDown(Enum.KeyCode.RightAlt)
+			if altDown then
+				local newGroup = {}
+				for instance in SearchResults._Value do
+					table.insert(newGroup, instance)
+				end
+				local AllPresent = true
+				for _, p in newGroup do
+					if not SelectionMap._Value[p] then
+						AllPresent = false
+						break
+					end
+				end
+				if AllPresent then
+					game.Selection:Set({})
+				else
+					game.Selection:Set(newGroup)
+				end
+			elseif shiftDown then
+				local matchValues = {}
+				local newGroup = {}
+				for _, value in fields do
+					matchValues[value] = true
+				end
+				for instance, fields in SearchResults._Value do
+					for _, compareValue in fields do
+						if matchValues[compareValue] then
+							table.insert(newGroup, instance)
+							break
+						end
+					end
+				end
+				if ctrlDown then
+					local AllPresent = true
+					for _, p in newGroup do
+						if not SelectionMap._Value[p] then
+							AllPresent = false
+							break
+						end
+					end
+					if AllPresent then
+						game.Selection:Remove(newGroup)
+					else
+						game.Selection:Add(newGroup)
+					end
+				else
+					game.Selection:Set(newGroup)
+				end
+			elseif ctrlDown then
+				if SelectionMap._Value[instance] then
+					SelectionDragMode = 2
+					game.Selection:Remove({ instance })
+				else
+					SelectionDragMode = 1
+					game.Selection:Add({ instance })
+				end
+			else
+				game.Selection:Set({ instance })
+			end
+		end,
+		MouseEnter = function()
+			if not SelectionDragMode then
+				return
+			end
+			if SelectionDragMode == 1 then
+				game.Selection:Add({ instance })
+			elseif SelectionDragMode == 2 then
+				game.Selection:Remove({ instance })
+			end
 		end,
 	}, contents)
 end
@@ -235,6 +364,7 @@ function module.Init(mouse: PluginMouse)
 		return
 	end
 	module.Active = true
+	SetupSelectionMap()
 	UpdatePropMarkers(SearchResults._Value)
 
 	local searchBox
@@ -254,11 +384,13 @@ function module.Init(mouse: PluginMouse)
 			task.delay(1, function()
 				if clock == lastTextChange then
 					SearchText:set(searchBox.Text)
+					SearchSelectionLimit:set({})
 				end
 			end)
 		end,
 		FocusLost = function()
 			SearchText:set(searchBox.Text)
+			SearchSelectionLimit:set({})
 		end,
 	})
 
@@ -267,7 +399,7 @@ function module.Init(mouse: PluginMouse)
 		Text = "Pin",
 		Size = UDim2.new(0, 100, 0, ROW_HEIGHT),
 		BackgroundTransparency = 0,
-		Position = UDim2.new(0, 320, 0, 0),
+		Position = UDim2.new(0, 430, 0, 0),
 		BorderSizePixel = 0,
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		TextColor3 = Color3.new(0, 0, 0),
@@ -301,9 +433,29 @@ function module.Init(mouse: PluginMouse)
 				TextColor3 = Color3.new(0, 0, 0),
 				Activated = function()
 					SearchText:set("")
+					SearchSelectionLimit:set({})
 				end,
 			}),
 			pinButton,
+			Create("TextButton", {
+				Text = "Filter",
+				Size = UDim2.new(0, 100, 0, ROW_HEIGHT),
+				BackgroundTransparency = 0,
+				Position = UDim2.new(0, 320, 0, 0),
+				BorderSizePixel = 0,
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				TextColor3 = Color3.new(0, 0, 0),
+				Activated = function()
+					if next(SelectionMap._Value) then
+						SearchSelectionLimit:set(table.clone(SelectionMap._Value))
+						game.Selection:Set({})
+					elseif next(SearchSelectionLimit) then
+						SearchSelectionLimit:set({})
+					else
+						warn("Cannot filter to selected instances: No Instances selected")
+					end
+				end,
+			}),
 			Create("ScrollingFrame", {
 				Size = UDim2.new(1, 0, 1, -ROW_HEIGHT * 1.5),
 				Position = UDim2.new(0, 0, 1, 0),
@@ -338,6 +490,7 @@ function module.Init(mouse: PluginMouse)
 						Text = k,
 						Activated = function()
 							SearchText:set(k)
+							SearchSelectionLimit:set({})
 						end,
 					})
 				end, SearchSubStrings),
@@ -377,6 +530,7 @@ function module.Init(mouse: PluginMouse)
 					end
 					table.sort(variableList)
 					SearchText:set(table.concat(variableList, " || "))
+					SearchSelectionLimit:set({})
 				end,
 			}),
 		}),
@@ -390,6 +544,7 @@ function module.Clean()
 	end
 	module.Active = false
 	ClearPropMarkers()
+	CleanupSelectionMap()
 	if module.UI then
 		module.UI:Destroy()
 		module.UI = nil
