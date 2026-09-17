@@ -265,7 +265,7 @@ return {
 			local newAttributes = {}
 			local attributeTypes = AttributesMap[name]
 			for attName, tableOfInfo in pairs(attributeTypes) do -- add attributes specifically listed in AttributesMap.lua
-				if not attributes[attName] then
+				if attributes[attName] == nil then
 					if includeDefaults then
 						newAttributes[attName] = tableOfInfo[2]
 					end
