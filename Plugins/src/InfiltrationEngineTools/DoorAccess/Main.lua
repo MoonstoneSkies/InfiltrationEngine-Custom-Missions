@@ -13,17 +13,71 @@ local module = {}
 module.Active = false
 module.DoorState = {}
 
+local DisplayPartFolder = nil
+
+local CUSTOM_RESTRICTIONS_LIST = {}
+local CUSTOM_RESTRICTIONS_ICONS_LIST = {}
+
 local RESTRICTIONS_LIST = {
 	"Never",
 	"Combat",
 	"BasicKeycard",
 	"SecurityKeycard",
+	"HighSecurityKeycard",
 	"MasterKeycard",
+	"VaultKeycard",
+	"KeycardA",
+	"KeycardB",
+	"KeycardC",
+	"KeycardBlank",
+	"KeycardBlankMagstripe",
+	"ITBadge",
+	"WorkerBadge",
+	"SecurityBadge",
+	"HighSecurityBadge",
+	"LeadSecurityBadge",
+	"ArchiveKey",
 	"MRKey",
 	"MasterKey",
-	"SecurityBadge",
-	"LeadSecurityBadge",
-	"ITBadge",
+	"ManagerOfficeKey",
+	"CashCageKey",
+	"RestaurantKey",
+	"ArmoryKey",
+	"FenceGateKey",
+	"SafeKey",
+	"FilingCabinetKey",
+	"ITClosetKey",
+	"LaundryKey",
+}
+
+local RESTRICTIONS_ICONS_LIST = {
+	["BasicKeycard"] = "9403683916",
+	["SecurityKeycard"] = "9403684457",
+	["HighSecurityKeycard"] = "9403685450",
+	["MasterKeycard"] = "9403684457",
+	["VaultKeycard"] = "104598553547470",
+	["KeycardA"] = "106646558077189",
+	["KeycardB"] = "136703799502752",
+	["KeycardC"] = "97330397237451",
+	["KeycardBlank"] = "125985694568048",
+	["KeycardBlankMagstripe"] = "125203335531284",
+	["ITBadge"] = "79761241684752",
+	["WorkerBadge"] = "92884966005437",
+	["SecurityBadge"] = "14598774566",
+	["HighSecurityBadge"] = "139020373938850",
+	["LeadSecurityBadge"] = "97451862463788",
+	["ArchiveKey"] = "9236250491",
+	["MRKey"] = "9236250491",
+	["MasterKey"] = "9236250491",
+	["ManagerOfficeKey"] = "9236250491",
+	["CashCageKey"] = "9236250491",
+	["RestaurantKey"] = "9236250491",
+	["ArmoryKey"] = "9236250491",
+	["FenceGateKey"] = "9236250491",
+	["SafeKey"] = "9236250491",
+	["FilingCabinetKey"] = "9236250491",
+	["ITClosetKey"] = "9236250491",
+	["LaundryKey"] = "9236250491",
 }
 
 type DoorData = {
@@ -35,6 +89,7 @@ type DoorData = {
 	IgnoreWhenOpen: boolean,
 	IgnoreWhenUnlocked: boolean,
 	IgnoreWhenBroken: boolean,
+	KeepClosed: boolean,
 	Display: Part?,
 }
 
@@ -45,6 +100,7 @@ local DEFAULT_DOOR_STATE: DoorData = {
 	IgnoreWhenOpen = false,
 	IgnoreWhenUnlocked = false,
 	IgnoreWhenBroken = false,
+	KeepClosed = false,
 }
 
 module.UIState = State(DEFAULT_DOOR_STATE)
@@ -59,9 +115,9 @@ end
 -- Data Load/Unload
 function module:GetDoorsFromLevel()
 	local doors = {}
-	local props = workspace.DebugMission.Props:GetChildren()
+	local props = workspace.DebugMission.Props:GetDescendants()
 	for _, part in pairs(props) do
-		if string.match(part.Name, "^Door") then
+		if string.match(part.Name, "^Door") and part.ClassName == "Part" then
 			table.insert(doors, part)
 		end
 	end
@@ -80,9 +136,10 @@ function module:ReadData(part: Part, side: number)
 		IgnoreWhenOpen = atr.PathIgnoreOpen and atr.PathIgnoreOpen % (side + side) >= side or false,
 		IgnoreWhenUnlocked = atr.PathIgnoreUnlocked and atr.PathIgnoreUnlocked % (side + side) >= side or false,
 		IgnoreWhenBroken = atr.PathIgnoreBroken and atr.PathIgnoreBroken % (side + side) >= side or false,
+		KeepClosed = atr.KeepClosed and atr.KeepClosed % (side + side) >= side or false,
 	}
 	if req then
-		for s in req:gmatch("(%a+)") do
+		for s in req:gmatch("(%S+)") do
 			table.insert(data.Restrictions, s)
 		end
 	end
@@ -115,6 +172,9 @@ function module:WriteData(part: Part, side: number, data: DoorData)
 
 	local ignoreBroken = setBitMaskValue(atr.PathIgnoreBroken or 0, side, data.IgnoreWhenBroken)
 	part:SetAttribute("PathIgnoreBroken", if ignoreBroken ~= 0 then ignoreBroken else nil)
+
+	local keepClosed = setBitMaskValue(atr.KeepClosed or 0, side, data.KeepClosed)
+	part:SetAttribute("KeepClosed", if keepClosed ~= 0 then keepClosed else nil)
 
 	local newData = self:ReadData(part, side)
 	newData.Display = self.DoorState[part][side].Display
@@ -163,6 +223,10 @@ function module:UpdateDisplayedData(data: DoorData)
 		table.insert(listItems, "Ignore When Broken")
 	end
 
+	if data.KeepClosed then
+		table.insert(listItems, "Keep Closed")
+	end
+
 	for index, item in pairs(listItems) do
 		listItems[index] = Create("TextLabel", {
 			Text = item,
@@ -177,6 +241,12 @@ function module:UpdateDisplayedData(data: DoorData)
 	end
 
 	if data.Base then
+		if DisplayPartFolder == nil then
+			DisplayPartFolder = Instance.new("WorldModel")
+			DisplayPartFolder.Archivable = false
+			DisplayPartFolder.Name = "DoorAccessDisplays"
+			DisplayPartFolder.Parent = workspace
+		end
 		data.Display = Create("Part", {
 			CFrame = data.Base.CFrame * CFrame.Angles(0, data.Side == 2 and math.pi or 0, 0) * CFrame.new(0, 0, -0.5),
 			Size = Vector3.new(4, 4, 0.2),
@@ -200,6 +270,8 @@ function module:UpdateDisplayedData(data: DoorData)
 				}),
 			}),
 		})
+		data.Display.Archivable = false
+		data.Display.Parent = DisplayPartFolder
 	end
 end
 
@@ -236,6 +308,20 @@ end
 
 -- UI setup
 function module:InitUI()
+	CUSTOM_RESTRICTIONS_LIST = {}
+	CUSTOM_RESTRICTIONS_ICONS_LIST = {}
+	
+	local itemsFolder = workspace:FindFirstChild("DebugMission"):FindFirstChild("CustomItems")
+	if itemsFolder then
+		for _, item in pairs(itemsFolder:GetChildren()) do
+			local itemClass = item:GetAttribute("Class")
+			if itemClass == "Keycard" or itemClass == "Badge" or itemClass == "Key" then
+				table.insert(CUSTOM_RESTRICTIONS_LIST,item.Name)
+				CUSTOM_RESTRICTIONS_ICONS_LIST[item.name] = item:GetAttribute("Icon")
+			end
+		end
+	end
+	
 	local buttons = {
 		Button({
 			Text = "Locked",
@@ -282,53 +368,139 @@ function module:InitUI()
 				self:UpdateSelectedState("IgnoreWhenBroken", not self.UIState._Value.IgnoreWhenBroken)
 			end,
 		}),
+		Button({
+			Text = "KeepClosed",
+			Enabled = Derived(function(data: DoorData)
+				return data.KeepClosed
+			end, self.UIState),
+			Activated = function()
+				self:UpdateSelectedState("KeepClosed", not self.UIState._Value.KeepClosed)
+			end,
+		}),
 	}
 
 	for index, text in pairs(RESTRICTIONS_LIST) do
-		table.insert(
-			buttons,
-			Button({
-				Text = text,
-				Enabled = Derived(function(data: DoorData)
-					for _, restriction in pairs(data.Restrictions) do
-						if restriction == text then
-							return true
-						end
+		local button = Button({
+			Text = text,
+			Enabled = Derived(function(data: DoorData)
+				for _, restriction in pairs(data.Restrictions) do
+					if restriction == text then
+						return true
 					end
-					return false
-				end, module.UIState),
-				Activated = function()
-					local wasRemoved = false
-					local copy = {}
-					for _, restriction in pairs(module.UIState._Value.Restrictions) do
-						if restriction ~= text then
-							table.insert(copy, restriction)
-						else
-							wasRemoved = true
-						end
+				end
+				return false
+			end, module.UIState),
+			Activated = function()
+				local wasRemoved = false
+				local copy = {}
+				for _, restriction in pairs(module.UIState._Value.Restrictions) do
+					if restriction ~= text then
+						table.insert(copy, restriction)
+					else
+						wasRemoved = true
 					end
-					if not wasRemoved then
-						table.insert(copy, text)
-					end
-					self:UpdateSelectedState("Restrictions", copy)
-				end,
+				end
+				if not wasRemoved then
+					table.insert(copy, text)
+				end
+				self:UpdateSelectedState("Restrictions", copy)
+			end,
+		})
+		local icon = RESTRICTIONS_ICONS_LIST[text]
+		if icon then
+			button.TextWrapped = true
+			button.TextScaled = true
+			Create("ImageLabel", {
+				Parent = button,
+				Image = "rbxassetid://" .. icon,
+				Position = UDim2.new(0, -30, 0, 5),
+				Size = UDim2.new(0, 30, 0, 30),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
 			})
-		)
+			Create("UIPadding", {
+				Parent = button,
+				PaddingLeft = UDim.new(0, 30),
+				PaddingRight = UDim.new(0, 5),
+			})
+			Create("UITextSizeConstraint", {
+				Parent = button,
+				MaxTextSize = 20,
+			})
+		end
+
+		table.insert(buttons, button)
 	end
 
+	for index, text in pairs(CUSTOM_RESTRICTIONS_LIST) do
+		local button = Button({
+			Text = text,
+			Enabled = Derived(function(data: DoorData)
+				for _, restriction in pairs(data.Restrictions) do
+					if restriction == text then
+						return true
+					end
+				end
+				return false
+			end, module.UIState),
+			Activated = function()
+				local wasRemoved = false
+				local copy = {}
+				for _, restriction in pairs(module.UIState._Value.Restrictions) do
+					if restriction ~= text then
+						table.insert(copy, restriction)
+					else
+						wasRemoved = true
+					end
+				end
+				if not wasRemoved then
+					table.insert(copy, text)
+				end
+				self:UpdateSelectedState("Restrictions", copy)
+			end,
+		})
+		local icon = CUSTOM_RESTRICTIONS_ICONS_LIST[text]
+		if icon then
+			button.TextWrapped = true
+			button.TextScaled = true
+			Create("ImageLabel", {
+				Parent = button,
+				Image = "rbxassetid://" .. icon,
+				Position = UDim2.new(0, -30, 0, 5),
+				Size = UDim2.new(0, 30, 0, 30),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+			})
+			Create("UIPadding", {
+				Parent = button,
+				PaddingLeft = UDim.new(0, 30),
+				PaddingRight = UDim.new(0, 5),
+			})
+			Create("UITextSizeConstraint", {
+				Parent = button,
+				MaxTextSize = 20,
+			})
+		end
+
+		table.insert(buttons, button)
+	end
+	
 	self.UI = Create("ScreenGui", {
 		Parent = game:GetService("CoreGui"),
 		Archivable = false,
 		Name = "DoorAccessConfig",
 	}, {
-		Create("Frame", {
-			Position = UDim2.new(1, -20, 1, -20),
-			AnchorPoint = Vector2.new(1, 1),
-			Size = UDim2.new(0, 200, 0, 200),
+		Create("ScrollingFrame", {
+			Position = UDim2.new(1, -20, 0, 20),
+			AnchorPoint = Vector2.new(1, 0),
+			Size = UDim2.new(0, 212, 0.8, -100),
 			BackgroundTransparency = 1,
+			CanvasSize = UDim2.fromOffset(0, 0),
+			AutomaticCanvasSize = Enum.AutomaticSize.Y,
+			
 		}, {
 			Create("UIListLayout", {
-				VerticalAlignment = Enum.VerticalAlignment.Bottom,
+				VerticalAlignment = Enum.VerticalAlignment.Top,
 				HorizontalAlignment = Enum.HorizontalAlignment.Left,
 			}),
 			buttons,
@@ -345,6 +517,7 @@ end
 
 -- Init/Cleanup
 module.Init = function(mouse: PluginMouse)
+	print("C - Copy door data")
 	if module.Active then
 		return
 	end
@@ -377,13 +550,10 @@ module.Clean = function()
 
 	self.InputEvent:Disconnect()
 	self.InputEvent = nil
-
-	for _, list in pairs(self.DoorState) do
-		for _, data in pairs(list) do
-			if data.Display then
-				data.Display:Destroy()
-			end
-		end
+	
+	if DisplayPartFolder ~= nil then
+		DisplayPartFolder:Destroy()
+		DisplayPartFolder = nil
 	end
 	self.DoorState = {}
 
